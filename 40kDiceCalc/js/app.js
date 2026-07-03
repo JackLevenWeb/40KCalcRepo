@@ -22,7 +22,7 @@ function createWeapon() {
 
     const attackerWeapon = new Weapon(attack, bsws, strength, ap, damage);
 
-    console.log(Weapon);
+    console.log(attackerWeapon);
 
 }
 
@@ -35,7 +35,8 @@ function createUnit() {
 
     const targetUnit = new Unit(toughness, wounds, save, invuln);
 
-    console.log(Unit);
+    console.log(targetUnit);
+
 
 
 }
