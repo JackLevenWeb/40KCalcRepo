@@ -2,10 +2,10 @@
 
 export class Unit {
 
-    constructor(toughness, wounds, savingThrow, inVul) {
+    constructor(toughness, wounds, save, inVul) {
         this.toughness = toughness;
         this.wounds = wounds;
-        this.savingThrow = savingThrow;
+        this.save = save;
         this.inVul = inVul;
 
     }
