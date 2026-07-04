@@ -1,33 +1,163 @@
+export function runSimulation(iterationsTotal, weapon, unit) {
+
+    //Running Totals
+    let sumTotalDamage = 0;
+    let sumModelsKilled = 0;
+    let sumWastedDamage = 0;
+
+
+    //below arrays used for aggregation
+    //The Historical Records
+    const allTotalDamage = [];
+    const allModelsKilled = [];
+    const allWastedDamage = [];
+
+
+    for (let i = 0; i < iterationsTotal; i++) {
+
+        const hurtSystem = runHurtSystem(weapon, unit);
+
+        allTotalDamage.push(hurtSystem.totalDamage);
+        allModelsKilled.push(hurtSystem.modelsKilled);
+        allWastedDamage.push(hurtSystem.wastedDamage);
+
+        sumModelsKilled += hurtSystem.modelsKilled;
+        sumTotalDamage += hurtSystem.totalDamage;
+        sumWastedDamage += hurtSystem.wastedDamage;
+
+
+    }
+
+    //avgs
+    const avgTotalDamage = sumTotalDamage / iterationsTotal;
+    const avgModelsKilled = sumModelsKilled / iterationsTotal;
+    const avgWastedDamage = sumWastedDamage / iterationsTotal;
+
+
+    let efficiencyPercent = 0;
+    if (avgTotalDamage > 0) {
+        efficiencyPercent = ((avgTotalDamage - avgWastedDamage) / avgTotalDamage) * 100;
+    }
+
+    //min - max
+    const maxDamage = Math.max(...allTotalDamage);
+    const maxKilled = Math.max(...allModelsKilled);
+    const minDamage = Math.min(...allTotalDamage);
+    const minKilled = Math.min(...allModelsKilled);
+
+    return {
+        SimulatedRuns: iterationsTotal,
+        averages: {
+            damage: avgTotalDamage,
+            killed: avgModelsKilled,
+            wasted: avgWastedDamage,
+            efficiency: efficiencyPercent.toFixed(1)
+        },
+        extremes: {
+            highestDamage: maxDamage,
+            highestKills: maxKilled,
+            lowestDamage: minDamage,
+            lowestKilled: minKilled
+
+        },
+        history: {
+            allTotalDamage,
+            allModelsKilled
+
+        }
+
+    }
+
+
+
+
+
+}
+
+
+
+
 export function runHurtSystem(weapon, unit) {
 
-    const hitRoll = rollDiceRecursive(weapon.attack * weapon.modelCount, []);
-    const woundTarget = calculateWoundTarget(weapon.strength, unit.toughness);
 
-    //place holder for when we create hit modifiers
-    // const hitModifier = modfiers.hitMod ;
-    // const woundModifer = modfiers.woundMod ;
+    const totalAttacks = weapon.attack * weapon.modelCount;
+    const hitRoll = rollDiceRecursive(totalAttacks, []);
+
+    // Modifiers (Placeholders for now)
     const hitModifier = 0;
-    const woundModifer = 0;
+    const woundModifier = 0;
     const damageModifier = 0;
     const specialModifier = "Normal Damage";
 
+    // 2. Hit Phase
     const hits = evaluateHits(hitRoll, weapon.BsWs, hitModifier);
+    const successfulHits = hits.successes.length;
 
-    if (hits.successes.length === 0) return "Attack failed to hit.";
+    // If no hits, return the Master Object with zeros
+    if (successfulHits === 0) {
+        return {
+            attacks: totalAttacks,
+            hits: 0,
+            wounds: 0,
+            failedSaves: 0,
+            totalDamage: 0,
+            modelsKilled: 0,
+            wastedDamage: 0
+        };
+    }
 
-    const woundRoll = rollDiceRecursive(hits.successes.length, []);
+    // 3. Wound Phase
+    const woundTarget = calculateWoundTarget(weapon.strength, unit.toughness);
+    const woundRoll = rollDiceRecursive(successfulHits, []);
+    const wounds = eveluateWounds(woundRoll, woundTarget, woundModifier);
+    const successfulWounds = wounds.successes.length;
 
-    const wounds = eveluateWounds(woundRoll, woundTarget, woundModifer);
+    // If no wounds, return early with zeros
+    if (successfulWounds === 0) {
+        return {
+            attacks: totalAttacks,
+            hits: successfulHits,
+            wounds: 0,
+            failedSaves: 0,
+            totalDamage: 0,
+            modelsKilled: 0,
+            wastedDamage: 0
+        };
+    }
 
-    if (wounds.successes.length === 0) return "Attack failed to wound.";
 
+    // 4. Save Phase
+    const saveRoll = rollDiceRecursive(successfulWounds, []);
+    // Note: ensure your evaluateSaves function uses unit.save, weapon.ap, unit.invul
+    const saves = eveluateSaves(saveRoll, unit.save, weapon.ap, unit.invul);
+    const failedSavesCount = saves.fails.length;
 
-    const saveRoll = rollDiceRecursive(wounds.successes.length, []);
+    // SPEED BOOST 3: If they saved everything, return early!
+    if (failedSavesCount === 0) {
+        return {
+            attacks: totalAttacks,
+            hits: successfulHits,
+            wounds: successfulWounds,
+            failedSaves: 0,
+            totalDamage: 0,
+            modelsKilled: 0,
+            wastedDamage: 0
+        };
+    }
 
-    const failedSaves = eveluateSaves(saveRoll, unit.save, weapon.ap, unit.inVul);
+    // 5. Damage Phase
+    const damageDone = modelsKill(saves.fails, weapon.damage, unit.wounds, damageModifier, specialModifier);
 
-    const damageDone = modelsKilled(failedSaves, weapon.damage, unit.wounds, damageModifier, specialModifier);
-
+    // 6. MASTER RETURN
+    return {
+        attacks: totalAttacks,
+        hits: successfulHits,
+        wounds: successfulWounds,
+        failedSaves: failedSavesCount,
+        totalDamage: damageDone.totalDamage,
+        modelsKilled: damageDone.modelsKilled,
+        wastedDamage: damageDone.wastedDamage
+    };
 
 }
 
@@ -161,7 +291,7 @@ function eveluateSaves(results, saveTarget, ap, invul) {
 
 
 
-function modelsKilled(failedSaves, weaponDamge, modelWounds, damageModifier, specialModifier) {
+function modelsKill(failedSaves, weaponDamge, modelWounds, damageModifier, specialModifier) {
 
     let finalDamage = weaponDamge;
 
@@ -184,10 +314,10 @@ function modelsKilled(failedSaves, weaponDamge, modelWounds, damageModifier, spe
     let currentModelHealth = modelWounds;
 
     for (let i = 0; i < failedSaves.length; i++) {
-        
-        
-        
-        
+
+
+
+
 
         currentModelHealth -= finalDamage;
 
