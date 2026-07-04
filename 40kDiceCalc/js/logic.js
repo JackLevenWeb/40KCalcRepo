@@ -59,11 +59,6 @@ export function runSimulation(iterationsTotal, weapon, unit) {
             lowestDamage: minDamage,
             lowestKilled: minKilled
 
-        },
-        history: {
-            allTotalDamage,
-            allModelsKilled
-
         }
 
     }
@@ -80,7 +75,7 @@ export function runSimulation(iterationsTotal, weapon, unit) {
 export function runHurtSystem(weapon, unit) {
 
 
-    const totalAttacks = weapon.attack * weapon.modelCount;
+    const totalAttacks = weapon.attack * weapon.modelCount * weapon.unitCount;
     const hitRoll = rollDiceRecursive(totalAttacks, []);
 
     // Modifiers (Placeholders for now)
@@ -128,11 +123,10 @@ export function runHurtSystem(weapon, unit) {
 
     // 4. Save Phase
     const saveRoll = rollDiceRecursive(successfulWounds, []);
-    // Note: ensure your evaluateSaves function uses unit.save, weapon.ap, unit.invul
-    const saves = eveluateSaves(saveRoll, unit.save, weapon.ap, unit.invul);
+    const saves = eveluateSaves(saveRoll, unit.save, weapon.Ap, unit.inVul);
     const failedSavesCount = saves.fails.length;
 
-    // SPEED BOOST 3: If they saved everything, return early!
+
     if (failedSavesCount === 0) {
         return {
             attacks: totalAttacks,
