@@ -95,6 +95,7 @@ export function runHurtSystem(weapon, unit, startingHealth) {
     let targetWoundMod = unit.modifiers.minusOneWound ? -1 : 0;
     if (unit.modifiers.minusOneWoundHighStr && weapon.strength > unit.toughness) targetWoundMod -= 1;
     const finalWoundMod = weapon.modifiers.woundMod + targetWoundMod;
+    if (weapon.modifiers.lance) finalWoundMod += 1;
 
     // Anti-X overrides the critical wound threshold
     const activeCritWound = weapon.modifiers.anti > 0 ? weapon.modifiers.anti : weapon.modifiers.critWoundThreshold;
