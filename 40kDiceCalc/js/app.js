@@ -15,18 +15,48 @@ AddAttackerBtn.addEventListener("click", addAttackerModule);
 function addAttackerModule() {
     const moduleHTML = `
       <div class="attacker-module" style="background: var(--bg-color); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px;">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-            <h4 style="margin: 0; border: none; color: var(--accent-blue);">Weapon Profile</h4>
-            <button class="remove-btn" style="background: var(--danger); color: white; border: none; border-radius: 4px; cursor: pointer; padding: 2px 8px;">X</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div class="input-field" style="flex-grow: 1; margin-right: 15px;">
+                <label>Unit Name</label>
+                <input type="text" class="in-unit-name" value="Attacker Unit" style="width: 100%; font-weight: bold;" />
+            </div>
+            <button class="remove-btn" style="background: var(--danger); color: white; border: none; border-radius: 4px; cursor: pointer; padding: 5px 10px; height: fit-content;">Remove</button>
         </div>
+
+        <div class="checkbox-group" style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color);">
+          <label class="checkbox-label"><input type="checkbox" class="is-leader"> 👑 Is Leader?</label>
+        </div>
+
+        <div class="leader-options" style="display: none; background: var(--surface-hover); padding: 10px; border-radius: 6px; margin-bottom: 15px;">
+          <div class="input-group">
+              <div class="input-field">
+                 <label>Attach to Unit:</label>
+                 <select class="attach-to"><option value="">-- Select Unit --</option></select>
+              </div>
+              <div class="input-field">
+                 <label>Grant Keyword to Unit:</label>
+                 <select class="grant-keyword">
+                    <option value="none">None</option>
+                    <option value="lethal">Lethal Hits</option>
+                    <option value="devastating">Devastating Wounds</option>
+                    <option value="sustained">Sustained Hits 1</option>
+                 </select>
+              </div>
+          </div>
+        </div>
+
         <div class="input-group">
           <div class="input-field"><label>Units</label><input type="number" class="in-units" value="1" min="1" /></div>
           <div class="input-field"><label>Models per Unit</label><input type="number" class="in-models" value="5" min="1" /></div>
           <div class="input-field"><label>Attacks (A)</label><input type="number" class="in-attacks" value="4" min="1" /></div>
-          <div class="input-field"><label>BS/WS</label><input type="number" class="in-bsws" value="3" min="2" max="6" /></div>
+          <div class="input-field"><label>BS/WS</label><input type="text" class="in-bsws" value="3" /></div>
           <div class="input-field"><label>Strength (S)</label><input type="number" class="in-str" value="4" min="1" /></div>
           <div class="input-field"><label>AP</label><input type="number" class="in-ap" value="-1" max="0" /></div>
           <div class="input-field"><label>Damage (D)</label><input type="number" class="in-dam" value="1" min="1" /></div>
+        </div>
+        <div class="input-group">
+          <div class="input-field"><label>Crit Hit Threshold</label><input type="number" class="in-crit-hit" value="6" min="2" max="6" /></div>
+          <div class="input-field"><label>Crit Wound Threshold</label><input type="number" class="in-crit-wound" value="6" min="2" max="6" /></div>
         </div>
         <div class="input-group">
           <div class="input-field"><label>Hit Mod</label><select class="mod-hit"><option value="0">None</option><option value="1">+1</option><option value="-1">-1</option></select></div>
@@ -40,7 +70,7 @@ function addAttackerModule() {
           <label class="checkbox-label"><input type="checkbox" class="kw-torrent"> Torrent</label>
           <label class="checkbox-label"><input type="checkbox" class="kw-twinlinked"> Twin-Linked</label>
           <label class="checkbox-label"><input type="checkbox" class="kw-blast"> Blast</label>
-          <label class="checkbox-label"><input type="checkbox" class="kw-cleave"> cleave</label>
+          <label class="checkbox-label"><input type="checkbox" class="kw-cleave"> Cleave</label>
         </div>
         <div class="input-group">
            <div class="keyword-with-value"><label class="checkbox-label"><input type="checkbox" class="kw-sustained"> Sustained</label><input type="number" class="val-sustained" value="1" min="1" /></div>
@@ -51,16 +81,60 @@ function addAttackerModule() {
       </div>
     `;
 
-    // Add it to the screen
     RosterContainer.insertAdjacentHTML('beforeend', moduleHTML);
-
-    // Wire up the delete button for this specific module
     const newModule = RosterContainer.lastElementChild;
+
+    // Toggle Leader Options
+    const isLeaderCheck = newModule.querySelector(".is-leader");
+    const leaderOptions = newModule.querySelector(".leader-options");
+    isLeaderCheck.addEventListener("change", (e) => {
+        leaderOptions.style.display = e.target.checked ? "block" : "none";
+        updateAllLeaderDropdowns();
+    });
+
+    // Update dropdowns when someone types a new name
+    newModule.querySelector(".in-unit-name").addEventListener("input", updateAllLeaderDropdowns);
+
+    // Delete Button Logic
     newModule.querySelector(".remove-btn").addEventListener("click", () => {
         if (document.querySelectorAll('.attacker-module').length > 1) {
             newModule.remove();
+            updateAllLeaderDropdowns(); // Refresh if a target is deleted!
         } else {
             alert("You must have at least one attacker!");
+        }
+    });
+
+    // Run once on spawn
+    updateAllLeaderDropdowns();
+}
+
+// THE DYNAMIC DROPDOWN MANAGER
+function updateAllLeaderDropdowns() {
+    const modules = document.querySelectorAll('.attacker-module');
+    const allNames = Array.from(modules).map(m => m.querySelector('.in-unit-name').value.trim());
+
+    modules.forEach(module => {
+        const select = module.querySelector('.attach-to');
+        const currentSelection = select.value;
+        const myName = module.querySelector('.in-unit-name').value.trim();
+
+        // Clear existing options
+        select.innerHTML = '<option value="">-- Select Unit --</option>';
+
+        // Repopulate with all names EXCEPT this module's own name
+        allNames.forEach(name => {
+            if (name && name !== myName) {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                select.appendChild(option);
+            }
+        });
+
+        // Restore their previous selection if that unit wasn't deleted
+        if (allNames.includes(currentSelection)) {
+            select.value = currentSelection;
         }
     });
 }
@@ -72,7 +146,7 @@ function createWeaponsArray() {
 
     modules.forEach(module => {
         const attack = parseInt(module.querySelector(".in-attacks").value, 10);
-        const bsws = parseInt(module.querySelector(".in-bsws").value, 10);
+        const bsws = module.querySelector(".in-bsws").value; // Handled as string for Torrent NA
         const strength = parseInt(module.querySelector(".in-str").value, 10);
         const ap = parseInt(module.querySelector(".in-ap").value, 10);
         const damage = parseInt(module.querySelector(".in-dam").value, 10);
@@ -80,6 +154,8 @@ function createWeaponsArray() {
         const unitCount = parseInt(module.querySelector(".in-units").value, 10);
 
         const modifiers = {
+            critHitThreshold: parseInt(module.querySelector(".in-crit-hit").value, 10),
+            critWoundThreshold: parseInt(module.querySelector(".in-crit-wound").value, 10),
             hitMod: parseInt(module.querySelector(".mod-hit").value, 10),
             woundMod: parseInt(module.querySelector(".mod-wound").value, 10),
             rerollHits: module.querySelector(".reroll-hits").value,
@@ -110,7 +186,16 @@ function createUnit() {
     const fnp = parseInt(document.getElementById("def-fnp").value, 10) || null;
     const modelCount = parseInt(document.getElementById("target-models").value, 10);
 
-    return new Unit(toughness, wounds, save, inVul, fnp, modelCount);
+    const modifiers = {
+        minusOneHit: document.getElementById("def-minus-hit").checked,
+        minusOneWound: document.getElementById("def-minus-wound").checked,
+        minusOneWoundHighStr: document.getElementById("def-minus-wound-str").checked,
+        cover: document.getElementById("def-cover").checked,
+        halfDamage: document.getElementById("def-half-dam").checked,
+        minusOneDamage: document.getElementById("def-minus-dam").checked,
+    };
+
+    return new Unit(toughness, wounds, save, inVul, fnp, modelCount, modifiers);
 }
 
 // --- BUTTON EXECUTION ---

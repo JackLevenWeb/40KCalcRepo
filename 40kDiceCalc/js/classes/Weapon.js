@@ -1,20 +1,13 @@
-
-
 export class Weapon {
-
     constructor(attack, BsWs, strength, Ap, damage, modelCount, unitCount, modifiers = {}) {
         this.attack = attack;
-        this.BsWs = BsWs;
+        this.BsWs = BsWs === "NA" ? "NA" : parseInt(BsWs, 10); // Account for Torrent NA
         this.strength = strength;
         this.Ap = Ap;
         this.damage = damage;
         this.modelCount = modelCount;
         this.unitCount = unitCount;
 
-
-
-
-        // The Modifiers Object
         this.modifiers = {
             hitMod: modifiers.hitMod || 0,
             woundMod: modifiers.woundMod || 0,
@@ -29,8 +22,9 @@ export class Weapon {
             sustained: modifiers.sustained || 0,
             melta: modifiers.melta || 0,
             rapidFire: modifiers.rapidFire || 0,
-            anti: modifiers.anti || 0
+            anti: modifiers.anti || 0,
+            critHitThreshold: modifiers.critHitThreshold || 6, // Default Crit on 6
+            critWoundThreshold: modifiers.critWoundThreshold || 6
         };
     }
-
 }
