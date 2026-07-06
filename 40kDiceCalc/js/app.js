@@ -2,7 +2,7 @@ import { Unit } from './classes/Unit.js';
 import { Weapon } from './classes/Weapon.js';
 import { runSimulation } from './logic.js';
 import { addAttackerModule, syncAppUI, buildRosterFromJSON } from './ui-manager.js';
-import { initDataBase, loadDataIntoSQL, queryComparisonData, clearDataBase } from './db-manager.js';
+import { initDataBase, loadDataIntoSQL, queryComparisonData, clearDataBase, generateAdvancedReport } from './db-manager.js';
 
 const SIMULATION_ITERATIONS = 50000;
 
@@ -394,7 +394,7 @@ function renderChart(distribution, totalRuns, mode = 'exact') {
 }
 
 // advChart
-function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns) {
+export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns) {
     const ctx = canvasElement.getContext('2d');
     if (damageChartInstance) damageChartInstance.destroy();
 

@@ -1,3 +1,5 @@
+import { renderAdvancedChart } from './app.js';
+
 const SIMULATION_ITERATIONS = 50000;
 
 
@@ -83,9 +85,9 @@ export function generateAdvancedReport(category, sqlData) {
 export function queryComparisonData() {
 
     const result = db.exec(`
-        SELECT modifier_name, damage_amount, category, metric_name, occurrence_count
+        SELECT modifier_name, value, category, metric_name, occurrence_count
         FROM simulation_runs
-        ORDER BY modifier_name ASC, damage_amount ASC;
+        ORDER BY modifier_name ASC, value ASC;
     `);
     return result.length === 0 ? [] : result[0].values;
 

@@ -26,7 +26,7 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
         for (const weapon of weaponsArray) {
             const hurtSystem = runHurtSystem(weapon, unit, currentTargetHealth);
 
-           
+
             runTotalDamage += hurtSystem.damage.totalDamage;
             runModelsKilled += hurtSystem.damage.modelsKilled;
             runWastedDamage += hurtSystem.damage.wastedDamage;
