@@ -1,50 +1,48 @@
 import { Dice } from './classes/Dice.js';
 
 export function runSimulation(iterationsTotal, weaponsArray, unit) {
-    let sumTotalDamage = 0;
-    let sumModelsKilled = 0;
-    let sumWastedDamage = 0;
+    let sumTotalDamage = 0, sumModelsKilled = 0, sumWastedDamage = 0;
+    const allTotalDamage = [], allModelsKilled = [], allWastedDamage = [];
 
-    const allTotalDamage = [];
-    const allModelsKilled = [];
-    const allWastedDamage = [];
+    // we need distributions for our advanced graphs
+    const hitDistribution = {};
+    const woundDistribution = {};
+    const saveDistribution = {};
 
-
-    //these are needed for adv sims
     let sumHits = { rawSuccesses: 0, bonusHits: 0, autoWounds: 0 };
     let sumWounds = { rawSuccesses: 0, devWounds: 0 };
     let sumSaves = { normalWoundsToSave: 0, devWoundsBypass: 0 };
 
     for (let i = 0; i < iterationsTotal; i++) {
         let currentTargetHealth = unit.wounds;
-        let runTotalDamage = 0;
-        let runModelsKilled = 0;
-        let runWastedDamage = 0;
+        let runTotalDamage = 0, runModelsKilled = 0, runWastedDamage = 0;
 
-
+        // Track totals for THIS specific run
+        let runTotalHits = 0, runTotalWounds = 0, runTotalSaves = 0;
 
         for (const weapon of weaponsArray) {
             const hurtSystem = runHurtSystem(weapon, unit, currentTargetHealth);
-
 
             runTotalDamage += hurtSystem.damage.totalDamage;
             runModelsKilled += hurtSystem.damage.modelsKilled;
             runWastedDamage += hurtSystem.damage.wastedDamage;
             currentTargetHealth = hurtSystem.finalHealth;
 
-            // these are needed for adv sims
+            // Adv Sim Aggregations
             sumHits.rawSuccesses += hurtSystem.hits.rawSuccesses;
             sumHits.bonusHits += hurtSystem.hits.bonusHits;
             sumHits.autoWounds += hurtSystem.hits.autoWounds;
 
-            sumWounds.rawSuccesses += hurtSystem.wounds.rawSuccesses;
-            sumWounds.devWounds += hurtSystem.wounds.devWounds;
-
-            sumSaves.normalWoundsToSave += hurtSystem.wounds.rawSuccesses;
-            sumSaves.devWoundsBypass += hurtSystem.wounds.devWounds;
-
-
+            // X-Axis Data collection for this specific iteration
+            runTotalHits += (hurtSystem.hits.rawSuccesses + hurtSystem.hits.bonusHits);
+            runTotalWounds += (hurtSystem.wounds.rawSuccesses + hurtSystem.wounds.devWounds + hurtSystem.hits.autoWounds);
+            runTotalSaves += hurtSystem.wounds.rawSuccesses;
         }
+
+        // Build the bell curves
+        hitDistribution[runTotalHits] = (hitDistribution[runTotalHits] || 0) + 1;
+        woundDistribution[runTotalWounds] = (woundDistribution[runTotalWounds] || 0) + 1;
+        saveDistribution[runTotalSaves] = (saveDistribution[runTotalSaves] || 0) + 1;
 
         allTotalDamage.push(runTotalDamage);
         allModelsKilled.push(runModelsKilled);

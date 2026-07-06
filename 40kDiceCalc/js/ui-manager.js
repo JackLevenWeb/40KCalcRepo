@@ -265,3 +265,18 @@ export function buildRosterFromJSON(containerElement, jsonData) {
     syncAppUI();
 };
 
+export function spawnReportCard(container, categoryTitle) {
+    const cardHTML = `
+        <div class="report-card" style="margin-bottom: 30px; display: grid; grid-template-columns: 200px 1fr; gap: 20px;">
+            <div class="stats-sidebar">
+                <h3>${categoryTitle}</h3>
+                <div class="mod-stats-list"></div>
+            </div>
+            <div style="height: 300px;">
+                <canvas class="adv-chart"></canvas>
+            </div>
+        </div>
+    `;
+    container.insertAdjacentHTML('beforeend', cardHTML);
+    return container.lastElementChild;
+}

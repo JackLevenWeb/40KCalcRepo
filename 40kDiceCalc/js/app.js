@@ -1,9 +1,8 @@
 import { Unit } from './classes/Unit.js';
 import { Weapon } from './classes/Weapon.js';
 import { runSimulation } from './logic.js';
-import { addAttackerModule, syncAppUI, buildRosterFromJSON } from './ui-manager.js';
-import { initDataBase, loadDataIntoSQL, queryComparisonData, clearDataBase, generateAdvancedReport } from './db-manager.js';
-
+import { addAttackerModule, syncAppUI, buildRosterFromJSON, spawnReportCard } from './ui-manager.js';
+import { initDataBase, loadDataIntoSQL, queryComparisonData, clearDataBase, ModLabels } from './db-manager.js';
 const SIMULATION_ITERATIONS = 50000;
 
 const CalcBtn = document.getElementById("calculate-btn");
@@ -232,7 +231,17 @@ function applyModifierToWeapon(weapon, modKey) {
     if (modKey === "devastating") weapon.modifiers.devastating = true;
 }
 
+// report generator
+function generateAdvancedReport(category, sqlData, totalRuns) {
+    const container = document.getElementById("advanced-reports-container");
+    const card = spawnReportCard(container, category);
+
+
+    renderAdvancedChart(card.querySelector('.adv-chart'), category, sqlData, totalRuns);
+}
+
 //ADV PIPELINE ORCHESTRATOR LOOP >>> might be some issues in here...
+//adv analytics button here>>
 if (advAnalyticsBtn) {
     advAnalyticsBtn.addEventListener("click", async () => {
         advAnalyticsBtn.textContent = "Running Pipeline...";
@@ -240,7 +249,13 @@ if (advAnalyticsBtn) {
         clearDataBase();
 
         const targetUnit = createUnit();
-        document.getElementById("results-wrapper").style.display = "grid";
+
+
+        document.getElementById("results-wrapper").style.display = "none";
+        document.getElementById("advanced-analytics-wrapper").style.display = "block";
+
+
+        document.getElementById("advanced-reports-container").innerHTML = "";
 
 
         try {
@@ -249,6 +264,7 @@ if (advAnalyticsBtn) {
             let baseResults = await runWorkerSimulation(SIMULATION_ITERATIONS, baseWeapons, targetUnit);
             loadDataIntoSQL("Base", "Hit", baseResults.totals.sumHits);
             loadDataIntoSQL("Base", "Wound", baseResults.totals.sumWounds);
+            loadDataIntoSQL("Base", "Save", baseResults.totals.sumSaves);
 
             // scenarios
             for (const [category, mods] of Object.entries(SIMULATION_SCENARIOS)) {
@@ -266,9 +282,9 @@ if (advAnalyticsBtn) {
 
             // 3. Query and Render
             const sqlData = queryComparisonData();
-            generateAdvancedReport("Hit", sqlData);
-            generateAdvancedReport("Wound", sqlData);
-            generateAdvancedReport("Save", sqlData);
+            generateAdvancedReport("Hit", sqlData, SIMULATION_ITERATIONS);
+            generateAdvancedReport("Wound", sqlData, SIMULATION_ITERATIONS);
+            generateAdvancedReport("Save", sqlData, SIMULATION_ITERATIONS);
 
         } catch (error) {
             console.error("Pipeline Failed:", error);
@@ -412,11 +428,13 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns)
         // base is Grey - others get a color
         const colors = ['#8C9BA8', '#9B2226', '#9ac1df', '#C48235', '#55efc4'];
 
+        const prettyLabel = ModLabels[modName] || modName;
+
         return {
-            label: modName,
+            label: prettyLabel,
             data: Object.values(dataMap),
             borderColor: colors[index % colors.length],
-            backgroundColor: colors[index % colors.length] + '44', // transparent fill
+            backgroundColor: colors[index % colors.length] + '44',
             fill: true,
             borderWidth: 2, tension: 0.3, pointRadius: 0
         };

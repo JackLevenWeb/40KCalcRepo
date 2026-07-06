@@ -1,4 +1,3 @@
-import { renderAdvancedChart } from './app.js';
 
 const SIMULATION_ITERATIONS = 50000;
 
@@ -57,30 +56,6 @@ export function loadDataIntoSQL(modifierName, category, metrics) {
 
 }
 
-export function spawnReportCard(container, categoryTitle) {
-    const cardHTML = `
-        <div class="report-card" style="margin-bottom: 30px; display: grid; grid-template-columns: 200px 1fr; gap: 20px;">
-            <div class="stats-sidebar">
-                <h3>${categoryTitle}</h3>
-                <div class="mod-stats-list"></div>
-            </div>
-            <div style="height: 300px;">
-                <canvas class="adv-chart"></canvas>
-            </div>
-        </div>
-    `;
-    container.insertAdjacentHTML('beforeend', cardHTML);
-    return container.lastElementChild;
-}
-
-
-export function generateAdvancedReport(category, sqlData) {
-    const container = document.getElementById("advanced-reports-container");
-    const card = spawnReportCard(container, category);
-    const categoryData = sqlData.filter(row => row[2] === category);
-    renderAdvancedChart(card.querySelector('.adv-chart'), categoryData);
-
-}
 
 export function queryComparisonData() {
 
