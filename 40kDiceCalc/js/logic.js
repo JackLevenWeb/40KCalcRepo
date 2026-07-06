@@ -36,6 +36,11 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
     const avgModelsKilled = sumModelsKilled / iterationsTotal;
     const avgWastedDamage = sumWastedDamage / iterationsTotal;
 
+    const damageDistribution = {};
+    for (const dmg of allTotalDamage) {
+        damageDistribution[dmg] = (damageDistribution[dmg] || 0) + 1;
+    }
+
     return {
         SimulatedRuns: iterationsTotal,
         averages: {
@@ -49,25 +54,22 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
             highestKills: Math.max(...allModelsKilled),
             lowestDamage: Math.min(...allTotalDamage),
             lowestKilled: Math.min(...allModelsKilled)
-        }
+        },
+        distribution: damageDistribution
     };
 }
 
 export function runHurtSystem(weapon, unit, startingHealth) {
-
     const totalAttacks = calculateAttacks(weapon, unit);
     let autoWounds = 0;
     let successfulHits = 0;
 
     // 2. Hit Phase
     if (weapon.modifiers.torrent || weapon.BsWs === "NA") {
-
         successfulHits = totalAttacks;
     } else {
         const finalHitMod = weapon.modifiers.hitMod + (unit.modifiers.minusOneHit ? -1 : 0);
-
-        // cover rule
-        let activeBsWs = weapon.BsWs;
+        let activeBsWs = parseInt(weapon.BsWs, 10);
         if (unit.modifiers.cover && activeBsWs !== "NA") {
             activeBsWs += 1;
         }
@@ -82,8 +84,8 @@ export function runHurtSystem(weapon, unit, startingHealth) {
             isLethalOrDev: weapon.modifiers.lethal
         });
 
-        autoWounds = hitData.autos; // Lethal hits bypass to damage!
-        successfulHits = hitData.successes + hitData.bonus; // Normal hits + Sustained
+        autoWounds = hitData.autos;
+        successfulHits = hitData.successes + hitData.bonus;
     }
 
     if (successfulHits === 0 && autoWounds === 0) return zeroReturn(startingHealth);
@@ -91,13 +93,11 @@ export function runHurtSystem(weapon, unit, startingHealth) {
     // 3. Wound Phase
     const baseWoundTarget = calculateWoundTarget(weapon.strength, unit.toughness);
 
-    // Target Modifiers for Wounds
     let targetWoundMod = unit.modifiers.minusOneWound ? -1 : 0;
     if (unit.modifiers.minusOneWoundHighStr && weapon.strength > unit.toughness) targetWoundMod -= 1;
-    const finalWoundMod = weapon.modifiers.woundMod + targetWoundMod;
+    let finalWoundMod = weapon.modifiers.woundMod + targetWoundMod;
     if (weapon.modifiers.lance) finalWoundMod += 1;
 
-    // Anti-X overrides the critical wound threshold
     const activeCritWound = weapon.modifiers.anti > 0 ? weapon.modifiers.anti : weapon.modifiers.critWoundThreshold;
 
     const woundData = Dice.rollPool({
@@ -165,6 +165,29 @@ function calculateWoundTarget(strength, toughness) {
     return 5;
 }
 
+// Resolves variable damage like "D3", "D6+2", "2D6"
+function resolveDamage(damageString) {
+    let str = String(damageString).toUpperCase().replace(/\s/g, '');
+    if (/^\d+$/.test(str)) return parseInt(str, 10);
+    let total = 0;
+    const diceRegex = /(\d*)D(\d+)/g;
+    let match;
+    while ((match = diceRegex.exec(str)) !== null) {
+        let numDice = match[1] === "" ? 1 : parseInt(match[1], 10);
+        let sides = parseInt(match[2], 10);
+        for (let i = 0; i < numDice; i++) {
+            total += Math.floor(Math.random() * sides) + 1;
+        }
+    }
+    let flatModsStr = str.replace(/(\d*)D(\d+)/g, '');
+    const flatRegex = /([+-]\d+)/g;
+    let flatMatch;
+    while ((flatMatch = flatRegex.exec(flatModsStr)) !== null) {
+        total += parseInt(flatMatch[1], 10);
+    }
+    return Math.max(1, total);
+}
+
 function modelsKill(damageEvents, weapon, unit, startingHealth) {
     let modelsKilledCount = 0;
     let wastedDamage = 0;
@@ -172,21 +195,14 @@ function modelsKill(damageEvents, weapon, unit, startingHealth) {
     let totalActualDamageTaken = 0;
 
     for (let i = 0; i < damageEvents; i++) {
+        let baseDmg = resolveDamage(weapon.damage);
+        let dmgInstance = baseDmg + (weapon.modifiers.melta || 0);
 
-        let dmgInstance = weapon.damage + (weapon.modifiers.melta || 0);
+        if (unit.modifiers.halfDamage) dmgInstance = Math.ceil(dmgInstance / 2);
+        if (unit.modifiers.minusOneDamage) dmgInstance -= 1;
 
-        // TARGET DAMAGE REDUCTIONS
-        if (unit.modifiers.halfDamage) {
-            dmgInstance = Math.ceil(dmgInstance / 2); //round up
-        }
-        if (unit.modifiers.minusOneDamage) {
-            dmgInstance -= 1;
-        }
-
-        // Minimum 1
         dmgInstance = Math.max(1, dmgInstance);
 
-        // Feel No Pain check
         if (unit.fnp && unit.fnp > 1) {
             let unpreventedDamage = 0;
             const fnpRolls = Dice.rollRaw(dmgInstance);

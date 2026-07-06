@@ -3,12 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>40k Hurt System Calculator</title>
+    <title>40k Dice Calculator | Space Wolves Pattern</title>
     <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
   <body>
     <main class="calculator-container">
-      <h1>40k Dice Calculator</h1>
+      <h1>Hurt System Cogitator</h1>
 
       <div class="stats-grid">
         <section class="panel attacker-panel">
@@ -21,22 +22,10 @@
             "
           >
             <h2>Attacker Roster</h2>
-            <button
-              id="add-attacker-btn"
-              style="
-                padding: 8px 15px;
-                border-radius: 8px;
-                background: var(--accent-blue);
-                color: var(--bg-color);
-                border: none;
-                cursor: pointer;
-                font-weight: bold;
-              "
-            >
-              + Add Unit
+            <button id="add-attacker-btn" class="btn-primary">
+              + Deploy Unit
             </button>
           </div>
-
           <div id="attacker-roster"></div>
         </section>
 
@@ -44,7 +33,7 @@
           <h2>Target Profile</h2>
 
           <h4>Defensive Stats</h4>
-          <div class="input-group">
+          <div class="core-stats-row">
             <div class="input-field">
               <label>Toughness (T)</label
               ><input type="number" id="toughness" value="10" min="1" />
@@ -70,41 +59,86 @@
           </div>
 
           <h4>Defensive Modifiers</h4>
-          <div class="checkbox-group" style="margin-bottom: 15px">
-            <label class="checkbox-label"
-              ><input type="checkbox" id="def-minus-hit" /> -1 to Hit</label
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <label
+              style="
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                cursor: pointer;
+                color: var(--text-primary);
+                text-transform: none;
+              "
+              ><input type="checkbox" id="def-minus-hit" style="width: 16px" />
+              -1 to Hit</label
             >
-            <label class="checkbox-label"
-              ><input type="checkbox" id="def-minus-wound" /> -1 to Wound</label
+            <label
+              style="
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                cursor: pointer;
+                color: var(--text-primary);
+                text-transform: none;
+              "
+              ><input
+                type="checkbox"
+                id="def-minus-wound"
+                style="width: 16px"
+              />
+              -1 to Wound</label
             >
-            <label class="checkbox-label"
-              ><input type="checkbox" id="def-minus-wound-str" /> -1 Wound (if S
-              > T)</label
+            <label
+              style="
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                cursor: pointer;
+                color: var(--text-primary);
+                text-transform: none;
+              "
+              ><input
+                type="checkbox"
+                id="def-minus-wound-str"
+                style="width: 16px"
+              />
+              -1 Wound (if S > T)</label
             >
-            <label class="checkbox-label"
-              ><input type="checkbox" id="def-cover" /> Benefit of Cover</label
+            <label
+              style="
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                cursor: pointer;
+                color: var(--text-primary);
+                text-transform: none;
+              "
+              ><input type="checkbox" id="def-cover" style="width: 16px" />
+              Benefit of Cover</label
             >
           </div>
 
           <h4>Damage Mitigation</h4>
-          <div class="checkbox-group" style="margin-bottom: 15px">
-            <label class="checkbox-label"
-              ><input type="checkbox" id="def-half-dam" /> Half Damage</label
-            >
-            <label class="checkbox-label"
-              ><input type="checkbox" id="def-minus-dam" /> -1 Damage</label
-            >
+          <div class="core-stats-row">
+            <div class="input-field">
+              <label>Reduce Damage</label>
+              <select id="def-reduce-dam">
+                <option value="none">None</option>
+                <option value="half">Half Damage</option>
+                <option value="minus1">-1 Damage</option>
+              </select>
+            </div>
+            <div class="input-field">
+              <label>Feel No Pain</label>
+              <select id="def-fnp">
+                <option value="0">None</option>
+                <option value="6">6+</option>
+                <option value="5">5+</option>
+                <option value="4">4+</option>
+              </select>
+            </div>
           </div>
 
-          <div class="input-field">
-            <label>Feel No Pain (FNP)</label>
-            <select id="def-fnp">
-              <option value="0">None</option>
-              <option value="6">6+</option>
-              <option value="5">5+</option>
-              <option value="4">4+</option>
-            </select>
-          </div>
           <div class="input-field" style="margin-top: 15px">
             <label>Models in Target Unit (For Blast Math)</label>
             <input type="number" id="target-models" value="10" min="1" />
@@ -114,8 +148,42 @@
 
       <button id="calculate-btn">Run 10,000 Simulations</button>
 
-      <section class="panel results-panel">
-        <pre id="results-output">Awaiting calculation...</pre>
+      <section class="panel results-panel-wrapper" id="results-wrapper">
+        <div class="stat-cards-grid" id="stats-html"></div>
+
+        <div style="display: flex; flex-direction: column; width: 100%">
+          <div
+            style="
+              display: flex;
+              justify-content: flex-end;
+              align-items: center;
+              margin-bottom: 10px;
+            "
+          >
+            <select
+              id="chart-toggle"
+              style="
+                width: auto;
+                padding: 5px 10px;
+                font-size: 0.9rem;
+                cursor: pointer;
+              "
+            >
+              <option value="exact">View: Exact Damage Chance</option>
+              <option value="cumulative">View: "At Least" Damage Chance</option>
+            </select>
+          </div>
+          <div
+            style="
+              position: relative;
+              height: 100%;
+              min-height: 350px;
+              width: 100%;
+            "
+          >
+            <canvas id="damageChart"></canvas>
+          </div>
+        </div>
       </section>
     </main>
 
