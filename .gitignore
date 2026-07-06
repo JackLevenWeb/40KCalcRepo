@@ -1,2 +1,6 @@
 .DS_Store
 Thumbs.db
+
+# Personal Documentation Folders
+internal_logic/
+internal_display/
