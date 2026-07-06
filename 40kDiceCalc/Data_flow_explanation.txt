@@ -1,0 +1,63 @@
+# Data Flow Explanation
+
+This document outlines the high-level Extract, Transform, Load (ETL) pipeline used to generate and visualize probability data.
+
+## 1. High-Level Pipeline Architecture
+
+[User Input (UI)]
+      |
+      v
+[Extract State]       <-- Parses DOM for Weapon/Unit profiles
+      |
+      v
+[Web Worker]          <-- Background Thread: Runs 50k iterations per weapon profile
+      |
+      v
+[Logic Engine]        <-- Executes pure JS math; Returns structured JSON distributions
+      |
+      v
+[SQL Database]        <-- In-Memory SQLite (sql.js). INSERTS raw distribution rows
+      |
+      v
+[SQL Query]           <-- SELECT rows grouped by Category (Hit/Wound/Save) and Modifier
+      |
+      v
+[Chart Rendering]     <-- Chart.js maps SQL rows to X/Y coordinates
+      |
+      v
+[DOM Output]          <-- Rendered UI Report Cards
+
+## 2. Web Worker Execution Flow
+
+[Main Thread (app.js)]
+      |
+      |-- postMessage({ weapons, target, iterations })
+      v
+[webWorker.js]
+      |
+      |-- Imports `runSimulation()`
+      |-- Executes loop
+      |
+      |-- postMessage(results)
+      v
+[Main Thread (app.js)]
+      |
+      v
+(Data goes to SQL Engine)
+
+## 3. Database Aggregation Flow
+
+Application Logic
+│
+├── Extract Output
+│   └── JSON object: { "4": 1200, "5": 3000 }
+│
+├── Prepare Statement (db-manager.js)
+│   └── "INSERT INTO simulation_runs (modifier_name, category, value, occurrence_count) VALUES (?, ?, ?, ?)"
+│
+├── Execute Query
+│   └── stmt.run(["Lethal", "Hit", 4, 1200])
+│
+└── SQLite Engine (WASM)
+    │
+    └── Update Storage (RAM)
