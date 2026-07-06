@@ -1,0 +1,219 @@
+// ONLY handles HTML generation and visual updates
+
+
+export const ModifierDictionary = {
+    "lethal": { name: "Lethal Hits", hasInput: false },
+    "devastating": { name: "Devastating Wounds", hasInput: false },
+    "lance": { name: "Lance", hasInput: false },
+    "torrent": { name: "Torrent", hasInput: false },
+    "twinlinked": { name: "Twin-Linked", hasInput: false },
+    "blast": { name: "Blast", hasInput: false },
+    "cleave": { name: "Cleave", hasInput: false },
+    "sustained": { name: "Sustained", hasInput: true, defaultVal: 1 },
+    "melta": { name: "Melta", hasInput: true, defaultVal: 2 },
+    "anti": { name: "Anti-X", hasInput: true, defaultVal: 4 },
+    "rapidfire": { name: "Rapid Fire", hasInput: true, defaultVal: 1 },
+    "hit_plus_1": { name: "+1 to Hit", hasInput: false },
+    "hit_minus_1": { name: "-1 to Hit", hasInput: false },
+    "wound_plus_1": { name: "+1 to Wound", hasInput: false },
+    "wound_minus_1": { name: "-1 to Wound", hasInput: false },
+    "reroll_hits_1": { name: "Reroll 1s (Hit)", hasInput: false },
+    "reroll_hits_all": { name: "Reroll All (Hit)", hasInput: false },
+    "reroll_wounds_1": { name: "Reroll 1s (Wound)", hasInput: false },
+    "reroll_wounds_all": { name: "Reroll All (Wound)", hasInput: false }
+};
+
+export function addAttackerModule(containerElement) {
+    const moduleHTML = `
+      <div class="attacker-module" style="background: var(--bg-color); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px;">
+        
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+            <div class="input-field" style="flex-grow: 1; margin-right: 15px;">
+                <input type="text" class="in-unit-name" value="Attacker Unit" style="font-weight: bold; font-size: 1.2rem; color: var(--sw-light-blue); border: none; border-bottom: 1px solid var(--sw-mid-blue); border-radius: 0; padding: 5px 0; background: transparent; box-shadow: none;" />
+                <div class="attached-leaders-display" style="color: var(--sw-light-blue); font-size: 0.85rem; font-weight: bold; margin-top: 5px;"></div>
+            </div>
+            <button class="remove-btn" style="background: var(--sw-light-blue); color: #0F1115; border: 1px solid var(--sw-mid-blue); border-radius: 4px; cursor: pointer; padding: 5px 10px; font-weight: bold;">X</button>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+          <label style="cursor: pointer; color: var(--sw-light-blue); font-weight: bold; font-size: 0.9rem; text-transform: uppercase;">
+             <input type="checkbox" class="is-leader" style="margin-right: 5px;"> 👑 Declare Leader
+          </label>
+        </div>
+
+        <div class="leader-options" style="display: none; background: var(--surface-hover); padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid var(--sw-mid-blue);">
+          <div class="core-stats-row">
+              <div class="input-field">
+                 <label>Attach to Unit:</label>
+                 <select class="attach-to"><option value="">-- Select Unit --</option></select>
+              </div>
+              <div class="input-field">
+                 <label>Grant Keyword to Unit:</label>
+                 <select class="grant-keyword">
+                    <option value="none">None</option>
+                    <option value="lethal">Lethal Hits</option>
+                    <option value="devastating">Devastating Wounds</option>
+                    <option value="sustained">Sustained Hits</option>
+                    <option value="lance">Lance</option>
+                    <option value="reroll_hits_1">Reroll 1s to Hit</option>
+                    <option value="reroll_wounds_1">Reroll 1s to Wound</option>
+                 </select>
+              </div>
+          </div>
+        </div>
+
+        <h4>Core Profile</h4>
+        <div class="core-stats-row">
+          <div class="input-field"><label>Units</label><input type="number" class="in-units" value="1" min="1" /></div>
+          <div class="input-field"><label>Models</label><input type="number" class="in-models" value="5" min="1" /></div>
+          <div class="input-field"><label>Attacks</label><input type="number" class="in-attacks" value="4" min="1" /></div>
+          <div class="input-field"><label>BS/WS</label><input type="text" class="in-bsws" value="3" placeholder="NA" /></div>
+          <div class="input-field"><label>Strength</label><input type="number" class="in-str" value="4" min="1" /></div>
+          <div class="input-field"><label>AP</label><input type="number" class="in-ap" value="-1" max="0" /></div>
+          <div class="input-field"><label>Damage</label><input type="text" class="in-dam" value="1" placeholder="D6+1" /></div>
+          <div class="input-field"><label>Crit Hit</label><input type="number" class="in-crit-hit" value="6" min="2" max="6" /></div>
+          <div class="input-field"><label>Crit Wnd</label><input type="number" class="in-crit-wound" value="6" min="2" max="6" /></div>
+        </div>
+
+        <h4>Active Modifiers</h4>
+        <div class="modifier-adder-row">
+            <select class="mod-dropdown" style="flex-grow: 1;">
+                <option value="none">-- Select a Rule to Add --</option>
+                <optgroup label="Weapon Rules">
+                    <option value="lethal">Lethal Hits</option>
+                    <option value="devastating">Devastating Wounds</option>
+                    <option value="sustained">Sustained Hits</option>
+                    <option value="melta">Melta</option>
+                    <option value="anti">Anti-X</option>
+                    <option value="rapidfire">Rapid Fire</option>
+                    <option value="lance">Lance</option>
+                    <option value="torrent">Torrent</option>
+                    <option value="twinlinked">Twin-Linked</option>
+                    <option value="blast">Blast</option>
+                    <option value="cleave">Cleave</option>
+                </optgroup>
+                <optgroup label="Flat Modifiers">
+                    <option value="hit_plus_1">+1 to Hit</option>
+                    <option value="hit_minus_1">-1 to Hit</option>
+                    <option value="wound_plus_1">+1 to Wound</option>
+                    <option value="wound_minus_1">-1 to Wound</option>
+                </optgroup>
+                <optgroup label="Rerolls">
+                    <option value="reroll_hits_1">Reroll 1s to Hit</option>
+                    <option value="reroll_hits_all">Reroll All Hits</option>
+                    <option value="reroll_wounds_1">Reroll 1s to Wound</option>
+                    <option value="reroll_wounds_all">Reroll All Wounds</option>
+                </optgroup>
+            </select>
+            <button class="btn-primary add-mod-btn">Add Rule</button>
+        </div>
+        
+        <div class="active-modifiers-list"></div>
+      </div>
+    `;
+
+    containerElement.insertAdjacentHTML('beforeend', moduleHTML);
+    const newModule = containerElement.lastElementChild;
+
+    newModule.querySelector(".remove-btn").addEventListener("click", () => {
+        if (document.querySelectorAll('.attacker-module').length > 1) {
+            newModule.remove();
+            syncAppUI();
+        } else {
+            alert("The pack must have at least one attacker!");
+        }
+    });
+
+    newModule.querySelector(".add-mod-btn").addEventListener("click", () => {
+        const select = newModule.querySelector(".mod-dropdown");
+        const modKey = select.value;
+        if (modKey !== "none") {
+            addBadgeToModule(newModule, modKey, false);
+            select.value = "none";
+            syncAppUI();
+        }
+    });
+}
+
+function addBadgeToModule(moduleNode, modKey, isGranted) {
+    const list = moduleNode.querySelector(".active-modifiers-list");
+    if (list.querySelector(`.mod-badge[data-key="${modKey}"]`)) return;
+
+    const modData = ModifierDictionary[modKey];
+    if (!modData) return;
+
+    const badge = document.createElement("div");
+    badge.className = "mod-badge";
+    badge.dataset.key = modKey;
+    if (isGranted) badge.dataset.granted = "true";
+
+    let innerHTML = `<span>${modData.name}</span>`;
+
+    if (modData.hasInput) {
+        innerHTML += `<input type="number" class="badge-val" value="${modData.defaultVal}" min="1" ${isGranted ? 'disabled' : ''} />`;
+    }
+
+    if (!isGranted) {
+        innerHTML += `<button class="remove-mod-btn">×</button>`;
+    }
+
+    badge.innerHTML = innerHTML;
+
+    if (!isGranted) {
+        badge.querySelector(".remove-mod-btn").addEventListener("click", () => {
+            badge.remove();
+            syncAppUI();
+        });
+    }
+
+    list.appendChild(badge);
+}
+
+export function syncAppUI() {
+    const modules = document.querySelectorAll('.attacker-module');
+    const allNames = Array.from(modules).map(m => m.querySelector('.in-unit-name').value.trim());
+
+    modules.forEach(module => {
+        module.querySelector('.in-units').disabled = false;
+        module.querySelector('.attached-leaders-display').innerHTML = '';
+        module.querySelectorAll('.mod-badge[data-granted="true"]').forEach(b => b.remove());
+
+        const isLeader = module.querySelector('.is-leader').checked;
+        module.querySelector('.leader-options').style.display = isLeader ? "block" : "none";
+
+        const select = module.querySelector('.attach-to');
+        const currentSelection = select.value;
+        const myName = module.querySelector('.in-unit-name').value.trim();
+        select.innerHTML = '<option value="">-- Select Unit --</option>';
+        allNames.forEach(name => {
+            if (name && name !== myName) {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                select.appendChild(option);
+            }
+        });
+        if (allNames.includes(currentSelection)) select.value = currentSelection;
+    });
+
+    modules.forEach(leaderModule => {
+        const isLeader = leaderModule.querySelector('.is-leader').checked;
+        const targetName = leaderModule.querySelector('.attach-to').value;
+        const granted = leaderModule.querySelector('.grant-keyword').value;
+        const leaderName = leaderModule.querySelector('.in-unit-name').value.trim();
+
+        if (isLeader && targetName) {
+            const targetModule = Array.from(modules).find(m => m.querySelector('.in-unit-name').value.trim() === targetName);
+
+            if (targetModule) {
+                targetModule.querySelector('.attached-leaders-display').innerHTML += `🛡️ Led by: ${leaderName}`;
+                targetModule.querySelector('.in-units').value = 1;
+                targetModule.querySelector('.in-units').disabled = true;
+
+                if (granted !== "none") {
+                    addBadgeToModule(targetModule, granted, true);
+                }
+            }
+        }
+    });
+}

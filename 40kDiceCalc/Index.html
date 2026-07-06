@@ -19,12 +19,49 @@
               justify-content: space-between;
               align-items: center;
               margin-bottom: 15px;
+              flex-wrap: wrap;
+              gap: 10px;
             "
           >
             <h2>Attacker Roster</h2>
-            <button id="add-attacker-btn" class="btn-primary">
-              + Deploy Unit
-            </button>
+            <div style="display: flex; gap: 10px; align-items: center">
+              <input
+                type="text"
+                id="roster-name"
+                value="SpaceWolves_Roster"
+                placeholder="Name your roster..."
+                style="width: 220px; height: 42px; padding: 5px 10px"
+              />
+
+              <input
+                type="file"
+                id="import-file-input"
+                accept=".json"
+                style="display: none"
+              />
+              <button
+                id="import-roster-btn"
+                class="btn-primary"
+                style="height: 42px; background-color: var(--sw-mid-blue)"
+              >
+                Import JSON
+              </button>
+
+              <button
+                id="export-roster-btn"
+                class="btn-primary"
+                style="height: 42px"
+              >
+                Export JSON
+              </button>
+              <button
+                id="add-attacker-btn"
+                class="btn-primary"
+                style="height: 42px"
+              >
+                + Deploy Unit
+              </button>
+            </div>
           </div>
           <div id="attacker-roster"></div>
         </section>
@@ -146,7 +183,7 @@
         </section>
       </div>
 
-      <button id="calculate-btn">Run 10,000 Simulations</button>
+      <button id="calculate-btn">FOR THE EMPEROR!</button>
 
       <section class="panel results-panel-wrapper" id="results-wrapper">
         <div class="stat-cards-grid" id="stats-html"></div>
