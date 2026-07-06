@@ -9,11 +9,17 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
     const allModelsKilled = [];
     const allWastedDamage = [];
 
+
+
     for (let i = 0; i < iterationsTotal; i++) {
         let currentTargetHealth = unit.wounds;
         let runTotalDamage = 0;
         let runModelsKilled = 0;
         let runWastedDamage = 0;
+
+        //these are needed for adv sims
+        let sumHits = { rawSuccesses: 0, bonusHits: 0, autoWounds: 0 };
+        let sumWounds = { rawSuccesses: 0, devWounds: 0 };
 
         for (const weapon of weaponsArray) {
             const hurtSystem = runHurtSystem(weapon, unit, currentTargetHealth);
@@ -21,6 +27,16 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
             runModelsKilled += hurtSystem.modelsKilled;
             runWastedDamage += hurtSystem.wastedDamage;
             currentTargetHealth = hurtSystem.finalHealth;
+
+            //these are needed for adv sims
+            sumHits.rawSuccesses += hurtSystem.hits.rawSuccesses;
+            sumHits.bonusHits += hurtSystem.hits.bonusHits;
+            sumHits.autoWounds += hurtSystem.hits.autoWounds;
+
+            sumWounds.rawSuccesses += hurtSystem.wounds.rawSuccesses;
+            sumWounds.devWounds += hurtSystem.wounds.devWounds;
+
+
         }
 
         allTotalDamage.push(runTotalDamage);
@@ -134,9 +150,20 @@ export function runHurtSystem(weapon, unit, startingHealth) {
     const damageDone = modelsKill(totalDamageEvents, weapon, unit, startingHealth);
 
     return {
-        totalDamage: damageDone.totalDamage,
-        modelsKilled: damageDone.modelsKilled,
-        wastedDamage: damageDone.wastedDamage,
+        hits: {
+            rawSuccesses: hitData.successes,
+            bonusHits: hitData.bonus,
+            autoWounds: autoWounds
+        },
+        wounds: {
+            rawSuccesses: woundData.successes,
+            devWounds: devWounds
+        },
+        damage: {
+            totalDamage: damageDone.totalDamage,
+            modelsKilled: damageDone.modelsKilled,
+            wastedDamage: damageDone.wastedDamage
+        },
         finalHealth: damageDone.currentHealth
     };
 }

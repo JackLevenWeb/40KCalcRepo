@@ -18,7 +18,7 @@ export async function initDataBase() {
     CREATE TABLE simulation_runs(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     modifier_name TEXT,
-    damage_amout INTEGER,
+    damage_amount INTEGER,
     occurrence_count INTEGER)`);
         console.log("SQLite Database Initialized");
     } catch (error) {
@@ -66,7 +66,7 @@ export function queryComparisonData() {
 export function clearDataBase() {
 
     if (db) {
-        db.run("DELETE FROM simulated_runs;");
+        db.run("DELETE FROM simulation_runs;");
 
     }
 
