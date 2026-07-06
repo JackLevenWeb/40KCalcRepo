@@ -2,6 +2,7 @@ import { Unit } from './classes/Unit.js';
 import { Weapon } from './classes/Weapon.js';
 import { runSimulation } from './logic.js';
 import { addAttackerModule, syncAppUI, buildRosterFromJSON } from './ui-manager.js';
+import { initDataBase, loadDataIntoSQL, queryComparisonData, clearDataBase } from './db-manager.js';
 
 const CalcBtn = document.getElementById("calculate-btn");
 const AddAttackerBtn = document.getElementById("add-attacker-btn");
@@ -14,6 +15,8 @@ const ImportInput = document.getElementById("import-file-input");
 
 let damageChartInstance = null;
 let currentSimulationResults = null;
+
+initDataBase();
 
 
 addAttackerModule(RosterContainer);
