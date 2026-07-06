@@ -217,3 +217,51 @@ export function syncAppUI() {
         }
     });
 }
+
+export function buildRosterFromJSON(containerElement, jsonData) {
+    containerElement.innerHTML = '';
+    jsonData.forEach(unitData => {
+        addAttackerModule(containerElement);
+        const newModule = containerElement.lastElementChild;
+
+        newModule.querySelector(".in-unit-name").value = unitData.unitName;
+        newModule.querySelector(".in-attacks").value = unitData.attack;
+        newModule.querySelector(".in-unit-name").value = unitData.unitName;
+        newModule.querySelector(".in-bsws").value = unitData.BsWs;
+        newModule.querySelector(".in-str").value = unitData.strength;
+        newModule.querySelector(".in-ap").value = unitData.Ap;
+        newModule.querySelector(".in-dam").value = unitData.damage;
+        newModule.querySelector(".in-models").value = unitData.modelCount;
+        newModule.querySelector(".in-units").value = unitData.unitCount;
+
+
+        const mods = unitData.modifiers;
+        if (mods) {
+            if (mods.lethal) addBadgeToModule(newModule, "lethal", false);
+            if (mods.devastating) addBadgeToModule(newModule, "devastating", false);
+            if (mods.lance) addBadgeToModule(newModule, "lance", false);
+            if (mods.torrent) addBadgeToModule(newModule, "torrent", false);
+            if (mods.twinLinked) addBadgeToModule(newModule, "twinlinked", false);
+            if (mods.blast) addBadgeToModule(newModule, "blast", false);
+            if (mods.cleave) addBadgeToModule(newModule, "cleave", false);
+
+            if (mods.sustained > 0) {
+                addBadgeToModule(newModule, "sustained", false);
+                newModule.querySelector('.mod-badge[data-key="sustained"] .badge-val').value = mods.sustained;
+            }
+            if (mods.melta > 0) {
+                addBadgeToModule(newModule, "melta", false);
+                newModule.querySelector('.mod-badge[data-key="melta"] .badge-val').value = mods.melta;
+            }
+            if (mods.anti > 0) {
+                addBadgeToModule(newModule, "anti", false);
+                newModule.querySelector('.mod-badge[data-key="anti"] .badge-val').value = mods.anti;
+            }
+        }
+
+
+    });
+
+    syncAppUI();
+};
+

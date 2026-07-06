@@ -1,7 +1,7 @@
 import { Unit } from './classes/Unit.js';
 import { Weapon } from './classes/Weapon.js';
 import { runSimulation } from './logic.js';
-import { addAttackerModule, syncAppUI } from './ui-manager.js';
+import { addAttackerModule, syncAppUI, buildRosterFromJSON } from './ui-manager.js';
 
 const CalcBtn = document.getElementById("calculate-btn");
 const AddAttackerBtn = document.getElementById("add-attacker-btn");
@@ -309,13 +309,24 @@ if (ImportBtn && ImportInput) {
 
         const reader = new FileReader();
 
+
         reader.onload = (e) => {
             try {
                 const rawText = e.target.result;
+                const jsonData = JSON.parse(rawText);
 
+
+                buildRosterFromJSON(RosterContainer, jsonData);
+
+
+                ImportInput.value = "";
+            } catch (error) {
+                alert("Invalid JSON file! Could not parse roster.");
+                console.error(error);
             }
+        };
 
-        }
-    }
 
+        reader.readAsText(file);
+    });
 }
