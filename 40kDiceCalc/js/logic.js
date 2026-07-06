@@ -10,6 +10,10 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
     const allWastedDamage = [];
 
 
+    //these are needed for adv sims
+    let sumHits = { rawSuccesses: 0, bonusHits: 0, autoWounds: 0 };
+    let sumWounds = { rawSuccesses: 0, devWounds: 0 };
+    let sumSaves = { normalWoundsToSave: 0, devWoundsBypass: 0 };
 
     for (let i = 0; i < iterationsTotal; i++) {
         let currentTargetHealth = unit.wounds;
@@ -17,9 +21,7 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
         let runModelsKilled = 0;
         let runWastedDamage = 0;
 
-        //these are needed for adv sims
-        let sumHits = { rawSuccesses: 0, bonusHits: 0, autoWounds: 0 };
-        let sumWounds = { rawSuccesses: 0, devWounds: 0 };
+
 
         for (const weapon of weaponsArray) {
             const hurtSystem = runHurtSystem(weapon, unit, currentTargetHealth);
@@ -35,6 +37,9 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
 
             sumWounds.rawSuccesses += hurtSystem.wounds.rawSuccesses;
             sumWounds.devWounds += hurtSystem.wounds.devWounds;
+
+            sumSaves.normalWoundsToSave += hurtSystem.wounds.rawSuccesses;
+            sumSaves.devWoundsBypass += hurtSystem.wounds.devWounds;
 
 
         }
@@ -59,6 +64,7 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
 
     return {
         SimulatedRuns: iterationsTotal,
+        totals: { sumHits, sumWounds, sumSaves },
         averages: {
             damage: avgTotalDamage,
             killed: avgModelsKilled,
@@ -79,7 +85,7 @@ export function runHurtSystem(weapon, unit, startingHealth) {
     const totalAttacks = calculateAttacks(weapon, unit);
     let autoWounds = 0;
     let successfulHits = 0;
-
+    let hitData = { successes: 0, bonus: 0 };
     // 2. Hit Phase
     if (weapon.modifiers.torrent || weapon.BsWs === "NA") {
         successfulHits = totalAttacks;
@@ -90,7 +96,7 @@ export function runHurtSystem(weapon, unit, startingHealth) {
             activeBsWs += 1;
         }
 
-        const hitData = Dice.rollPool({
+        hitData = Dice.rollPool({
             poolSize: totalAttacks,
             target: activeBsWs,
             modifier: finalHitMod,

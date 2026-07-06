@@ -15,11 +15,15 @@ export async function initDataBase() {
         db = new SQL.Database();
 
         db.run(`
-    CREATE TABLE simulation_runs(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    modifier_name TEXT,
-    damage_amount INTEGER,
-    occurrence_count INTEGER)`);
+    CREATE TABLE simulation_runs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        modifier_name TEXT,
+        category TEXT,          -- hit, wound, or save
+        metric_name TEXT,       -- rawSuccesses, devWounds, etc.
+        value INTEGER,
+        occurrence_count INTEGER
+    );
+`);
         console.log("SQLite Database Initialized");
     } catch (error) {
         console.error("Failed to initialize SQLite:", error);
@@ -29,39 +33,79 @@ export async function initDataBase() {
 
 }
 //load
-export function loadDataIntoSQL(modifierName, distributionData) {
+export function loadDataIntoSQL(modifierName, category, metrics) {
     if (!db) {
         console.error("Database not ready");
         return;
     }
 
     //using prepare statement (?,?,?) - prevent sql query code being inserted
-    const stmt = db.prepare("INSERT INTO simulation_runs (modifier_name, damage_amount, occurrence_count)VALUES (?, ?, ?)");
-
+    const stmt = db.prepare(`
+        INSERT INTO simulation_runs (modifier_name, category, metric_name, value, occurrence_count) 
+        VALUES (?, ?, ?, ?, ?)
+    `);
     // actual loading
-    for (const [damage, count] of Object.entries(distributionData)) {
-        stmt.run([modifierName, parseInt(damage, 10), count]);
+    for (const [metricName, value] of Object.entries(metrics)) {
+        stmt.run([modifierName, category, metricName, value, 1]);
     }
 
-    //garbage collection for sqLite
+    //dump garbage safty 
     stmt.free();
-    console.log(`${SIMULATION_ITERATIONS} runs loaded for [${modifierName}]`);
+    console.log(`Loaded [${category}] metrics for [${modifierName}]`);
+
+}
+
+export function spawnReportCard(container, categoryTitle) {
+    const cardHTML = `
+        <div class="report-card" style="margin-bottom: 30px; display: grid; grid-template-columns: 200px 1fr; gap: 20px;">
+            <div class="stats-sidebar">
+                <h3>${categoryTitle}</h3>
+                <div class="mod-stats-list"></div>
+            </div>
+            <div style="height: 300px;">
+                <canvas class="adv-chart"></canvas>
+            </div>
+        </div>
+    `;
+    container.insertAdjacentHTML('beforeend', cardHTML);
+    return container.lastElementChild;
+}
+
+
+export function generateAdvancedReport(category, sqlData) {
+    const container = document.getElementById("advanced-reports-container");
+    const card = spawnReportCard(container, category);
+    const categoryData = sqlData.filter(row => row[2] === category);
+    renderAdvancedChart(card.querySelector('.adv-chart'), categoryData);
 
 }
 
 export function queryComparisonData() {
 
     const result = db.exec(`
-    SELECT modifier_name, damage_amount, occurrence_count
-    FROM simulation_runs
-    ORDER BY modifier_name ASC, damage_amount ASC;`);
-
-    if (result.length === 0) return [];
-
-    return result[0].values;
+        SELECT modifier_name, damage_amount, category, metric_name, occurrence_count
+        FROM simulation_runs
+        ORDER BY modifier_name ASC, damage_amount ASC;
+    `);
+    return result.length === 0 ? [] : result[0].values;
 
 
 }
+
+
+export const ModLabels = {
+    "Base": "Base Profile",
+    "hit_plus_1": "+1 to Hit",
+    "reroll_hits_1": "Reroll 1s (Hit)",
+    "reroll_hits_all": "Reroll All Hits",
+    "sustained_hits": "Sustained Hits 1",
+    "wound_plus_1": "+1 to Wound",
+    "reroll_wounds_1": "Reroll 1s (Wound)",
+    "reroll_wounds_all": "Reroll All Wounds",
+    "lethal": "Lethal Hits",
+    "extra_ap_1": "AP -1",
+    "devastating": "Devastating Wounds"
+};
 
 export function clearDataBase() {
 

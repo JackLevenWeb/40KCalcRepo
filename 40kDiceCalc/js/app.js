@@ -149,69 +149,6 @@ function runWorkerSimulation(iterations, weaponsArray, targetUnit) {
     });
 
 
-}
-
-const SIMULATION_SCENARIOS = {
-    "Hit Mods": ["hit_plus_1", "reroll_hits_1", "reroll_hits_all", "sustained_hits"],
-    "Wound Mods": ["wound_plus_1", "reroll_wounds_1", "reroll_wounds_all", "lethal"],
-    "Save/Ap": ["extra_ap_1", "devastating"]
-};
-
-function applyModifierToWeapon(weapon, modKey) {
-    if (modKey === "hit_plus_1") weapon.modifiers.hitMod += 1;
-    if (modKey === "reroll_hits_1") weapon.modifiers.rerollHits = "ones";
-    if (modKey === "reroll_hits_all") weapon.modifiers.rerollHits = "all";
-    if (modKey === "sustained_hits") weapon.modifiers.sustained = 1;
-
-    if (modKey === "wound_plus_1") weapon.modifiers.woundMod += 1;
-    if (modKey === "reroll_wounds_1") weapon.modifiers.rerollWounds = "ones";
-    if (modKey === "reroll_wounds_all") weapon.modifiers.rerollWounds = "all";
-    if (modKey === "lethal") weapon.modifiers.lethal = true;
-
-    if (modKey === "extra_ap_1") weapon.Ap -= 1;
-    if (modKey === "devastating") weapon.modifiers.devastating = true;
-}
-
-//ADV PIPELINE ORCHESTRATOR
-if (advAnalyticsBtn) {
-    advAnalyticsBtn.addEventListener("click", async () => {
-        advAnalyticsBtn.textContent = "Running Pipeline...";
-        advAnalyticsBtn.disabled = true;
-        clearDataBase();
-
-        const targetUnit = createUnit();
-        document.getElementById("results-wrapper").style.display = "grid";
-
-
-        try {
-            // base
-            let baseWeapons = createWeaponsArray();
-            let baseResults = await runWorkerSimulation(SIMULATION_ITERATIONS, baseWeapons, targetUnit);
-            loadDataIntoSQL("Base", baseResults.distribution);
-
-            // scenarios
-            for (const [category, mods] of Object.entries(SIMULATION_SCENARIOS)) {
-                for (const modKey of mods) {
-                    let weapons = createWeaponsArray();
-                    // Apply the specific modifier from our loop
-                    weapons.forEach(w => applyModifierToWeapon(w, modKey));
-
-                    let results = await runWorkerSimulation(SIMULATION_ITERATIONS, weapons, targetUnit);
-                    loadDataIntoSQL(modKey, results.distribution);
-                }
-            }
-
-            // 3. Query and Render
-            const sqlData = queryComparisonData();
-            renderAdvancedChart(sqlData, SIMULATION_ITERATIONS);
-
-        } catch (error) {
-            console.error("Pipeline Failed:", error);
-            alert("Pipeline Failed.");
-        }
-        advAnalyticsBtn.textContent = "Run Advanced Analytics";
-        advAnalyticsBtn.disabled = false;
-    });
 
 }
 
@@ -273,6 +210,77 @@ CalcBtn.addEventListener("click", () => {
 
 
 });
+
+const SIMULATION_SCENARIOS = {
+    "Hit Mods": ["hit_plus_1", "reroll_hits_1", "reroll_hits_all", "sustained_hits"],
+    "Wound Mods": ["wound_plus_1", "reroll_wounds_1", "reroll_wounds_all", "lethal"],
+    "Save/Ap": ["extra_ap_1", "devastating"]
+};
+
+function applyModifierToWeapon(weapon, modKey) {
+    if (modKey === "hit_plus_1") weapon.modifiers.hitMod += 1;
+    if (modKey === "reroll_hits_1") weapon.modifiers.rerollHits = "ones";
+    if (modKey === "reroll_hits_all") weapon.modifiers.rerollHits = "all";
+    if (modKey === "sustained_hits") weapon.modifiers.sustained = 1;
+
+    if (modKey === "wound_plus_1") weapon.modifiers.woundMod += 1;
+    if (modKey === "reroll_wounds_1") weapon.modifiers.rerollWounds = "ones";
+    if (modKey === "reroll_wounds_all") weapon.modifiers.rerollWounds = "all";
+    if (modKey === "lethal") weapon.modifiers.lethal = true;
+
+    if (modKey === "extra_ap_1") weapon.Ap -= 1;
+    if (modKey === "devastating") weapon.modifiers.devastating = true;
+}
+
+//ADV PIPELINE ORCHESTRATOR LOOP >>> might be some issues in here...
+if (advAnalyticsBtn) {
+    advAnalyticsBtn.addEventListener("click", async () => {
+        advAnalyticsBtn.textContent = "Running Pipeline...";
+        advAnalyticsBtn.disabled = true;
+        clearDataBase();
+
+        const targetUnit = createUnit();
+        document.getElementById("results-wrapper").style.display = "grid";
+
+
+        try {
+            // base
+            let baseWeapons = createWeaponsArray();
+            let baseResults = await runWorkerSimulation(SIMULATION_ITERATIONS, baseWeapons, targetUnit);
+            loadDataIntoSQL("Base", "Hit", baseResults.totals.sumHits);
+            loadDataIntoSQL("Base", "Wound", baseResults.totals.sumWounds);
+
+            // scenarios
+            for (const [category, mods] of Object.entries(SIMULATION_SCENARIOS)) {
+                for (const modKey of mods) {
+                    let weapons = createWeaponsArray();
+                    // Apply the specific modifier from our loop
+                    weapons.forEach(w => applyModifierToWeapon(w, modKey));
+
+                    let results = await runWorkerSimulation(SIMULATION_ITERATIONS, weapons, targetUnit);
+                    loadDataIntoSQL(modKey, "Hit", results.totals.sumHits);
+                    loadDataIntoSQL(modKey, "Wound", results.totals.sumWounds);
+                    loadDataIntoSQL(modKey, "Save", results.totals.sumSaves);
+                }
+            }
+
+            // 3. Query and Render
+            const sqlData = queryComparisonData();
+            generateAdvancedReport("Hit", sqlData);
+            generateAdvancedReport("Wound", sqlData);
+            generateAdvancedReport("Save", sqlData);
+
+        } catch (error) {
+            console.error("Pipeline Failed:", error);
+            alert("Pipeline Failed.");
+        }
+        advAnalyticsBtn.textContent = "Run Advanced Analytics";
+        advAnalyticsBtn.disabled = false;
+    });
+
+}
+
+
 
 // chart
 function renderChart(distribution, totalRuns, mode = 'exact') {
@@ -386,18 +394,20 @@ function renderChart(distribution, totalRuns, mode = 'exact') {
 }
 
 // advChart
-function renderAdvancedChart(sqlRows, totalRuns) {
-    const ctx = document.getElementById('damageChart').getContext('2d');
+function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns) {
+    const ctx = canvasElement.getContext('2d');
     if (damageChartInstance) damageChartInstance.destroy();
 
-    // find all unique modifiers in SQL results
-    const uniqueMods = [...new Set(sqlRows.map(r => r[0]))];
+    // filter data by category from the SQL database
+    const categoryRows = sqlRows.filter(r => r[2] === category);
+    const uniqueMods = [...new Set(categoryRows.map(r => r[0]))];
+    const uniqueMetrics = [...new Set(categoryRows.map(r => r[3]))];// metric_name: rawSuccesses, etc.
 
     // build db
     const datasets = uniqueMods.map((modName, index) => {
-        const modRows = sqlRows.filter(r => r[0] === modName);
+        const modRows = categoryRows.filter(r => r[0] === modName);
         const dataMap = {};
-        modRows.forEach(r => dataMap[r[1]] = (r[2] / totalRuns) * 100);
+        modRows.forEach(r => dataMap[r[1]] = (r[4] / totalRuns) * 100);
 
         // base is Grey - others get a color
         const colors = ['#8C9BA8', '#9B2226', '#9ac1df', '#C48235', '#55efc4'];
@@ -406,20 +416,22 @@ function renderAdvancedChart(sqlRows, totalRuns) {
             label: modName,
             data: Object.values(dataMap),
             borderColor: colors[index % colors.length],
+            backgroundColor: colors[index % colors.length] + '44', // transparent fill
+            fill: true,
             borderWidth: 2, tension: 0.3, pointRadius: 0
         };
     });
 
     // draw
-    damageChartInstance = new Chart(ctx, {
+    new Chart(ctx, {
         type: 'line',
-        data: { labels: Object.keys(sqlRows.filter(r => r[0] === uniqueMods[0]).map(r => r[1])), datasets: datasets },
+        data: { labels: Object.keys(categoryRows.filter(r => r[0] === uniqueMods[0]).map(r => r[1])), datasets: datasets },
         options: {
             responsive: true, maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
+            interaction: { mode: 'index', intersect: true },
             scales: {
-                x: { title: { display: true, text: 'Total Damage', color: '#8C9BA8' }, ticks: { color: '#8C9BA8' }, grid: { color: '#38424D' } },
-                y: { title: { display: true, text: 'Chance (%)', color: '#8C9BA8' }, ticks: { color: '#8C9BA8' }, grid: { color: '#38424D' } }
+                x: { stacked: false, title: { display: true, text: 'Outcome Value', color: '#8C9BA8' }, ticks: { color: '#8C9BA8' }, grid: { color: '#38424D' } },
+                y: { stacked: true, title: { display: true, text: 'Chance (%)', color: '#8C9BA8' }, ticks: { color: '#8C9BA8' }, grid: { color: '#38424D' }, beginAtZero: true }
             },
             plugins: { legend: { display: true, labels: { color: '#fff' } } }
         }
