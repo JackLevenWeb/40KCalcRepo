@@ -18,4 +18,4 @@ This project uses a modular, frontend-only architecture:
 * `db-manager.js`: SQLite database initialization and querying.
 * `webWorker.js`: Background thread handler.
 
-For a detailed breakdown of how data moves through this application, please see [DATA_FLOW_EXPLANATION.md](DATA_FLOW_EXPLANATION.md).
+For a detailed breakdown of how data moves through this application, please see DATA_FLOW_EXPLANATION.md
