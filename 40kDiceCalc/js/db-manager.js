@@ -5,70 +5,42 @@ const SIMULATION_ITERATIONS = 50000;
 //In-Memory SQLite Database via WebAssembly
 let db;
 
-//create db and get needed sql.js
 export async function initDataBase() {
-
     try {
-        const SQL = await initSqlJs({//oad sql.js library
-            locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
-        });
-
+        const SQL = await initSqlJs({ locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}` });
         db = new SQL.Database();
-
         db.run(`
-    CREATE TABLE simulation_runs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        modifier_name TEXT,
-        category TEXT,          -- hit, wound, or save
-        metric_name TEXT,       -- rawSuccesses, devWounds, etc.
-        value INTEGER,
-        occurrence_count INTEGER
-    );
-`);
+            CREATE TABLE simulation_runs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                modifier_name TEXT,
+                category TEXT,
+                value INTEGER,
+                occurrence_count INTEGER
+            );
+        `);
         console.log("SQLite Database Initialized");
-    } catch (error) {
-        console.error("Failed to initialize SQLite:", error);
-
-
-    }
-
+    } catch (error) { console.error("Failed to initialize SQLite:", error); }
 }
-//load
-export function loadDataIntoSQL(modifierName, category, metrics) {
-    if (!db) {
-        console.error("Database not ready");
-        return;
-    }
 
-    //using prepare statement (?,?,?) - prevent sql query code being inserted
-    const stmt = db.prepare(`
-        INSERT INTO simulation_runs (modifier_name, category, metric_name, value, occurrence_count) 
-        VALUES (?, ?, ?, ?, ?)
-    `);
-    // actual loading
-    for (const [metricName, value] of Object.entries(metrics)) {
-        stmt.run([modifierName, category, metricName, value, 1]);
-    }
+export function loadDataIntoSQL(modifierName, category, distribution) {
+    if (!db) return;
+    const stmt = db.prepare(`INSERT INTO simulation_runs (modifier_name, category, value, occurrence_count) VALUES (?, ?, ?, ?)`);
 
-    //dump garbage safty 
+    // Convert distribution { "5": 1200 } into rows
+    for (const [amount, count] of Object.entries(distribution)) {
+        stmt.run([modifierName, category, parseInt(amount, 10), count]);
+    }
     stmt.free();
-    console.log(`Loaded [${category}] metrics for [${modifierName}]`);
-
 }
-
 
 export function queryComparisonData() {
-
     const result = db.exec(`
-        SELECT modifier_name, value, category, metric_name, occurrence_count
+        SELECT modifier_name, value, category, occurrence_count
         FROM simulation_runs
         ORDER BY modifier_name ASC, value ASC;
     `);
     return result.length === 0 ? [] : result[0].values;
-
-
 }
-
 
 export const ModLabels = {
     "Base": "Base Profile",

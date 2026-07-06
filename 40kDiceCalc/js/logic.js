@@ -65,6 +65,9 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
     return {
         SimulatedRuns: iterationsTotal,
         totals: { sumHits, sumWounds, sumSaves },
+        hitDistribution,
+        woundDistribution,
+        saveDistribution,
         averages: {
             damage: avgTotalDamage,
             killed: avgModelsKilled,

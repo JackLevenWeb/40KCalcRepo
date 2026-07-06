@@ -232,12 +232,11 @@ function applyModifierToWeapon(weapon, modKey) {
 }
 
 // report generator
-function generateAdvancedReport(category, sqlData, totalRuns) {
+// add an allowedMods parameter so we can filter out graph mods contamination
+function generateAdvancedReport(category, sqlData, totalRuns, allowedMods) {
     const container = document.getElementById("advanced-reports-container");
     const card = spawnReportCard(container, category);
-
-
-    renderAdvancedChart(card.querySelector('.adv-chart'), category, sqlData, totalRuns);
+    renderAdvancedChart(card.querySelector('.adv-chart'), category, sqlData, totalRuns, allowedMods);
 }
 
 //ADV PIPELINE ORCHESTRATOR LOOP >>> might be some issues in here...
@@ -262,29 +261,29 @@ if (advAnalyticsBtn) {
             // base
             let baseWeapons = createWeaponsArray();
             let baseResults = await runWorkerSimulation(SIMULATION_ITERATIONS, baseWeapons, targetUnit);
-            loadDataIntoSQL("Base", "Hit", baseResults.totals.sumHits);
-            loadDataIntoSQL("Base", "Wound", baseResults.totals.sumWounds);
-            loadDataIntoSQL("Base", "Save", baseResults.totals.sumSaves);
+            loadDataIntoSQL("Base", "Hit", baseResults.hitDistribution);
+            loadDataIntoSQL("Base", "Wound", baseResults.woundDistribution);
+            loadDataIntoSQL("Base", "Save", baseResults.saveDistribution);
 
             // scenarios
             for (const [category, mods] of Object.entries(SIMULATION_SCENARIOS)) {
                 for (const modKey of mods) {
                     let weapons = createWeaponsArray();
-                    // Apply the specific modifier from our loop
                     weapons.forEach(w => applyModifierToWeapon(w, modKey));
-
                     let results = await runWorkerSimulation(SIMULATION_ITERATIONS, weapons, targetUnit);
-                    loadDataIntoSQL(modKey, "Hit", results.totals.sumHits);
-                    loadDataIntoSQL(modKey, "Wound", results.totals.sumWounds);
-                    loadDataIntoSQL(modKey, "Save", results.totals.sumSaves);
+
+                    loadDataIntoSQL(modKey, "Hit", results.hitDistribution);
+                    loadDataIntoSQL(modKey, "Wound", results.woundDistribution);
+                    loadDataIntoSQL(modKey, "Save", results.saveDistribution);
                 }
             }
 
-            // 3. Query and Render
             const sqlData = queryComparisonData();
-            generateAdvancedReport("Hit", sqlData, SIMULATION_ITERATIONS);
-            generateAdvancedReport("Wound", sqlData, SIMULATION_ITERATIONS);
-            generateAdvancedReport("Save", sqlData, SIMULATION_ITERATIONS);
+
+            // specific allowed modifiers to stop contamination!
+            generateAdvancedReport("Hit", sqlData, SIMULATION_ITERATIONS, ["Base", ...SIMULATION_SCENARIOS["Hit Mods"]]);
+            generateAdvancedReport("Wound", sqlData, SIMULATION_ITERATIONS, ["Base", ...SIMULATION_SCENARIOS["Wound Mods"]]);
+            generateAdvancedReport("Save", sqlData, SIMULATION_ITERATIONS, ["Base", ...SIMULATION_SCENARIOS["Save/Ap"]]);
 
         } catch (error) {
             console.error("Pipeline Failed:", error);
@@ -410,48 +409,64 @@ function renderChart(distribution, totalRuns, mode = 'exact') {
 }
 
 // advChart
-export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns) {
+export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns, allowedMods) {
     const ctx = canvasElement.getContext('2d');
-    if (damageChartInstance) damageChartInstance.destroy();
 
-    // filter data by category from the SQL database
-    const categoryRows = sqlRows.filter(r => r[2] === category);
-    const uniqueMods = [...new Set(categoryRows.map(r => r[0]))];
-    const uniqueMetrics = [...new Set(categoryRows.map(r => r[3]))];// metric_name: rawSuccesses, etc.
+    // only allow rows matching the category AND allowed mods
+    const categoryRows = sqlRows.filter(r => r[2] === category && allowedMods.includes(r[0]));
 
-    // build db
-    const datasets = uniqueMods.map((modName, index) => {
+    // fix the X-Axis scale
+    let minVal = 999, maxVal = 0;
+    categoryRows.forEach(r => {
+        if (r[1] < minVal) minVal = r[1];
+        if (r[1] > maxVal) maxVal = r[1];
+    });
+
+    const chartLabels = [];
+    for (let i = minVal; i <= maxVal; i++) chartLabels.push(i);
+
+    //  build
+    const datasets = allowedMods.map((modName, index) => {
         const modRows = categoryRows.filter(r => r[0] === modName);
-        const dataMap = {};
-        modRows.forEach(r => dataMap[r[1]] = (r[4] / totalRuns) * 100);
 
-        // base is Grey - others get a color
+        // map exact values to the X-Axis so lines draw correctly
+        const dataArray = chartLabels.map(label => {
+            const row = modRows.find(r => r[1] === label);
+            return row ? (row[3] / totalRuns) * 100 : 0;
+        });
+
         const colors = ['#8C9BA8', '#9B2226', '#9ac1df', '#C48235', '#55efc4'];
-
-        const prettyLabel = ModLabels[modName] || modName;
-
         return {
-            label: prettyLabel,
-            data: Object.values(dataMap),
+            label: ModLabels[modName] || modName,
+            data: dataArray,
             borderColor: colors[index % colors.length],
-            backgroundColor: colors[index % colors.length] + '44',
+            backgroundColor: colors[index % colors.length] + '22',
             fill: true,
-            borderWidth: 2, tension: 0.3, pointRadius: 0
+            borderWidth: 2, tension: 0.3, pointRadius: 0, pointHoverRadius: 5
         };
     });
 
     // draw
     new Chart(ctx, {
         type: 'line',
-        data: { labels: Object.keys(categoryRows.filter(r => r[0] === uniqueMods[0]).map(r => r[1])), datasets: datasets },
+        data: { labels: chartLabels, datasets: datasets },
         options: {
             responsive: true, maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: true },
+            interaction: { mode: 'index', intersect: false },
             scales: {
-                x: { stacked: false, title: { display: true, text: 'Outcome Value', color: '#8C9BA8' }, ticks: { color: '#8C9BA8' }, grid: { color: '#38424D' } },
-                y: { stacked: true, title: { display: true, text: 'Chance (%)', color: '#8C9BA8' }, ticks: { color: '#8C9BA8' }, grid: { color: '#38424D' }, beginAtZero: true }
+                x: { title: { display: true, text: `Total Successful ${category}s`, color: '#8C9BA8', font: { weight: 'bold' } }, ticks: { color: '#9ac1df' }, grid: { color: '#38424D' } },
+                y: { title: { display: true, text: 'Chance (%)', color: '#8C9BA8', font: { weight: 'bold' } }, ticks: { color: '#9ac1df' }, grid: { color: '#38424D' }, beginAtZero: true }
             },
-            plugins: { legend: { display: true, labels: { color: '#fff' } } }
+            plugins: {
+                legend: { display: true, labels: { color: '#fff' } },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 17, 21, 0.95)', titleColor: '#9ac1df', bodyColor: '#DAE6EF',
+                    borderColor: '#C48235', borderWidth: 1, padding: 12,
+                    callbacks: {
+                        label: function (context) { return context.dataset.label + ': ' + context.raw.toFixed(2) + '%'; }
+                    }
+                }
+            }
         }
     });
 }
