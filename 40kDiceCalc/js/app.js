@@ -121,14 +121,22 @@ function createUnit() {
 
 // execution
 CalcBtn.addEventListener("click", () => {
-    CalcBtn.textContent = "Rolling 10,000 dice... 🎲";
+    CalcBtn.textContent = "Rolling dice...";
     CalcBtn.disabled = true;
+    const attackerWeapons = createWeaponsArray();
+    const targetUnit = createUnit();
 
-    setTimeout(() => {
-        const attackerWeapons = createWeaponsArray();
-        const targetUnit = createUnit();
-        const results = runSimulation(10000, attackerWeapons, targetUnit);
+    const worker = new Worker(new URL('./webWorker.js', import.meta.url), { type: 'module' });
 
+    worker.addEventListener('error', (error) => {
+        console.error("PIPELINE CRASH:", error.message);
+        CalcBtn.textContent = "Pipeline Error (Check Console)";
+        CalcBtn.disabled = false;
+        worker.terminate();
+    });
+
+    worker.addEventListener('message', (event) => {
+        const results = event.data;
         currentSimulationResults = results;
 
         document.getElementById("results-wrapper").style.display = "grid";
@@ -151,16 +159,27 @@ CalcBtn.addEventListener("click", () => {
         `;
 
         const currentMode = ChartToggle ? ChartToggle.value : 'exact';
-        renderChart(results.distribution, currentMode);
+        renderChart(results.distribution, results.SimulatedRuns, currentMode);
 
-        CalcBtn.textContent = "Run 10,000 Simulations";
+        CalcBtn.textContent = "FOR THE EMPEROR!";
         CalcBtn.disabled = false;
+        worker.terminate();
 
-    }, 50);
+    });
+
+
+    worker.postMessage({
+        iterations: 50000, // running 50k now instead of 10k
+        weaponsArray: attackerWeapons,
+        targetUnit: targetUnit
+    });
+
+
+
 });
 
 // -charts
-function renderChart(distribution, mode = 'exact') {
+function renderChart(distribution, totalRuns, mode = 'exact') {
     const ctx = document.getElementById('damageChart').getContext('2d');
 
     if (damageChartInstance) {
@@ -178,7 +197,7 @@ function renderChart(distribution, mode = 'exact') {
     for (let i = minDamage; i <= maxDamage; i++) {
         chartLabels.push(i);
         const occurrenceCount = distribution[i] || 0;
-        exactData.push((occurrenceCount / 10000) * 100);
+        exactData.push((occurrenceCount / totalRuns) * 100);
     }
 
     let runningTotal = 0;
