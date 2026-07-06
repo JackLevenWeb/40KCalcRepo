@@ -231,16 +231,70 @@ function applyModifierToWeapon(weapon, modKey) {
     if (modKey === "devastating") weapon.modifiers.devastating = true;
 }
 
-// report generator
+
+
+// redundancy filter
+function isModRedundant(weaponsArray, modKey) {
+    return weaponsArray.some(w => {
+        if (modKey === "hit_plus_1") return w.modifiers.hitMod > 0;
+        if (modKey === "reroll_hits_1") return w.modifiers.rerollHits === "ones" || w.modifiers.rerollHits === "all";
+        if (modKey === "reroll_hits_all") return w.modifiers.rerollHits === "all";
+        if (modKey === "sustained_hits") return w.modifiers.sustained > 0;
+        if (modKey === "wound_plus_1") return w.modifiers.woundMod > 0;
+        if (modKey === "reroll_wounds_1") return w.modifiers.rerollWounds === "ones" || w.modifiers.rerollWounds === "all";
+        if (modKey === "reroll_wounds_all") return w.modifiers.rerollWounds === "all";
+        if (modKey === "lethal") return w.modifiers.lethal === true;
+        if (modKey === "devastating") return w.modifiers.devastating === true;
+        return false;
+    });
+}
+
+// ui helper
+function buildBaseStatsHTML(weaponsArray, targetUnit) {
+    // target Stats
+    let html = `
+        <div style="margin-bottom: 10px;">
+            <strong style="color: #9ac1df;">TARGET:</strong><br>
+            T${targetUnit.toughness} | W${targetUnit.wounds} | SV ${targetUnit.save}+ | Invul ${targetUnit.inVul ? targetUnit.inVul + '+' : 'None'}
+        </div>
+        <strong style="color: #9ac1df;">ATTACKER(S):</strong>
+    `;
+
+    // attacker Stats 
+    weaponsArray.forEach(w => {
+        let activeMods = [];
+        if (w.modifiers.lethal) activeMods.push("Lethal");
+        if (w.modifiers.devastating) activeMods.push("Dev Wounds");
+        if (w.modifiers.sustained > 0) activeMods.push(`Sustained ${w.modifiers.sustained}`);
+        if (w.modifiers.rerollHits !== "none") activeMods.push(`RR Hits`);
+        if (w.modifiers.rerollWounds !== "none") activeMods.push(`RR Wounds`);
+        if (w.modifiers.anti > 0) activeMods.push(`Anti-${w.modifiers.anti}+`);
+
+        let modsStr = activeMods.length > 0 ? `[${activeMods.join(', ')}]` : `[No Mods]`;
+
+        html += `
+            <div style="margin-top: 5px; padding-top: 5px; border-top: 1px solid #38424D;">
+                <span style="color: #fff;">${w.unitName}</span><br>
+                ${w.unitCount * w.modelCount} Models - ${w.attack}A per - ${w.BsWs}+ BS<br>
+                <span style="color: #C48235; font-size: 0.75rem; font-weight: bold;">${modsStr}</span>
+            </div>
+        `;
+    });
+    return html;
+
+}
+
+
 // add an allowedMods parameter so we can filter out graph mods contamination
-function generateAdvancedReport(category, sqlData, totalRuns, allowedMods) {
+// report generator
+function generateAdvancedReport(category, sqlData, totalRuns, allowedMods, statsHTML) {
     const container = document.getElementById("advanced-reports-container");
-    const card = spawnReportCard(container, category);
+    const card = spawnReportCard(container, category, statsHTML);
     renderAdvancedChart(card.querySelector('.adv-chart'), category, sqlData, totalRuns, allowedMods);
 }
 
 //ADV PIPELINE ORCHESTRATOR LOOP >>> might be some issues in here...
-//adv analytics button here>>
+// adv analytics button here>>
 if (advAnalyticsBtn) {
     advAnalyticsBtn.addEventListener("click", async () => {
         advAnalyticsBtn.textContent = "Running Pipeline...";
@@ -249,13 +303,9 @@ if (advAnalyticsBtn) {
 
         const targetUnit = createUnit();
 
-
         document.getElementById("results-wrapper").style.display = "none";
         document.getElementById("advanced-analytics-wrapper").style.display = "block";
-
-
         document.getElementById("advanced-reports-container").innerHTML = "";
-
 
         try {
             // base
@@ -265,25 +315,40 @@ if (advAnalyticsBtn) {
             loadDataIntoSQL("Base", "Wound", baseResults.woundDistribution);
             loadDataIntoSQL("Base", "Save", baseResults.saveDistribution);
 
+            // Generate the Concise Stats HTML
+            let statsHTML = buildBaseStatsHTML(baseWeapons, targetUnit);
+
+            // Track allowed mods to stop contamination
+            let allowedHitMods = ["Base"];
+            let allowedWoundMods = ["Base"];
+            let allowedSaveMods = ["Base"];
+
             // scenarios
             for (const [category, mods] of Object.entries(SIMULATION_SCENARIOS)) {
                 for (const modKey of mods) {
+
+                    // REDUNDANCY FILTER: Skip if base weapon already has it!
+                    if (isModRedundant(baseWeapons, modKey)) continue;
+
+                    if (category === "Hit Mods") allowedHitMods.push(modKey);
+                    if (category === "Wound Mods") allowedWoundMods.push(modKey);
+                    if (category === "Save/Ap") allowedSaveMods.push(modKey);
+
                     let weapons = createWeaponsArray();
                     weapons.forEach(w => applyModifierToWeapon(w, modKey));
-                    let results = await runWorkerSimulation(SIMULATION_ITERATIONS, weapons, targetUnit);
 
+                    let results = await runWorkerSimulation(SIMULATION_ITERATIONS, weapons, targetUnit);
                     loadDataIntoSQL(modKey, "Hit", results.hitDistribution);
                     loadDataIntoSQL(modKey, "Wound", results.woundDistribution);
                     loadDataIntoSQL(modKey, "Save", results.saveDistribution);
                 }
             }
 
+            // 3. Query and Render
             const sqlData = queryComparisonData();
-
-            // specific allowed modifiers to stop contamination!
-            generateAdvancedReport("Hit", sqlData, SIMULATION_ITERATIONS, ["Base", ...SIMULATION_SCENARIOS["Hit Mods"]]);
-            generateAdvancedReport("Wound", sqlData, SIMULATION_ITERATIONS, ["Base", ...SIMULATION_SCENARIOS["Wound Mods"]]);
-            generateAdvancedReport("Save", sqlData, SIMULATION_ITERATIONS, ["Base", ...SIMULATION_SCENARIOS["Save/Ap"]]);
+            generateAdvancedReport("Hit", sqlData, SIMULATION_ITERATIONS, allowedHitMods, statsHTML);
+            generateAdvancedReport("Wound", sqlData, SIMULATION_ITERATIONS, allowedWoundMods, statsHTML);
+            generateAdvancedReport("Save", sqlData, SIMULATION_ITERATIONS, allowedSaveMods, statsHTML);
 
         } catch (error) {
             console.error("Pipeline Failed:", error);
@@ -292,7 +357,6 @@ if (advAnalyticsBtn) {
         advAnalyticsBtn.textContent = "Run Advanced Analytics";
         advAnalyticsBtn.disabled = false;
     });
-
 }
 
 
