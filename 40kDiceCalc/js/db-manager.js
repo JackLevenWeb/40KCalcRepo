@@ -1,3 +1,6 @@
+const SIMULATION_ITERATIONS = 50000;
+
+
 //In-Memory SQLite Database via WebAssembly
 let db;
 
@@ -42,7 +45,7 @@ export function loadDataIntoSQL(modifierName, distributionData) {
 
     //garbage collection for sqLite
     stmt.free();
-    console.log(`50000 runs loaded for [${modifierName}]`);
+    console.log(`${SIMULATION_ITERATIONS} runs loaded for [${modifierName}]`);
 
 }
 

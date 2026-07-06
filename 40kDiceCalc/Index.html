@@ -184,7 +184,21 @@
         </section>
       </div>
 
-      <button id="calculate-btn">FOR THE EMPEROR!</button>
+      <div style="display: flex; gap: 15px; margin-bottom: 20px">
+        <button id="calculate-btn" style="flex: 1">
+          FOR THE EMPEROR! (Standard)
+        </button>
+        <button
+          id="advanced-analytics-btn"
+          style="
+            flex: 1;
+            background-color: var(--accent-bronze);
+            color: #0f1115;
+          "
+        >
+          Run Advanced Analytics
+        </button>
+      </div>
 
       <section class="panel results-panel-wrapper" id="results-wrapper">
         <div class="stat-cards-grid" id="stats-html"></div>

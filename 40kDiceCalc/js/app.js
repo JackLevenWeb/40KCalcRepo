@@ -4,6 +4,8 @@ import { runSimulation } from './logic.js';
 import { addAttackerModule, syncAppUI, buildRosterFromJSON } from './ui-manager.js';
 import { initDataBase, loadDataIntoSQL, queryComparisonData, clearDataBase } from './db-manager.js';
 
+const SIMULATION_ITERATIONS = 50000;
+
 const CalcBtn = document.getElementById("calculate-btn");
 const AddAttackerBtn = document.getElementById("add-attacker-btn");
 const RosterContainer = document.getElementById("attacker-roster");
@@ -12,6 +14,7 @@ const ExportBtn = document.getElementById("export-roster-btn");
 const RosterNameInput = document.getElementById("roster-name");
 const ImportBtn = document.getElementById("import-roster-btn");
 const ImportInput = document.getElementById("import-file-input");
+const advAnalyticsBtn = document.getElementById("advanced-analytics-btn");
 
 let damageChartInstance = null;
 let currentSimulationResults = null;
@@ -122,6 +125,76 @@ function createUnit() {
     return new Unit(toughness, wounds, save, inVul, fnp, modelCount, modifiers);
 }
 
+//async worker
+function runWorkerSimulation(iterations, weaponsArray, targetUnit) {
+    return new Promise((resolve, reject) => {
+        const worker = new Worker(new URL('./webWorker.js', import.meta.url), { type: 'module' });
+
+        worker.addEventListener('message', (event) => {
+
+            const results = event.data;
+            worker.terminate();
+            resolve(results);
+
+
+        });
+
+        worker.addEventListener('error', (error) => {
+            worker.terminate();
+            reject(error);
+
+        });
+
+        worker.postMessage({ iterations, weaponsArray, targetUnit });
+    });
+
+
+}
+
+//ADV PIPELINE ORCHESTRATOR
+if (advAnalyticsBtn) {
+    advAnalyticsBtn.addEventListener("click", async () => {
+        advAnalyticsBtn.textContent = "Running Pipeline...";
+        advAnalyticsBtn.disabled = true;
+
+        const targetUnit = createUnit();
+        document.getElementById("results-wrapper").style.display = "grid";
+
+
+        try {
+            //make sure we're using a empty db
+            clearDataBase();
+
+            let baseWeapons = createWeaponsArray();
+            let baseResults = await runWorkerSimulation(SIMULATION_ITERATIONS, baseWeapons, targetUnit);
+            loadDataIntoSQL("Base", baseResults.distribution);
+
+            let lethalWeapons = createWeaponsArray();
+            lethalWeapons.forEach(w => w.modifiers.lethal = true); // force Lethal on
+            let lethalResults = await runWorkerSimulation(SIMULATION_ITERATIONS, lethalWeapons, targetUnit);
+            loadDataIntoSQL("Lethal", lethalResults.distribution);
+
+            let sustainedWeapons = createWeaponsArray();
+            sustainedWeapons.forEach(w => w.modifiers.sustained = 1); // force Sustained on
+            let sustainedResults = await runWorkerSimulation(SIMULATION_ITERATIONS, sustainedWeapons, targetUnit);
+            loadDataIntoSQL("Sustained", sustainedResults.distribution);
+
+            const sqlData = queryComparisonData();
+
+            renderAdvancedChart(sqlData, SIMULATION_ITERATIONS);
+
+        } catch (error) {
+            console.error("Pipeline Orchestrator Failed:", error);
+            alert("Pipeline Failed. Check console.");
+
+
+        }
+        advAnalyticsBtn.textContent = "Run Advanced Analytics";
+        advAnalyticsBtn.disabled = false;
+    });
+
+}
+
 // execution
 CalcBtn.addEventListener("click", () => {
     CalcBtn.textContent = "Rolling dice...";
@@ -172,7 +245,7 @@ CalcBtn.addEventListener("click", () => {
 
 
     worker.postMessage({
-        iterations: 50000, // running 50k now instead of 10k
+        iterations: SIMULATION_ITERATIONS, // running 50k now instead of 10k
         weaponsArray: attackerWeapons,
         targetUnit: targetUnit
     });
@@ -181,7 +254,7 @@ CalcBtn.addEventListener("click", () => {
 
 });
 
-// -charts
+// chart
 function renderChart(distribution, totalRuns, mode = 'exact') {
     const ctx = document.getElementById('damageChart').getContext('2d');
 
@@ -292,6 +365,17 @@ function renderChart(distribution, totalRuns, mode = 'exact') {
     });
 }
 
+// advChart
+// function renderAdvancedChart(sqlRows, totalRuns) {
+//     const ctx = document.getElementById('damageChart').getContext('2d');
+//     if (damageChartInstance) damageChartInstance.destroy();
+
+//     const groupedData = { "base": {}, "Lethal"}
+
+// }
+
+
+
 // export
 function exportRoster() {
     const weaponsArray = createWeaponsArray();
@@ -314,7 +398,7 @@ function exportRoster() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }
-
+//button for above
 if (ExportBtn) ExportBtn.addEventListener("click", exportRoster);
 
 // import
