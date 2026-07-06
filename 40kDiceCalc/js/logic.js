@@ -25,12 +25,14 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
 
         for (const weapon of weaponsArray) {
             const hurtSystem = runHurtSystem(weapon, unit, currentTargetHealth);
-            runTotalDamage += hurtSystem.totalDamage;
-            runModelsKilled += hurtSystem.modelsKilled;
-            runWastedDamage += hurtSystem.wastedDamage;
+
+           
+            runTotalDamage += hurtSystem.damage.totalDamage;
+            runModelsKilled += hurtSystem.damage.modelsKilled;
+            runWastedDamage += hurtSystem.damage.wastedDamage;
             currentTargetHealth = hurtSystem.finalHealth;
 
-            //these are needed for adv sims
+            // these are needed for adv sims
             sumHits.rawSuccesses += hurtSystem.hits.rawSuccesses;
             sumHits.bonusHits += hurtSystem.hits.bonusHits;
             sumHits.autoWounds += hurtSystem.hits.autoWounds;
@@ -177,7 +179,12 @@ export function runHurtSystem(weapon, unit, startingHealth) {
 // --- HELPER FUNCTIONS ---
 
 function zeroReturn(health) {
-    return { totalDamage: 0, modelsKilled: 0, wastedDamage: 0, finalHealth: health };
+    return {
+        hits: { rawSuccesses: 0, bonusHits: 0, autoWounds: 0 },
+        wounds: { rawSuccesses: 0, devWounds: 0 },
+        damage: { totalDamage: 0, modelsKilled: 0, wastedDamage: 0 },
+        finalHealth: health
+    };
 }
 
 function calculateAttacks(weapon, unit) {
