@@ -373,6 +373,7 @@ CalcBtn.addEventListener("click", () => {
 
         CalcBtn.textContent = "Run 10,000 Simulations";
         CalcBtn.disabled = false;
+        const exportJSON = JSON.stringify(attackerWeapons);
 
     }, 50);
 });
@@ -492,3 +493,4 @@ function renderChart(distribution, mode = 'exact') {
         }
     });
 }
+
