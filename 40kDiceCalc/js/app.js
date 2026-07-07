@@ -149,8 +149,7 @@ const SIMULATION_SCENARIOS = {
     "Hit Mods": ["hit_plus_1", "reroll_hits_1", "reroll_hits_all", "sustained_hits"],
     "Wound Mods": ["wound_plus_1", "reroll_wounds_1", "reroll_wounds_all", "lethal"],
     "Save/Ap": ["extra_ap_1"],
-    "DamageDone": ["devastating"],
-    "ModelsKilled": ["devastating"]
+    "Damage Mods": ["devastating"]
 };
 
 function applyModifierToWeapon(weapon, modKey) {
@@ -253,13 +252,14 @@ function buildBaseStatsHTML(weaponsArray, targetUnit) {
 
 // add an allowedMods parameter so we can filter out graph mods contamination
 // report generator
-function generateAdvancedReport(category, sqlData, totalRuns, allowedMods, statsHTML) {
+function generateAdvancedReport(title, category, sqlData, totalRuns, allowedMods, statsHTML) {
     const container = document.getElementById("advanced-reports-container");
-    const card = spawnReportCard(container, category, statsHTML);
+    const card = spawnReportCard(title, container, statsHTML);
     renderAdvancedChart(card.querySelector('.adv-chart'), category, sqlData, totalRuns, allowedMods);
 }
 
 // execution
+//standard btn
 if (CalcBtn) {
     CalcBtn.addEventListener("click", () => {
         CalcBtn.textContent = "Rolling dice...";
@@ -320,7 +320,7 @@ if (CalcBtn) {
     });
 }
 
-//ADV PIPELINE ORCHESTRATOR LOOP >>> might be some issues in here...
+//ADV PIPELINE ORCHESTRATOR LOOP
 // adv analytics button here>>
 if (advAnalyticsBtn) {
     advAnalyticsBtn.addEventListener("click", async () => {
@@ -328,61 +328,85 @@ if (advAnalyticsBtn) {
         advAnalyticsBtn.disabled = true;
         clearDataBase();
 
-        const targetUnit = createUnit();
+
 
         document.getElementById("results-wrapper").style.display = "none";
         document.getElementById("advanced-analytics-wrapper").style.display = "block";
         document.getElementById("advanced-reports-container").innerHTML = "";
 
+        const baseWeapons = createWeaponsArray();
+        const targetUnit = createUnit();
+
         try {
             // base
-            let baseWeapons = createWeaponsArray();
-            let baseResults = await runWorkerSimulation(SIMULATION_ITERATIONS, baseWeapons, targetUnit);
-            loadDataIntoSQL("Base", "Hit", baseResults.hitDistribution);
-            loadDataIntoSQL("Base", "Wound", baseResults.woundDistribution);
-            loadDataIntoSQL("Base", "Save", baseResults.saveDistribution);
-            loadDataIntoSQL("Base", "Damage", baseResults.damageDistribution);
-            loadDataIntoSQL("Base", "Damage", modelsKilled);
+            for (const baseWeapon of baseWeapons) {
+                const unitName = baseWeapon.unitName;
 
-            // Generate the Concise Stats HTML
-            let statsHTML = buildBaseStatsHTML(baseWeapons, targetUnit);
+                ModLabels["Base"] = `Base Profile (AP ${baseWeapon.Ap})`;
+                ModLabels["extra_ap_1"] = `AP ${baseWeapon.Ap - 1}`;
 
-            // Track allowed mods to stop contamination
-            let allowedHitMods = ["Base"];
-            let allowedWoundMods = ["Base"];
-            let allowedSaveMods = ["Base"];
 
-            // scenarios
-            for (const [category, mods] of Object.entries(SIMULATION_SCENARIOS)) {
-                for (const modKey of mods) {
+                let statsHTML = buildBaseStatsHTML([baseWeapon], targetUnit);
 
-                    // REDUNDANCY FILTER: Skip if base weapon already has it!
-                    if (isModRedundant(baseWeapons, modKey)) continue;
+                //track allowed mods per unit
+                let allowedHitMods = ["Base"];
+                let allowedWoundMods = ["Base"];
+                let allowedSaveMods = ["Base"];
+                let allowedDamageMods = ["Base"];
+                let allowedKilledMods = ["Base"];
 
-                    if (category === "Hit Mods") allowedHitMods.push(modKey);
-                    if (category === "Wound Mods") allowedWoundMods.push(modKey);
-                    if (category === "Save/Ap") allowedSaveMods.push(modKey);
+                let singleWeaponRoster = [baseWeapon];
+                let baseResults = await runWorkerSimulation(SIMULATION_ITERATIONS, singleWeaponRoster, targetUnit);
 
-                    let weapons = createWeaponsArray();
-                    weapons.forEach(w => applyModifierToWeapon(w, modKey));
+                loadDataIntoSQL(unitName, "Base", "Hit", baseResults.hitDistribution);
+                loadDataIntoSQL(unitName, "Base", "Wound", baseResults.woundDistribution);
+                loadDataIntoSQL(unitName, "Base", "Save", baseResults.saveDistribution);
+                loadDataIntoSQL(unitName, "Base", "Damage", baseResults.damageDistribution);
+                loadDataIntoSQL(unitName, "Base", "ModelsKilled", baseResults.killedDistribution);
+                for (const [category, mods] of Object.entries(SIMULATION_SCENARIOS)) {
+                    for (const modKey of mods) {
 
-                    let results = await runWorkerSimulation(SIMULATION_ITERATIONS, weapons, targetUnit);
-                    loadDataIntoSQL(modKey, "Hit", results.hitDistribution);
-                    loadDataIntoSQL(modKey, "Wound", results.woundDistribution);
-                    loadDataIntoSQL(modKey, "Save", results.saveDistribution);
+                        if (isModRedundant([baseWeapon], modKey)) continue;
+                        if (category === "Hit Mods") allowedHitMods.push(modKey);
+                        if (category === "Wound Mods") allowedWoundMods.push(modKey);
+                        if (category === "Save/Ap") allowedSaveMods.push(modKey);
+                        if (category === "Damage Mods") {
+                            allowedDamageMods.push(modKey);
+                            allowedKilledMods.push(modKey);
+                        }
+
+                        let moddedWeapon = JSON.parse(JSON.stringify(baseWeapon));
+                        applyModifierToWeapon(moddedWeapon, modKey);
+
+                        let results = await runWorkerSimulation(SIMULATION_ITERATIONS, [moddedWeapon], targetUnit);
+
+                        loadDataIntoSQL(unitName, modKey, "Hit", results.hitDistribution);
+                        loadDataIntoSQL(unitName, modKey, "Wound", results.woundDistribution);
+                        loadDataIntoSQL(unitName, modKey, "Save", results.saveDistribution);
+                        loadDataIntoSQL(unitName, modKey, "Damage", results.damageDistribution);
+                        loadDataIntoSQL(unitName, modKey, "ModelsKilled", results.killedDistribution);
+
+                    }
                 }
+
+                // query the Database and Draw the 5 Charts for THIS unit
+                const sqlData = queryComparisonData(unitName);
+
+
+
+                generateAdvancedReport(`${unitName}: Hit`, "Hit", sqlData, SIMULATION_ITERATIONS, allowedHitMods, statsHTML);
+                generateAdvancedReport(`${unitName}: Wound`, "Wound", sqlData, SIMULATION_ITERATIONS, allowedWoundMods, statsHTML);
+                generateAdvancedReport(`${unitName}: Save`, "Save", sqlData, SIMULATION_ITERATIONS, allowedSaveMods, statsHTML);
+                generateAdvancedReport(`${unitName}: Damage`, "Damage", sqlData, SIMULATION_ITERATIONS, allowedDamageMods, statsHTML);
+                generateAdvancedReport(`${unitName}: ModelsKilled`, "ModelsKilled", sqlData, SIMULATION_ITERATIONS, allowedKilledMods, statsHTML);
+
+
             }
-
-            // 3. Query and Render
-            const sqlData = queryComparisonData();
-            generateAdvancedReport("Hit", sqlData, SIMULATION_ITERATIONS, allowedHitMods, statsHTML);
-            generateAdvancedReport("Wound", sqlData, SIMULATION_ITERATIONS, allowedWoundMods, statsHTML);
-            generateAdvancedReport("Save", sqlData, SIMULATION_ITERATIONS, allowedSaveMods, statsHTML);
-
         } catch (error) {
             console.error("Pipeline Failed:", error);
             alert("Pipeline Failed.");
         }
+
         advAnalyticsBtn.textContent = "Run Advanced Analytics";
         advAnalyticsBtn.disabled = false;
     });

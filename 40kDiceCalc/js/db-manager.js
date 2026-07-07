@@ -25,7 +25,7 @@ export async function initDataBase() {
 
 export function loadDataIntoSQL(unitName, modifierName, category, distribution) {
     if (!db) return;
-    const stmt = db.prepare(`INSERT INTO simulation_runs (unit_name,modifier_name, category, value, occurrence_count) VALUES (?, ?, ?, ?)`);
+    const stmt = db.prepare(`INSERT INTO simulation_runs (unit_name, modifier_name, category, value, occurrence_count) VALUES (?, ?, ?, ?, ?)`);
 
     // Convert distribution { "5": 1200 } into rows
     for (const [amount, count] of Object.entries(distribution)) {
@@ -34,10 +34,11 @@ export function loadDataIntoSQL(unitName, modifierName, category, distribution) 
     stmt.free();
 }
 
-export function queryComparisonData() {
+export function queryComparisonData(unitName) {
     const result = db.exec(`
-        SELECT modifier_name, value, category, occurrence_count
-        FROM simulation_runs
+        SELECT modifier_name, value, category, occurrence_count 
+        FROM simulation_runs 
+        WHERE unit_name = '${unitName}' 
         ORDER BY modifier_name ASC, value ASC;
     `);
     return result.length === 0 ? [] : result[0].values;

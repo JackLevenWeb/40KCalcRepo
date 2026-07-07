@@ -13,6 +13,11 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
     let sumWounds = { rawSuccesses: 0, devWounds: 0 };
     let sumSaves = { normalWoundsToSave: 0, devWoundsBypass: 0 };
 
+    let highestDamage = 0;
+    let highestKills = 0;
+    let lowestDamage = 0;
+    let lowestKilled = 0;
+
     for (let i = 0; i < iterationsTotal; i++) {
         let currentTargetHealth = unit.wounds;
         let runTotalDamage = 0, runModelsKilled = 0, runWastedDamage = 0;
@@ -54,6 +59,11 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
         sumTotalDamage += runTotalDamage;
         sumModelsKilled += runModelsKilled;
         sumWastedDamage += runWastedDamage;
+
+        if (highestDamage < runTotalDamage) highestDamage = runTotalDamage;
+        if (highestKills < runModelsKilled) highestKills = runModelsKilled;
+        if (lowestDamage > runTotalDamage) lowestDamage = runTotalDamage;
+        if (lowestKilled > runModelsKilled) lowestKilled = runModelsKilled;
     }
 
     const avgTotalDamage = sumTotalDamage / iterationsTotal;
@@ -84,10 +94,10 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
             efficiency: avgTotalDamage > 0 ? (((avgTotalDamage - avgWastedDamage) / avgTotalDamage) * 100).toFixed(1) : 0
         },
         extremes: {
-            highestDamage: Math.max(...allTotalDamage),
-            highestKills: Math.max(...allModelsKilled),
-            lowestDamage: Math.min(...allTotalDamage),
-            lowestKilled: Math.min(...allModelsKilled)
+            highestDamage: highestDamage,
+            highestKills: highestKills,
+            lowestDamage: lowestDamage,
+            lowestKilled: lowestKilled
         },
         damageDistribution: damageDistribution,
         killedDistribution: killedDistribution

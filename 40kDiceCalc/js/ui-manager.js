@@ -265,11 +265,11 @@ export function buildRosterFromJSON(containerElement, jsonData) {
     syncAppUI();
 };
 
-export function spawnReportCard(container, categoryTitle, statsHTML) {
+export function spawnReportCard(title, container, statsHTML) {
     const cardHTML = `
         <div class="report-card" style="margin-bottom: 30px; display: grid; grid-template-columns: 250px 1fr; gap: 20px;">
             <div class="stats-sidebar" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 6px; border-left: 2px solid var(--sw-mid-blue);">
-                <h3 style="color: var(--sw-light-blue); margin-bottom: 10px;">${categoryTitle}</h3>
+                <h3 style="color: var(--sw-light-blue); margin-bottom: 10px;">${title}</h3>
                 <div class="mod-stats-list" style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">
                     ${statsHTML}
                 </div>
