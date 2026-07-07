@@ -241,7 +241,7 @@ function isModRedundant(weaponsArray, modKey) {
     });
 }
 
-// ui helper
+// ui helper - specific stats data goes where and when
 function buildBaseStatsHTML(weaponsArray, targetUnit) {
     // target Stats
     let targetMods = [];
@@ -251,6 +251,7 @@ function buildBaseStatsHTML(weaponsArray, targetUnit) {
     if (targetUnit.modifiers.cover) targetMods.push("Cover");
     if (targetUnit.modifiers.halfDamage) targetMods.push("Half Damage");
     if (targetUnit.modifiers.minusOneDamage) targetMods.push("-1 Damage");
+    if (targetUnit.fnp && targetUnit.fnp > 1) targetMods.push(`FNP ${targetUnit.fnp}+`);
 
     let targetModsStr = targetMods.length > 0 ? targetMods.join(' | ') : "[No Mods]";
 
