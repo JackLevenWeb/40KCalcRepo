@@ -189,7 +189,7 @@ function zeroReturn(health) {
 }
 
 function calculateAttacks(weapon, unit) {
-    let baseAttacks = weapon.attack;
+    let baseAttacks = resolveDamage(weapon.attack); //reusing function for variable damage here
     if (weapon.modifiers.blast || weapon.modifiers.cleave) {
         baseAttacks += Math.floor(unit.modelCount / 5);
     } else if (weapon.modifiers.rapidFire) {

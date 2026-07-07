@@ -66,7 +66,7 @@ export function addAttackerModule(containerElement) {
         <div class="core-stats-row">
           <div class="input-field"><label>Units</label><input type="number" class="in-units" value="1" min="1" /></div>
           <div class="input-field"><label>Models</label><input type="number" class="in-models" value="5" min="1" /></div>
-          <div class="input-field"><label>Attacks</label><input type="number" class="in-attacks" value="4" min="1" /></div>
+          <div class="input-field"><label>Attacks</label><input type="text" class="in-attacks" value="4" min="1" placeholder="D3+1" /></div>
           <div class="input-field"><label>BS/WS</label><input type="text" class="in-bsws" value="3" placeholder="NA" /></div>
           <div class="input-field"><label>Strength</label><input type="number" class="in-str" value="4" min="1" /></div>
           <div class="input-field"><label>AP</label><input type="number" class="in-ap" value="-1" max="0" /></div>

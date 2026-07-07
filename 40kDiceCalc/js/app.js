@@ -47,11 +47,11 @@ function createWeaponsArray() {
 
     modules.forEach(module => {
         const unitName = module.querySelector(".in-unit-name").value.trim();
-        const attack = parseInt(module.querySelector(".in-attacks").value, 10);
+        const attack = module.querySelector(".in-attacks").value.trim().toUpperCase() || "1";
+        const damage = module.querySelector(".in-dam").value.trim().toUpperCase() || "1";
         const bsws = module.querySelector(".in-bsws").value.trim().toUpperCase();
         const strength = parseInt(module.querySelector(".in-str").value, 10);
         const ap = parseInt(module.querySelector(".in-ap").value, 10);
-        const damage = module.querySelector(".in-dam").value.trim().toUpperCase() || "1";
         const modelCount = parseInt(module.querySelector(".in-models").value, 10);
         const unitCount = parseInt(module.querySelector(".in-units").value, 10);
 
