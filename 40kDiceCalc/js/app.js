@@ -300,7 +300,7 @@ if (CalcBtn) {
         `;
 
 
-            renderChart(results.distribution, results.SimulatedRuns);
+            renderChart(results.damageDistribution, results.SimulatedRuns);
 
             CalcBtn.textContent = "FOR THE EMPEROR!";
             CalcBtn.disabled = false;

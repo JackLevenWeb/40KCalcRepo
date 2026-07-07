@@ -15,8 +15,8 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
 
     let highestDamage = 0;
     let highestKills = 0;
-    let lowestDamage = 0;
-    let lowestKilled = 0;
+    let lowestDamage = Infinity; // starts infinitely high
+    let lowestKilled = Infinity;
 
     for (let i = 0; i < iterationsTotal; i++) {
         let currentTargetHealth = unit.wounds;
