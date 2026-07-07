@@ -64,6 +64,12 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
     for (const dmg of allTotalDamage) {
         damageDistribution[dmg] = (damageDistribution[dmg] || 0) + 1;
     }
+    const killedDistribution = {};
+    for (const killed of allModelsKilled) {
+        killedDistribution[killed] = (killedDistribution[killed] || 0) + 1;
+
+
+    }
 
     return {
         SimulatedRuns: iterationsTotal,
@@ -83,7 +89,9 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
             lowestDamage: Math.min(...allTotalDamage),
             lowestKilled: Math.min(...allModelsKilled)
         },
-        distribution: damageDistribution
+        damageDistribution: damageDistribution,
+        killedDistribution: killedDistribution
+
     };
 }
 

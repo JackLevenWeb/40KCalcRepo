@@ -12,6 +12,7 @@ export async function initDataBase() {
         db.run(`
             CREATE TABLE simulation_runs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                unit_name TEXT,
                 modifier_name TEXT,
                 category TEXT,
                 value INTEGER,
@@ -22,13 +23,13 @@ export async function initDataBase() {
     } catch (error) { console.error("Failed to initialize SQLite:", error); }
 }
 
-export function loadDataIntoSQL(modifierName, category, distribution) {
+export function loadDataIntoSQL(unitName, modifierName, category, distribution) {
     if (!db) return;
-    const stmt = db.prepare(`INSERT INTO simulation_runs (modifier_name, category, value, occurrence_count) VALUES (?, ?, ?, ?)`);
+    const stmt = db.prepare(`INSERT INTO simulation_runs (unit_name,modifier_name, category, value, occurrence_count) VALUES (?, ?, ?, ?)`);
 
     // Convert distribution { "5": 1200 } into rows
     for (const [amount, count] of Object.entries(distribution)) {
-        stmt.run([modifierName, category, parseInt(amount, 10), count]);
+        stmt.run([unitName, modifierName, category, parseInt(amount, 10), count]);
     }
     stmt.free();
 }

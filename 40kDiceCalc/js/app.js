@@ -143,69 +143,14 @@ function runWorkerSimulation(iterations, weaponsArray, targetUnit) {
 
 }
 
-// execution
-CalcBtn.addEventListener("click", () => {
-    CalcBtn.textContent = "Rolling dice...";
-    CalcBtn.disabled = true;
-    const attackerWeapons = createWeaponsArray();
-    const targetUnit = createUnit();
 
-    const worker = new Worker(new URL('./webWorker.js', import.meta.url), { type: 'module' });
-
-    worker.addEventListener('error', (error) => {
-        console.error("PIPELINE CRASH:", error.message);
-        CalcBtn.textContent = "Pipeline Error (Check Console)";
-        CalcBtn.disabled = false;
-        worker.terminate();
-    });
-
-    worker.addEventListener('message', (event) => {
-        const results = event.data;
-        currentSimulationResults = results;
-
-        document.getElementById("results-wrapper").style.display = "grid";
-        document.getElementById("stats-html").innerHTML = `
-            <div class="stat-card">
-                <h5>Average Damage Dealt</h5>
-                <div class="stat-value">${results.averages.damage.toFixed(2)}</div>
-                <div class="stat-sub">Highest Spike: ${results.extremes.highestDamage}</div>
-            </div>
-            <div class="stat-card">
-                <h5>Average Models Killed</h5>
-                <div class="stat-value">${results.averages.killed.toFixed(2)}</div>
-                <div class="stat-sub">Max Killed: ${results.extremes.highestKills}</div>
-            </div>
-            <div class="stat-card" style="border-left-color: var(--accent-red);">
-                <h5>Wasted Damage (Overkill)</h5>
-                <div class="stat-value">${results.averages.wasted.toFixed(2)}</div>
-                <div class="stat-sub">Damage Efficiency: ${results.averages.efficiency}%</div>
-            </div>
-        `;
-
-
-        renderChart(results.distribution, results.SimulatedRuns);
-
-        CalcBtn.textContent = "FOR THE EMPEROR!";
-        CalcBtn.disabled = false;
-        worker.terminate();
-
-    });
-
-
-    worker.postMessage({
-        iterations: SIMULATION_ITERATIONS, // running 50k now instead of 10k
-        weaponsArray: attackerWeapons,
-        targetUnit: targetUnit
-    });
-
-
-
-});
 
 const SIMULATION_SCENARIOS = {
     "Hit Mods": ["hit_plus_1", "reroll_hits_1", "reroll_hits_all", "sustained_hits"],
     "Wound Mods": ["wound_plus_1", "reroll_wounds_1", "reroll_wounds_all", "lethal"],
-    "Save/Ap": ["extra_ap_1", "devastating"]
+    "Save/Ap": ["extra_ap_1"],
+    "DamageDone": ["devastating"],
+    "ModelsKilled": ["devastating"]
 };
 
 function applyModifierToWeapon(weapon, modKey) {
@@ -222,8 +167,6 @@ function applyModifierToWeapon(weapon, modKey) {
     if (modKey === "extra_ap_1") weapon.Ap -= 1;
     if (modKey === "devastating") weapon.modifiers.devastating = true;
 }
-
-
 
 // redundancy filter
 function isModRedundant(weaponsArray, modKey) {
@@ -316,6 +259,67 @@ function generateAdvancedReport(category, sqlData, totalRuns, allowedMods, stats
     renderAdvancedChart(card.querySelector('.adv-chart'), category, sqlData, totalRuns, allowedMods);
 }
 
+// execution
+if (CalcBtn) {
+    CalcBtn.addEventListener("click", () => {
+        CalcBtn.textContent = "Rolling dice...";
+        CalcBtn.disabled = true;
+        const attackerWeapons = createWeaponsArray();
+        const targetUnit = createUnit();
+
+        const worker = new Worker(new URL('./webWorker.js', import.meta.url), { type: 'module' });
+
+        worker.addEventListener('error', (error) => {
+            console.error("PIPELINE CRASH:", error.message);
+            CalcBtn.textContent = "Pipeline Error (Check Console)";
+            CalcBtn.disabled = false;
+            worker.terminate();
+        });
+
+        worker.addEventListener('message', (event) => {
+            const results = event.data;
+            currentSimulationResults = results;
+
+            document.getElementById("results-wrapper").style.display = "grid";
+            document.getElementById("stats-html").innerHTML = `
+            <div class="stat-card">
+                <h5>Average Damage Dealt</h5>
+                <div class="stat-value">${results.averages.damage.toFixed(2)}</div>
+                <div class="stat-sub">Highest Spike: ${results.extremes.highestDamage}</div>
+            </div>
+            <div class="stat-card">
+                <h5>Average Models Killed</h5>
+                <div class="stat-value">${results.averages.killed.toFixed(2)}</div>
+                <div class="stat-sub">Max Killed: ${results.extremes.highestKills}</div>
+            </div>
+            <div class="stat-card" style="border-left-color: var(--accent-red);">
+                <h5>Wasted Damage (Overkill)</h5>
+                <div class="stat-value">${results.averages.wasted.toFixed(2)}</div>
+                <div class="stat-sub">Damage Efficiency: ${results.averages.efficiency}%</div>
+            </div>
+        `;
+
+
+            renderChart(results.distribution, results.SimulatedRuns);
+
+            CalcBtn.textContent = "FOR THE EMPEROR!";
+            CalcBtn.disabled = false;
+            worker.terminate();
+
+        });
+
+
+        worker.postMessage({
+            iterations: SIMULATION_ITERATIONS, // running 50k now instead of 10k
+            weaponsArray: attackerWeapons,
+            targetUnit: targetUnit
+        });
+
+
+
+    });
+}
+
 //ADV PIPELINE ORCHESTRATOR LOOP >>> might be some issues in here...
 // adv analytics button here>>
 if (advAnalyticsBtn) {
@@ -337,6 +341,8 @@ if (advAnalyticsBtn) {
             loadDataIntoSQL("Base", "Hit", baseResults.hitDistribution);
             loadDataIntoSQL("Base", "Wound", baseResults.woundDistribution);
             loadDataIntoSQL("Base", "Save", baseResults.saveDistribution);
+            loadDataIntoSQL("Base", "Damage", baseResults.damageDistribution);
+            loadDataIntoSQL("Base", "Damage", modelsKilled);
 
             // Generate the Concise Stats HTML
             let statsHTML = buildBaseStatsHTML(baseWeapons, targetUnit);
