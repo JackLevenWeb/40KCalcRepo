@@ -8,7 +8,6 @@ const SIMULATION_ITERATIONS = 50000;
 const CalcBtn = document.getElementById("calculate-btn");
 const AddAttackerBtn = document.getElementById("add-attacker-btn");
 const RosterContainer = document.getElementById("attacker-roster");
-const ChartToggle = document.getElementById("chart-toggle");
 const ExportBtn = document.getElementById("export-roster-btn");
 const RosterNameInput = document.getElementById("roster-name");
 const ImportBtn = document.getElementById("import-roster-btn");
@@ -32,13 +31,6 @@ AddAttackerBtn.addEventListener("click", () => {
     syncAppUI();
 });
 
-if (ChartToggle) {
-    ChartToggle.addEventListener("change", (e) => {
-        if (currentSimulationResults) {
-            renderChart(currentSimulationResults.distribution, e.target.value);
-        }
-    });
-}
 
 // get needed data
 function createWeaponsArray() {
@@ -190,8 +182,8 @@ CalcBtn.addEventListener("click", () => {
             </div>
         `;
 
-        const currentMode = ChartToggle ? ChartToggle.value : 'exact';
-        renderChart(results.distribution, results.SimulatedRuns, currentMode);
+
+        renderChart(results.distribution, results.SimulatedRuns);
 
         CalcBtn.textContent = "FOR THE EMPEROR!";
         CalcBtn.disabled = false;
@@ -252,10 +244,21 @@ function isModRedundant(weaponsArray, modKey) {
 // ui helper
 function buildBaseStatsHTML(weaponsArray, targetUnit) {
     // target Stats
+    let targetMods = [];
+    if (targetUnit.modifiers.minusOneHit) targetMods.push("-1 to Hit");
+    if (targetUnit.modifiers.minusOneWound) targetMods.push("-1 to Wound");
+    if (targetUnit.modifiers.minusOneWoundHighStr) targetMods.push("S>T -1 Wound");
+    if (targetUnit.modifiers.cover) targetMods.push("Cover");
+    if (targetUnit.modifiers.halfDamage) targetMods.push("Half Damage");
+    if (targetUnit.modifiers.minusOneDamage) targetMods.push("-1 Damage");
+
+    let targetModsStr = targetMods.length > 0 ? targetMods.join(' | ') : "[No Mods]";
+
     let html = `
         <div style="margin-bottom: 10px;">
             <strong style="color: #9ac1df;">TARGET:</strong><br>
-            T${targetUnit.toughness} | W${targetUnit.wounds} | SV ${targetUnit.save}+ | Invul ${targetUnit.inVul ? targetUnit.inVul + '+' : 'None'}
+            T${targetUnit.toughness} | W${targetUnit.wounds} | SV ${targetUnit.save}+ | Invul ${targetUnit.inVul ? targetUnit.inVul + '+' : 'None'} <br>
+            <span style="color: #E63946; font-size: 0.8rem; font-weight: bold;">${targetModsStr}</span>
         </div>
         <strong style="color: #9ac1df;">ATTACKER(S):</strong>
     `;
@@ -269,14 +272,33 @@ function buildBaseStatsHTML(weaponsArray, targetUnit) {
         if (w.modifiers.rerollHits !== "none") activeMods.push(`RR Hits`);
         if (w.modifiers.rerollWounds !== "none") activeMods.push(`RR Wounds`);
         if (w.modifiers.anti > 0) activeMods.push(`Anti-${w.modifiers.anti}+`);
+        if (w.modifiers.lance) activeMods.push("Lance");
+        if (w.modifiers.rapidFire > 0) activeMods.push(`Rapid Fire ${w.modifiers.rapidFire}`);
+        if (w.modifiers.melta > 0) activeMods.push(`Melta ${w.modifiers.melta}`);
+        if (w.modifiers.torrent) activeMods.push("Torrent");
+        if (w.modifiers.twinLinked) activeMods.push("Twin-Linked");
+        if (w.modifiers.blast) activeMods.push("Blast");
+        if (w.modifiers.cleave) activeMods.push("Cleave");
+        if (w.modifiers.hitMod > 0) activeMods.push(`+${w.modifiers.hitMod} Hit`);
+        if (w.modifiers.hitMod < 0) activeMods.push(`${w.modifiers.hitMod} Hit`);
+        if (w.modifiers.woundMod > 0) activeMods.push(`+${w.modifiers.woundMod} Wound`);
+        if (w.modifiers.woundMod < 0) activeMods.push(`${w.modifiers.woundMod} Wound`);
 
         let modsStr = activeMods.length > 0 ? `[${activeMods.join(', ')}]` : `[No Mods]`;
 
         html += `
-            <div style="margin-top: 5px; padding-top: 5px; border-top: 1px solid #38424D;">
-                <span style="color: #fff;">${w.unitName}</span><br>
-                ${w.unitCount * w.modelCount} Models - ${w.attack}A per - ${w.BsWs}+ BS<br>
-                <span style="color: #C48235; font-size: 0.75rem; font-weight: bold;">${modsStr}</span>
+            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #38424D;">
+                <strong style="color: #fff; font-size: 1.05rem;">${w.unitName} - Base Stats</strong><br>
+                <span style="color: #8C9BA8; line-height: 1.4;">
+                    ${w.unitCount * w.modelCount} Models<br>
+                    ${w.attack} Attacks per model<br>
+                    BS/WS ${w.BsWs}+ <br>
+                    Strength ${w.strength} <br>
+                    AP ${w.Ap}
+                </span><br>
+                <div style="color: #C48235; font-size: 0.8rem; font-weight: bold; margin-top: 4px;">
+                    ${modsStr}
+                </div>
             </div>
         `;
     });
@@ -361,7 +383,7 @@ if (advAnalyticsBtn) {
 
 
 
-// chart
+// standard chart
 function renderChart(distribution, totalRuns, mode = 'exact') {
     const ctx = document.getElementById('damageChart').getContext('2d');
 
@@ -389,36 +411,52 @@ function renderChart(distribution, totalRuns, mode = 'exact') {
         cumulativeData[i] = runningTotal;
     }
 
-    const isCumulative = mode === 'cumulative';
-    const activeData = isCumulative ? cumulativeData : exactData;
-    const yAxisLabel = isCumulative ? 'Chance to Deal THIS OR MORE (%)' : 'Chance to Deal EXACTLY THIS (%)';
+
+    // const yAxisLabel = isCumulative ? 'Chance to Deal THIS OR MORE (%)' : 'Chance to Deal EXACTLY THIS (%)';
 
     damageChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
             labels: chartLabels,
-            datasets: [{
-                label: 'Damage Probability',
-                data: activeData,
-                borderColor: '#9ac1df',
-                backgroundColor: 'rgba(154, 193, 223, 0.15)',
-                borderWidth: 2,
-                pointBackgroundColor: '#0F1115',
-                pointBorderColor: '#9ac1df',
-                pointHoverBackgroundColor: '#C48235',
-                pointHoverBorderColor: '#C48235',
-                pointRadius: 2,
-                pointHoverRadius: 6,
-                fill: true,
-                tension: isCumulative ? 0.1 : 0.4
-            }]
+            datasets: [
+                {
+                    label: 'Exactly This Damage',
+                    data: exactData,
+                    borderColor: '#9ac1df', // --sw-light-blue
+                    backgroundColor: 'rgba(154, 193, 223, 0.15)',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#0F1115',
+                    pointBorderColor: '#9ac1df',
+                    pointHoverBackgroundColor: '#9ac1df',
+                    pointHoverBorderColor: '#9ac1df',
+                    pointRadius: 2,
+                    pointHoverRadius: 6,
+                    fill: true,
+                    tension: 0.4
+                },
+                {
+                    label: 'At Least This Damage',
+                    data: cumulativeData,
+                    borderColor: '#C48235', // --accent-bronze
+                    backgroundColor: 'rgba(196, 130, 53, 0.15)',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#0F1115',
+                    pointBorderColor: '#C48235',
+                    pointHoverBackgroundColor: '#C48235',
+                    pointHoverBorderColor: '#C48235',
+                    pointRadius: 2,
+                    pointHoverRadius: 6,
+                    fill: true,
+                    tension: 0.1
+                }
+            ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             interaction: {
-                mode: 'index',
-                intersect: false,
+                mode: 'nearest', // closest line to cursor
+                intersect: false
             },
             scales: {
                 x: {
@@ -427,18 +465,21 @@ function renderChart(distribution, totalRuns, mode = 'exact') {
                     grid: { color: '#38424D' }
                 },
                 y: {
-                    title: { display: true, text: yAxisLabel, color: '#8C9BA8', font: { weight: 'bold' } },
+                    title: { display: true, text: 'Probability (%)', color: '#8C9BA8', font: { weight: 'bold' } },
                     ticks: {
                         color: '#9ac1df',
                         callback: function (value) { return value + '%'; }
                     },
                     grid: { color: '#38424D' },
                     beginAtZero: true,
-                    max: isCumulative ? 100 : undefined
+                    max: 100
                 }
             },
             plugins: {
-                legend: { display: false },
+                legend: {
+                    display: true,
+                    labels: { color: '#fff' }
+                },
                 tooltip: {
                     backgroundColor: 'rgba(15, 17, 21, 0.95)',
                     titleColor: '#9ac1df',
@@ -449,21 +490,7 @@ function renderChart(distribution, totalRuns, mode = 'exact') {
                     callbacks: {
                         title: function (context) { return 'Damage: ' + context[0].label; },
                         label: function (context) {
-                            const index = context.dataIndex;
-                            const exactVal = exactData[index].toFixed(2) + '%';
-                            const cumVal = cumulativeData[index].toFixed(2) + '%';
-
-                            if (isCumulative) {
-                                return [
-                                    'At Least ' + context.label + ' Damage: ' + cumVal,
-                                    'Exactly ' + context.label + ' Damage: ' + exactVal
-                                ];
-                            } else {
-                                return [
-                                    'Exactly ' + context.label + ' Damage: ' + exactVal,
-                                    'At Least ' + context.label + ' Damage: ' + cumVal
-                                ];
-                            }
+                            return context.dataset.label + ': ' + context.raw.toFixed(2) + '%';
                         }
                     }
                 }
@@ -499,10 +526,20 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
             return row ? (row[3] / totalRuns) * 100 : 0;
         });
 
+        const cumulativeArray = [];
+        let runningTotal = 0;
+
+        for (let i = dataArray.length - 1; i >= 0; i--) {
+            runningTotal += dataArray[i];
+            cumulativeArray[i] = runningTotal;
+
+
+        }
+
         const colors = ['#8C9BA8', '#9B2226', '#9ac1df', '#C48235', '#55efc4'];
         return {
             label: ModLabels[modName] || modName,
-            data: dataArray,
+            data: cumulativeArray,
             borderColor: colors[index % colors.length],
             backgroundColor: colors[index % colors.length] + '22',
             fill: true,
@@ -516,10 +553,10 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
         data: { labels: chartLabels, datasets: datasets },
         options: {
             responsive: true, maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
+            interaction: { mode: 'nearest', intersect: false },
             scales: {
                 x: { title: { display: true, text: `Total Successful ${category}s`, color: '#8C9BA8', font: { weight: 'bold' } }, ticks: { color: '#9ac1df' }, grid: { color: '#38424D' } },
-                y: { title: { display: true, text: 'Chance (%)', color: '#8C9BA8', font: { weight: 'bold' } }, ticks: { color: '#9ac1df' }, grid: { color: '#38424D' }, beginAtZero: true }
+                y: { title: { display: true, text: `At Least - (%) Chance of ${category}`, color: '#8C9BA8', font: { weight: 'bold' } }, ticks: { color: '#9ac1df' }, grid: { color: '#38424D' }, beginAtZero: true }
             },
             plugins: {
                 legend: { display: true, labels: { color: '#fff' } },
