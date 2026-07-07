@@ -170,7 +170,6 @@ export function runHurtSystem(weapon, unit, startingHealth) {
     }
 
     const totalDamageEvents = failedSavesCount + devWounds;
-    const totalDamageEvents = failedSavesCount + devWounds;
     if (totalDamageEvents === 0) {
         return {
             hits: { rawSuccesses: hitData.successes, bonusHits: hitData.bonus, autoWounds: autoWounds },
@@ -202,17 +201,7 @@ export function runHurtSystem(weapon, unit, startingHealth) {
     };
 }
 
-// --- HELPER FUNCTIONS ---
-
-function zeroReturn(health) {
-    return {
-        hits: { rawSuccesses: 0, bonusHits: 0, autoWounds: 0 },
-        wounds: { rawSuccesses: 0, devWounds: 0 },
-        damage: { totalDamage: 0, modelsKilled: 0, wastedDamage: 0 },
-        finalHealth: health
-    };
-}
-
+// helper functions
 function calculateAttacks(weapon, unit) {
     let baseAttacks = resolveDamage(weapon.attack); //reusing function for variable damage here
     if (weapon.modifiers.blast || weapon.modifiers.cleave) {
