@@ -335,7 +335,7 @@ if (advAnalyticsBtn) {
 
 
 
-        document.getElementById("results-wrapper").style.display = "none";
+
         document.getElementById("advanced-analytics-wrapper").style.display = "block";
         document.getElementById("advanced-reports-container").innerHTML = "";
 
@@ -619,10 +619,16 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
 
 
         }
+        //only want "AP-2 in profile for saves graph"
+        let displayLabel = ModLabels[modName] || modName;
+
+        if (modName === "Base" && category !== "Save") {
+            displayLabel = "Base Profile";
+        }
 
         const colors = ['#8C9BA8', '#9B2226', '#9ac1df', '#C48235', '#55efc4'];
         return {
-            label: ModLabels[modName] || modName,
+            label: displayLabel,
             data: cumulativeArray,
             borderColor: colors[index % colors.length],
             backgroundColor: colors[index % colors.length] + '22',
