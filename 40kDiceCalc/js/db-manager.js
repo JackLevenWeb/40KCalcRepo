@@ -55,7 +55,8 @@ export const ModLabels = {
     "reroll_wounds_all": "Reroll All Wounds",
     "lethal": "Lethal Hits",
     "extra_ap_1": "AP -1",
-    "devastating": "Devastating Wounds"
+    "devastating": "Devastating Wounds",
+    "melta_range": "In melta range"
 };
 
 export function clearDataBase() {

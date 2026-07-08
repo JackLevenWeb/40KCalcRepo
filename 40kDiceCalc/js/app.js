@@ -144,12 +144,12 @@ function runWorkerSimulation(iterations, weaponsArray, targetUnit) {
 }
 
 
-
+//scenarios dictionary
 const SIMULATION_SCENARIOS = {
     "Hit Mods": ["hit_plus_1", "reroll_hits_1", "reroll_hits_all", "sustained_hits"],
     "Wound Mods": ["wound_plus_1", "reroll_wounds_1", "reroll_wounds_all", "lethal"],
     "Save/Ap": ["extra_ap_1"],
-    "Damage Mods": ["devastating"]
+    "Damage Mods": ["devastating", "melta_range"]
 };
 
 function applyModifierToWeapon(weapon, modKey) {
@@ -165,9 +165,14 @@ function applyModifierToWeapon(weapon, modKey) {
 
     if (modKey === "extra_ap_1") weapon.Ap -= 1;
     if (modKey === "devastating") weapon.modifiers.devastating = true;
+    if (modKey === "melta_range") {
+        //for clarity on melta vs other mods
+        // do nothing, weapon already natively holds its Melta value,
+        // just needed to trigger a separate scenario run for it
+    }
 }
 
-// redundancy filter
+// redundancy filter - used to 'skip' scenarios when mod is already applied or has no affect(eg metla 0)
 function isModRedundant(weaponsArray, modKey) {
     return weaponsArray.some(w => {
         if (modKey === "hit_plus_1") return w.modifiers.hitMod > 0;
@@ -179,11 +184,12 @@ function isModRedundant(weaponsArray, modKey) {
         if (modKey === "reroll_wounds_all") return w.modifiers.rerollWounds === "all";
         if (modKey === "lethal") return w.modifiers.lethal === true;
         if (modKey === "devastating") return w.modifiers.devastating === true;
+        if (modKey === "melta_range") return w.modifiers.melta === 0;
         return false;
     });
 }
 
-// ui helper - specific stats data goes where and when
+// ui helper - specific 'reading' stats data goes where and when
 function buildBaseStatsHTML(weaponsArray, targetUnit) {
     // target Stats
     let targetMods = [];
@@ -342,6 +348,18 @@ if (advAnalyticsBtn) {
             for (const baseWeapon of baseWeapons) {
                 const unitName = baseWeapon.unitName;
 
+                //creating specific unit containers
+                const mainContainer = document.getElementById("advanced-reports-container");
+                const unitAccordion = document.createElement("details");
+                unitAccordion.style.marginBottom = "20px";
+                unitAccordion.innerHTML = `
+                    <summary style="background: var(--sw-mid-blue); padding: 15px; cursor: pointer; font-weight: bold; border-radius: 6px; font-size: 1.1rem; margin-bottom: 15px;">
+                        ${unitName} - Advanced Analytics
+                    </summary>
+                    <div class="unit-reports-wrapper"></div>
+                `;
+                mainContainer.appendChild(unitAccordion);
+
                 ModLabels["Base"] = `Base Profile (AP ${baseWeapon.Ap})`;
                 ModLabels["extra_ap_1"] = `AP ${baseWeapon.Ap - 1}`;
 
@@ -363,11 +381,16 @@ if (advAnalyticsBtn) {
 
                 let baseResults = await runWorkerSimulation(SIMULATION_ITERATIONS, singleWeaponRoster, targetUnit);
 
+                //base profile runs
                 loadDataIntoSQL(unitName, "Base", "Hit", baseResults.hitDistribution);
                 loadDataIntoSQL(unitName, "Base", "Wound", baseResults.woundDistribution);
                 loadDataIntoSQL(unitName, "Base", "Save", baseResults.saveDistribution);
                 loadDataIntoSQL(unitName, "Base", "Damage", baseResults.damageDistribution);
                 loadDataIntoSQL(unitName, "Base", "ModelsKilled", baseResults.killedDistribution);
+
+                //restore OG melta
+                baseWeapon.modifiers.melta = originalMelta;
+
                 for (const [category, mods] of Object.entries(SIMULATION_SCENARIOS)) {
                     for (const modKey of mods) {
 
