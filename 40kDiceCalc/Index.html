@@ -64,6 +64,43 @@
               </button>
             </div>
           </div>
+          <div
+            class="global-rules-panel"
+            style="
+              background: rgba(196, 130, 53, 0.1);
+              padding: 15px;
+              border-radius: 6px;
+              margin-bottom: 15px;
+              border: 1px dashed var(--accent-bronze);
+            "
+          >
+            <div style="display: flex; gap: 10px; align-items: center">
+              <label style="font-weight: bold; color: var(--accent-bronze)"
+                >Army Wide Rules:</label
+              >
+              <select id="global-mod-dropdown" style="flex-grow: 1">
+                <option value="none">
+                  -- Select Rule to Apply to ALL Units --
+                </option>
+                <option value="lethal">Lethal Hits</option>
+                <option value="devastating">Devastating Wounds</option>
+                <option value="sustained">Sustained Hits</option>
+                <option value="lance">Lance</option>
+                <option value="reroll_hits_1">Reroll 1s to Hit</option>
+                <option value="reroll_hits_all">Reroll All (Hit)</option>
+                <option value="reroll_wounds_1">Reroll 1s to Wound</option>
+                <option value="reroll_wounds_all">Reroll All (Wound)</option>
+                <option value="hit_plus_1">+1 to Hit</option>
+              </select>
+              <button
+                id="add-global-mod-btn"
+                class="btn-primary"
+                style="background-color: var(--accent-bronze); color: #0f1115"
+              >
+                Apply to All
+              </button>
+            </div>
+          </div>
           <div id="attacker-roster"></div>
         </section>
 

@@ -138,7 +138,7 @@ export function addAttackerModule(containerElement) {
     });
 }
 
-function addBadgeToModule(moduleNode, modKey, isGranted) {
+export function addBadgeToModule(moduleNode, modKey, isGranted) {
     const list = moduleNode.querySelector(".active-modifiers-list");
     if (list.querySelector(`.mod-badge[data-key="${modKey}"]`)) return;
 
@@ -172,6 +172,8 @@ function addBadgeToModule(moduleNode, modKey, isGranted) {
     list.appendChild(badge);
 }
 
+
+//ui Reconciliation
 export function syncAppUI() {
     const modules = document.querySelectorAll('.attacker-module');
     const allNames = Array.from(modules).map(m => m.querySelector('.in-unit-name').value.trim());

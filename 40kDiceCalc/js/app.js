@@ -1,7 +1,7 @@
 import { Unit } from './classes/Unit.js';
 import { Weapon } from './classes/Weapon.js';
 import { runSimulation } from './logic.js';
-import { addAttackerModule, syncAppUI, buildRosterFromJSON, spawnReportCard } from './ui-manager.js';
+import { addAttackerModule, syncAppUI, buildRosterFromJSON, spawnReportCard, addBadgeToModule } from './ui-manager.js';
 import { initDataBase, loadDataIntoSQL, queryComparisonData, clearDataBase, ModLabels } from './db-manager.js';
 const SIMULATION_ITERATIONS = 50000;
 
@@ -349,7 +349,7 @@ if (advAnalyticsBtn) {
             for (const baseWeapon of baseWeapons) {
                 const unitName = baseWeapon.unitName;
 
-                //creating specific unit containers
+                //creating specific unit containersgit push
                 const mainContainer = document.getElementById("advanced-reports-container");
                 const unitAccordion = document.createElement("details");
                 unitAccordion.style.marginBottom = "20px";
@@ -447,6 +447,34 @@ if (advAnalyticsBtn) {
 
         advAnalyticsBtn.textContent = "Run Advanced Analytics";
         advAnalyticsBtn.disabled = false;
+    });
+}
+
+
+//global army mods
+const GlobalModBtn = document.getElementById("add-global-mod-btn");
+const GlobalModSelect = document.getElementById("global-mod-dropdown");
+
+if (GlobalModBtn) {
+    GlobalModBtn.addEventListener("click", () => {
+        const modKey = GlobalModSelect.value;
+
+
+        if (modKey === "none") return;
+
+
+        const allModules = document.querySelectorAll('.attacker-module');
+
+
+
+        allModules.forEach(module => {
+            addBadgeToModule(module, modKey, false);
+
+        });
+        GlobalModSelect.value = "none";
+        syncAppUI();
+
+
     });
 }
 
