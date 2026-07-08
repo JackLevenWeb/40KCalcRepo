@@ -258,9 +258,8 @@ function buildBaseStatsHTML(weaponsArray, targetUnit) {
 
 // add an allowedMods parameter so we can filter out graph mods contamination
 // report generator
-function generateAdvancedReport(title, category, sqlData, totalRuns, allowedMods, statsHTML) {
-    const container = document.getElementById("advanced-reports-container");
-    const card = spawnReportCard(title, container, statsHTML);
+function generateAdvancedReport(title, category, sqlData, totalRuns, allowedMods, statsHTML, targetContainer) {
+    const card = spawnReportCard(title, targetContainer, statsHTML);
     renderAdvancedChart(card.querySelector('.adv-chart'), category, sqlData, totalRuns, allowedMods);
 }
 
@@ -344,6 +343,8 @@ if (advAnalyticsBtn) {
         const targetUnit = createUnit();
 
         try {
+            let isFirstUnit = true;
+
             // base
             for (const baseWeapon of baseWeapons) {
                 const unitName = baseWeapon.unitName;
@@ -359,6 +360,13 @@ if (advAnalyticsBtn) {
                     <div class="unit-reports-wrapper"></div>
                 `;
                 mainContainer.appendChild(unitAccordion);
+
+                //open first wrapper
+                if (isFirstUnit) {
+                    unitAccordion.open = true;
+
+                }
+                isFirstUnit = false;
 
                 ModLabels["Base"] = `Base Profile (AP ${baseWeapon.Ap})`;
                 ModLabels["extra_ap_1"] = `AP ${baseWeapon.Ap - 1}`;
@@ -420,13 +428,15 @@ if (advAnalyticsBtn) {
                 // query the Database and Draw the 5 Charts for THIS unit
                 const sqlData = queryComparisonData(unitName);
 
+                //target unitAccordion unit wrapper
+                const attackerUnitReport = unitAccordion.querySelector('.unit-reports-wrapper');
 
 
-                generateAdvancedReport(`${unitName}: Hit`, "Hit", sqlData, SIMULATION_ITERATIONS, allowedHitMods, statsHTML);
-                generateAdvancedReport(`${unitName}: Wound`, "Wound", sqlData, SIMULATION_ITERATIONS, allowedWoundMods, statsHTML);
-                generateAdvancedReport(`${unitName}: Save`, "Save", sqlData, SIMULATION_ITERATIONS, allowedSaveMods, statsHTML);
-                generateAdvancedReport(`${unitName}: Damage`, "Damage", sqlData, SIMULATION_ITERATIONS, allowedDamageMods, statsHTML);
-                generateAdvancedReport(`${unitName}: ModelsKilled`, "ModelsKilled", sqlData, SIMULATION_ITERATIONS, allowedKilledMods, statsHTML);
+                generateAdvancedReport(`${unitName}: Hit`, "Hit", sqlData, SIMULATION_ITERATIONS, allowedHitMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: Wound`, "Wound", sqlData, SIMULATION_ITERATIONS, allowedWoundMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: Save`, "Save", sqlData, SIMULATION_ITERATIONS, allowedSaveMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: Damage`, "Damage", sqlData, SIMULATION_ITERATIONS, allowedDamageMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: ModelsKilled`, "ModelsKilled", sqlData, SIMULATION_ITERATIONS, allowedKilledMods, statsHTML, attackerUnitReport);
 
 
             }

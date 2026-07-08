@@ -56,7 +56,10 @@ export function addAttackerModule(containerElement) {
                     <option value="sustained">Sustained Hits</option>
                     <option value="lance">Lance</option>
                     <option value="reroll_hits_1">Reroll 1s to Hit</option>
+                    <option value="reroll_hits_all">Reroll All (Hit)</option>
                     <option value="reroll_wounds_1">Reroll 1s to Wound</option>
+                    <option value="reroll_wounds_all">Reroll All (Wound)</option>
+                    <option value="hit_plus_1">+1 to Hit</option>
                  </select>
               </div>
           </div>
