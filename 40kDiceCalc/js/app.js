@@ -356,6 +356,11 @@ if (advAnalyticsBtn) {
                 let allowedKilledMods = ["Base"];
 
                 let singleWeaponRoster = [baseWeapon];
+
+                //adding for clarity on how metla affects damage/modelsKilled
+                const originalMelta = baseWeapon.modifiers.melta;
+                baseWeapon.modifiers.melta = 0;
+
                 let baseResults = await runWorkerSimulation(SIMULATION_ITERATIONS, singleWeaponRoster, targetUnit);
 
                 loadDataIntoSQL(unitName, "Base", "Hit", baseResults.hitDistribution);
@@ -463,7 +468,7 @@ function renderChart(distribution, totalRuns, mode = 'exact') {
                     pointRadius: 2,
                     pointHoverRadius: 6,
                     fill: true,
-                    tension: 0.4
+                    tension: 0.1
                 },
                 {
                     label: 'At Least This Damage',
@@ -538,11 +543,26 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
     const categoryRows = sqlRows.filter(r => r[2] === category && allowedMods.includes(r[0]));
 
     // fix the X-Axis scale
-    let minVal = 999, maxVal = 0;
+    let minVal = 0, maxVal = 0;
     categoryRows.forEach(r => {
-        if (r[1] < minVal) minVal = r[1];
         if (r[1] > maxVal) maxVal = r[1];
     });
+
+    //acounting for when no damage can be dealt across all sims
+    if (maxVal === 0) {
+        maxVal = 1;
+        let warningColur = "#39FF14"
+        let warningText = category === "ModelsKilled" ? "(ZERO MODELS KILLED)" : "(ZERO IMPACT)";
+        const card = canvasElement.closest('.report-card');
+
+        if (card) {
+            const titleElement = card.querySelector('h3');
+            if (titleElement && !titleElement.innerHTML.includes(warningText)) {
+                titleElement.innerHTML += ` <span style="color: ${warningColur}; font-size: 0.55rem;">${warningText}</span>`;
+            }
+        }
+
+    }
 
     const chartLabels = [];
     for (let i = minVal; i <= maxVal; i++) chartLabels.push(i);
@@ -574,7 +594,7 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
             borderColor: colors[index % colors.length],
             backgroundColor: colors[index % colors.length] + '22',
             fill: true,
-            borderWidth: 2, tension: 0.3, pointRadius: 0, pointHoverRadius: 5
+            borderWidth: 2, tension: 0.1, pointRadius: 0, pointHoverRadius: 5, cubicInterpolationMode: 'monotone'
         };
     });
 

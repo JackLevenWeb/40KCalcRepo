@@ -212,6 +212,7 @@ export function syncAppUI() {
 
                 if (granted !== "none") {
                     addBadgeToModule(targetModule, granted, true);
+                    addBadgeToModule(leaderModule, granted, true);
                 }
             }
         }
