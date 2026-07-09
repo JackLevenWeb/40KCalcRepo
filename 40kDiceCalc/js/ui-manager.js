@@ -271,18 +271,27 @@ export function buildRosterFromJSON(containerElement, jsonData) {
     syncAppUI();
 };
 
-export function spawnReportCard(title, container, statsHTML) {
+
+//creating graph roll stat and base stat blocks
+export function spawnReportCard(title, container, statsHTML, avgStatsHTML) {
     const cardHTML = `
-        <div class="report-card" style="margin-bottom: 30px; display: grid; grid-template-columns: 250px 1fr; gap: 20px;">
-            <div class="stats-sidebar" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 6px; border-left: 2px solid var(--sw-mid-blue);">
-                <h3 style="color: var(--sw-light-blue); margin-bottom: 10px;">${title}</h3>
-                <div class="mod-stats-list" style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">
-                    ${statsHTML}
+        <div class="report-card" style="margin-bottom: 20px; background: rgba(15, 17, 21, 0.4); border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden;">
+            
+            <div class="core-stats-header" style="padding: 10px 15px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border-color);">
+                ${statsHTML}
+            </div>
+
+            <div style="display: grid; grid-template-columns: 375px 1fr; gap: 0; align-items: stretch;">
+                <div class="avg-stats-sidebar" style="background: rgba(0,0,0,0.25); padding: 15px; border-right: 1px solid var(--border-color);">
+                    <h4 style="color: var(--sw-light-blue); margin-top: 0; margin-bottom: 10px; font-size: 1rem;">${title} Averages</h4>
+                    ${avgStatsHTML}
+                </div>
+                
+                <div style="padding: 15px; min-height: 250px; position: relative;">
+                    <canvas class="adv-chart"></canvas>
                 </div>
             </div>
-            <div style="height: 300px;">
-                <canvas class="adv-chart"></canvas>
-            </div>
+
         </div>
     `;
     container.insertAdjacentHTML('beforeend', cardHTML);

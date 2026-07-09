@@ -7,7 +7,8 @@
   
   --sw-light-blue: #9ac1df; /* Main Space Wolves Ice Grey/Blue */
   --sw-input-bg: #c5ddef; /* 35% Lighter Blue-Grey for inputs */
-  --sw-mid-blue: #4A637B; /* Darker Fenrisian armor blue */
+  --sw-mid-blue: rgb(74, 99, 123); /* Darker Fenrisian armor blue */
+  --sw-mid-blue-hover: #293846; /* Blue Hover */
   
   --text-primary: #9ac1df; 
   --text-secondary: #8C9BA8;
@@ -242,6 +243,37 @@ button#calculate-btn:hover {
 }
 
 button#calculate-btn:disabled { 
+  background-color: var(--border-color); 
+  cursor: not-allowed; 
+  transform: none;
+  box-shadow: none;
+}
+
+
+button#advanced-analytics-btn{
+  width: 100%;
+  background-color: var(--sw-mid-blue);
+  color: #fff;
+  border: 2px solid #000;
+  border-radius: 6px;
+  padding: 18px 20px;
+  font-size: 1.2rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 10px  rgb(92, 124, 153);;
+}
+
+button#advanced-analytics-btn:hover { 
+  background-color: var(--sw-mid-blue-hover); 
+  box-shadow: 0 6px 14px  rgb(39, 55, 70);;
+  transform: translateY(-2px);
+}
+
+button#advanced-analytics-btn:disabled { 
   background-color: var(--border-color); 
   cursor: not-allowed; 
   transform: none;

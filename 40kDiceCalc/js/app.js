@@ -2,7 +2,7 @@ import { Unit } from './classes/Unit.js';
 import { Weapon } from './classes/Weapon.js';
 import { runSimulation } from './logic.js';
 import { addAttackerModule, syncAppUI, buildRosterFromJSON, spawnReportCard, addBadgeToModule } from './ui-manager.js';
-import { initDataBase, loadDataIntoSQL, queryComparisonData, clearDataBase, ModLabels } from './db-manager.js';
+import { initDataBase, loadDataIntoSQL, queryComparisonData, clearDataBase, ModLabels, loadAveragesIntoSQL, queryAveragesData } from './db-manager.js';
 import { renderChart, renderAdvancedChart } from './chart-manager.js';
 const SIMULATION_ITERATIONS = 50000;
 
@@ -47,6 +47,9 @@ function createWeaponsArray() {
         const ap = parseInt(module.querySelector(".in-ap").value, 10);
         const modelCount = parseInt(module.querySelector(".in-models").value, 10);
         const unitCount = parseInt(module.querySelector(".in-units").value, 10);
+        const isLeader = module.querySelector('.is-leader').checked;
+        const attachTarget = module.querySelector('.attach-to').value || null;
+        const grantedKeyword = module.querySelector('.grant-keyword').value;
 
         const hasMod = (key) => module.querySelector(`.mod-badge[data-key="${key}"]`) !== null;
         const getModVal = (key) => {
@@ -190,79 +193,8 @@ function isModRedundant(weaponsArray, modKey) {
     });
 }
 
-// ui helper - specific 'reading' stats data goes where and when
-function buildBaseStatsHTML(weaponsArray, targetUnit) {
-    // target Stats
-    let targetMods = [];
-    if (targetUnit.modifiers.minusOneHit) targetMods.push("-1 to Hit");
-    if (targetUnit.modifiers.minusOneWound) targetMods.push("-1 to Wound");
-    if (targetUnit.modifiers.minusOneWoundHighStr) targetMods.push("S>T -1 Wound");
-    if (targetUnit.modifiers.cover) targetMods.push("Cover");
-    if (targetUnit.modifiers.halfDamage) targetMods.push("Half Damage");
-    if (targetUnit.modifiers.minusOneDamage) targetMods.push("-1 Damage");
-    if (targetUnit.fnp && targetUnit.fnp > 1) targetMods.push(`FNP ${targetUnit.fnp}+`);
-
-    let targetModsStr = targetMods.length > 0 ? targetMods.join(' | ') : "[No Mods]";
-
-    let html = `
-        <div style="margin-bottom: 10px;">
-            <strong style="color: #9ac1df;">TARGET:</strong><br>
-            T${targetUnit.toughness} | W${targetUnit.wounds} | SV ${targetUnit.save}+ | Invul ${targetUnit.inVul ? targetUnit.inVul + '+' : 'None'} <br>
-            <span style="color: #E63946; font-size: 0.8rem; font-weight: bold;">${targetModsStr}</span>
-        </div>
-        <strong style="color: #9ac1df;">ATTACKER(S):</strong>
-    `;
-
-    // attacker Stats 
-    weaponsArray.forEach(w => {
-        let activeMods = [];
-        if (w.modifiers.lethal) activeMods.push("Lethal");
-        if (w.modifiers.devastating) activeMods.push("Dev Wounds");
-        if (w.modifiers.sustained > 0) activeMods.push(`Sustained ${w.modifiers.sustained}`);
-        if (w.modifiers.rerollHits !== "none") activeMods.push(`RR Hits`);
-        if (w.modifiers.rerollWounds !== "none") activeMods.push(`RR Wounds`);
-        if (w.modifiers.anti > 0) activeMods.push(`Anti-${w.modifiers.anti}+`);
-        if (w.modifiers.lance) activeMods.push("Lance");
-        if (w.modifiers.rapidFire > 0) activeMods.push(`Rapid Fire ${w.modifiers.rapidFire}`);
-        if (w.modifiers.melta > 0) activeMods.push(`Melta ${w.modifiers.melta}`);
-        if (w.modifiers.torrent) activeMods.push("Torrent");
-        if (w.modifiers.twinLinked) activeMods.push("Twin-Linked");
-        if (w.modifiers.blast) activeMods.push("Blast");
-        if (w.modifiers.cleave) activeMods.push("Cleave");
-        if (w.modifiers.hitMod > 0) activeMods.push(`+${w.modifiers.hitMod} Hit`);
-        if (w.modifiers.hitMod < 0) activeMods.push(`${w.modifiers.hitMod} Hit`);
-        if (w.modifiers.woundMod > 0) activeMods.push(`+${w.modifiers.woundMod} Wound`);
-        if (w.modifiers.woundMod < 0) activeMods.push(`${w.modifiers.woundMod} Wound`);
-
-        let modsStr = activeMods.length > 0 ? `[${activeMods.join(', ')}]` : `[No Mods]`;
-
-        html += `
-            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #38424D;">
-                <strong style="color: #fff; font-size: 1.05rem;">${w.unitName} - Base Stats</strong><br>
-                <span style="color: #8C9BA8; line-height: 1.4;">
-                    ${w.unitCount * w.modelCount} Models<br>
-                    ${w.attack} Attacks per model<br>
-                    BS/WS ${w.BsWs}+ <br>
-                    Strength ${w.strength} <br>
-                    AP ${w.Ap}
-                </span><br>
-                <div style="color: #C48235; font-size: 0.8rem; font-weight: bold; margin-top: 4px;">
-                    ${modsStr}
-                </div>
-            </div>
-        `;
-    });
-    return html;
-
-}
 
 
-// add an allowedMods parameter so we can filter out graph mods contamination
-// report generator
-function generateAdvancedReport(title, category, sqlData, totalRuns, allowedMods, statsHTML, targetContainer) {
-    const card = spawnReportCard(title, targetContainer, statsHTML);
-    renderAdvancedChart(card.querySelector('.adv-chart'), category, sqlData, totalRuns, allowedMods);
-}
 
 // execution
 //standard btn
@@ -388,6 +320,7 @@ if (advAnalyticsBtn) {
                 const originalMelta = baseWeapon.modifiers.melta;
                 baseWeapon.modifiers.melta = 0;
 
+                //pushing data into sql
                 let baseResults = await runWorkerSimulation(SIMULATION_ITERATIONS, singleWeaponRoster, targetUnit);
 
                 //base profile runs
@@ -396,6 +329,7 @@ if (advAnalyticsBtn) {
                 loadDataIntoSQL(unitName, "Base", "Save", baseResults.saveDistribution);
                 loadDataIntoSQL(unitName, "Base", "Damage", baseResults.damageDistribution);
                 loadDataIntoSQL(unitName, "Base", "ModelsKilled", baseResults.killedDistribution);
+                loadAveragesIntoSQL(unitName, "Base", baseResults.averages);
 
                 //restore OG melta
                 baseWeapon.modifiers.melta = originalMelta;
@@ -415,6 +349,7 @@ if (advAnalyticsBtn) {
                         let moddedWeapon = JSON.parse(JSON.stringify(baseWeapon));
                         applyModifierToWeapon(moddedWeapon, modKey);
 
+                        //pushing data into sql
                         let results = await runWorkerSimulation(SIMULATION_ITERATIONS, [moddedWeapon], targetUnit);
 
                         loadDataIntoSQL(unitName, modKey, "Hit", results.hitDistribution);
@@ -422,22 +357,24 @@ if (advAnalyticsBtn) {
                         loadDataIntoSQL(unitName, modKey, "Save", results.saveDistribution);
                         loadDataIntoSQL(unitName, modKey, "Damage", results.damageDistribution);
                         loadDataIntoSQL(unitName, modKey, "ModelsKilled", results.killedDistribution);
-
+                        loadAveragesIntoSQL(unitName, modKey, results.averages);
                     }
                 }
 
                 // query the Database and Draw the 5 Charts for THIS unit
                 const sqlData = queryComparisonData(unitName);
+                // query the Database and get the roll stats for THIS unit
+                const sqlAvgData = queryAveragesData(unitName);
 
                 //target unitAccordion unit wrapper
                 const attackerUnitReport = unitAccordion.querySelector('.unit-reports-wrapper');
 
 
-                generateAdvancedReport(`${unitName}: Hit`, "Hit", sqlData, SIMULATION_ITERATIONS, allowedHitMods, statsHTML, attackerUnitReport);
-                generateAdvancedReport(`${unitName}: Wound`, "Wound", sqlData, SIMULATION_ITERATIONS, allowedWoundMods, statsHTML, attackerUnitReport);
-                generateAdvancedReport(`${unitName}: Save`, "Save", sqlData, SIMULATION_ITERATIONS, allowedSaveMods, statsHTML, attackerUnitReport);
-                generateAdvancedReport(`${unitName}: Damage`, "Damage", sqlData, SIMULATION_ITERATIONS, allowedDamageMods, statsHTML, attackerUnitReport);
-                generateAdvancedReport(`${unitName}: ModelsKilled`, "ModelsKilled", sqlData, SIMULATION_ITERATIONS, allowedKilledMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: Hit`, "Hit", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedHitMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: Wound`, "Wound", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedWoundMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: Save`, "Save", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedSaveMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: Damage`, "Damage", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedDamageMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: ModelsKilled`, "ModelsKilled", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedKilledMods, statsHTML, attackerUnitReport);
 
 
             }
@@ -446,9 +383,161 @@ if (advAnalyticsBtn) {
             alert("Pipeline Failed.");
         }
 
-        advAnalyticsBtn.textContent = "Run Advanced Analytics";
+        advAnalyticsBtn.textContent = "FOR THE ADVANCED EMPEROR!";
         advAnalyticsBtn.disabled = false;
     });
+}
+
+// add an allowedMods parameter so we can filter out graph mods contamination
+// report generator
+function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns, allowedMods, statsHTML, targetContainer) {
+    const filteredAverages = sqlAvgData.filter(row => allowedMods.includes(row.modifier_name));
+
+
+    const th = `padding: 8px 10px; color: #8C9BA8; font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid #38424D;`;
+    const td = `padding: 10px; background: rgba(255,255,255,0.03); color: #fff; font-weight: bold; margin-bottom: 5px;`;
+    const tdFirst = td + `border-left: 3px solid #9ac1df; border-radius: 4px 0 0 4px;`;
+    const tdLast = td + `border-radius: 0 4px 4px 0;`;
+
+    let avgStatsHTML = `<table style="width: 100%; border-collapse: separate; border-spacing: 0 6px; font-size: 0.9rem; text-align: left;">`;
+
+    if (category === "Hit") {
+
+        const hasBonus = filteredAverages.some(r => r.hits_bonus > 0);
+        const hasAuto = filteredAverages.some(r => r.hits_auto > 0);
+
+        let headers = `<th style="${th}">Rule</th><th style="${th}">Avg Hits</th>`;
+        if (hasBonus) headers += `<th style="${th}">Sustained</th>`;
+        if (hasAuto) headers += `<th style="${th}">Lethal (Auto)</th>`;
+        avgStatsHTML += `<tr>${headers}</tr>`;
+
+        filteredAverages.forEach(row => {
+            let name = ModLabels[row.modifier_name] || row.modifier_name;
+            if (row.modifier_name === "Base") name = "Base Profile";
+
+
+            let cells = [row.hits_success.toFixed(2)];
+            if (hasBonus) cells.push(row.hits_bonus.toFixed(2));
+            if (hasAuto) cells.push(row.hits_auto.toFixed(2));
+
+            let rowHTML = `<tr><td style="${tdFirst}">${name}</td>`;
+            cells.forEach((val, index) => {
+                let isLast = index === cells.length - 1;
+                rowHTML += `<td style="${isLast ? tdLast : td}">${val}</td>`;
+            });
+            avgStatsHTML += rowHTML + `</tr>`;
+        });
+    }
+    else if (category === "Wound") {
+        const hasDev = filteredAverages.some(r => r.wounds_dev > 0);
+
+        let headers = `<th style="${th}">Rule</th><th style="${th}">Avg Wounds</th>`;
+        if (hasDev) headers += `<th style="${th}">Devastating</th>`;
+        avgStatsHTML += `<tr>${headers}</tr>`;
+
+        filteredAverages.forEach(row => {
+            let name = ModLabels[row.modifier_name] || row.modifier_name;
+            if (row.modifier_name === "Base") name = "Base Profile";
+
+            let cells = [row.wounds_success.toFixed(2)];
+            if (hasDev) cells.push(row.wounds_dev.toFixed(2));
+
+            let rowHTML = `<tr><td style="${tdFirst}">${name}</td>`;
+            cells.forEach((val, index) => {
+                let isLast = index === cells.length - 1;
+                rowHTML += `<td style="${isLast ? tdLast : td}">${val}</td>`;
+            });
+            avgStatsHTML += rowHTML + `</tr>`;
+        });
+    }
+    else if (category === "Save") {
+        avgStatsHTML += `<tr><th style="${th}">Rule</th><th style="${th}">Saves Forced</th><th style="${th}">Passed</th><th style="${th}">Failed (Dmg)</th></tr>`;
+        filteredAverages.forEach(row => {
+            let name = ModLabels[row.modifier_name] || row.modifier_name;
+            avgStatsHTML += `<tr><td style="${tdFirst}">${name}</td><td style="${td}">${row.saves_forced.toFixed(2)}</td><td style="${td}">${row.saves_passed.toFixed(2)}</td><td style="${tdLast}">${row.saves_failed.toFixed(2)}</td></tr>`;
+        });
+    }
+    else if (category === "Damage") {
+        avgStatsHTML += `<tr><th style="${th}">Rule</th><th style="${th}">Avg Total Damage</th></tr>`;
+        filteredAverages.forEach(row => {
+            let name = ModLabels[row.modifier_name] || row.modifier_name;
+            if (row.modifier_name === "Base") name = "Base Profile";
+            avgStatsHTML += `<tr><td style="${tdFirst}">${name}</td><td style="${tdLast}">${row.avg_damage.toFixed(2)}</td></tr>`;
+        });
+    }
+    else if (category === "ModelsKilled") {
+        avgStatsHTML += `<tr><th style="${th}">Rule</th><th style="${th}">Avg Killed</th><th style="${th}">Overkill</th><th style="${th}">Efficiency</th></tr>`;
+        filteredAverages.forEach(row => {
+            let name = ModLabels[row.modifier_name] || row.modifier_name;
+            if (row.modifier_name === "Base") name = "Base Profile";
+            avgStatsHTML += `<tr><td style="${tdFirst}">${name}</td><td style="${td}">${row.avg_killed.toFixed(3)}</td><td style="${td}">${row.avg_wasted.toFixed(2)}</td><td style="${tdLast}">${row.efficiency}%</td></tr>`;
+        });
+    }
+    avgStatsHTML += `</table>`;
+
+    const card = spawnReportCard(title, targetContainer, statsHTML, avgStatsHTML);
+    renderAdvancedChart(card.querySelector('.adv-chart'), category, sqlData, totalRuns, allowedMods);
+}
+
+
+// ui helper - specific 'reading' stats data goes where and when
+function buildBaseStatsHTML(weaponsArray, targetUnit) {
+    let html = `<div style="display: flex; gap: 10px; flex-wrap: wrap; width: 100%;">`;
+
+
+    weaponsArray.forEach(w => {
+        let activeMods = [];
+        if (w.modifiers.lethal) activeMods.push("Lethal");
+        if (w.modifiers.devastating) activeMods.push("Dev Wounds");
+        if (w.modifiers.sustained > 0) activeMods.push(`Sus ${w.modifiers.sustained}`);
+        if (w.modifiers.rerollHits !== "none") activeMods.push(`RR Hits`);
+        if (w.modifiers.rerollWounds !== "none") activeMods.push(`RR Wounds`);
+        if (w.modifiers.anti > 0) activeMods.push(`Anti-${w.modifiers.anti}+`);
+        if (w.modifiers.lance) activeMods.push("Lance");
+        if (w.modifiers.rapidFire > 0) activeMods.push(`RF ${w.modifiers.rapidFire}`);
+        if (w.modifiers.melta > 0) activeMods.push(`Melta ${w.modifiers.melta}`);
+        if (w.modifiers.torrent) activeMods.push("Torrent");
+        if (w.modifiers.twinLinked) activeMods.push("Twin-Linked");
+        if (w.modifiers.blast) activeMods.push("Blast");
+        if (w.modifiers.cleave) activeMods.push("Cleave");
+        if (w.modifiers.hitMod > 0) activeMods.push(`+${w.modifiers.hitMod} Hit`);
+        if (w.modifiers.hitMod < 0) activeMods.push(`${w.modifiers.hitMod} Hit`);
+        if (w.modifiers.woundMod > 0) activeMods.push(`+${w.modifiers.woundMod} Wound`);
+        if (w.modifiers.woundMod < 0) activeMods.push(`${w.modifiers.woundMod} Wound`);
+        let modsStr = activeMods.length > 0 ? `[${activeMods.join(', ')}]` : `[No Mods]`;
+
+        html += `
+        <div style="flex: 1; min-width: 200px; background: rgba(0,0,0,0.2); padding: 6px 12px; border-radius: 4px; border-left: 3px solid #C48235; display: flex; flex-direction: column; justify-content: center;">
+            <div style="color: #8C9BA8; font-size: 0.65rem; font-weight: bold; text-transform: uppercase;">Attacker: ${w.unitName}</div>
+            <div style="font-size: 0.85rem; color: #fff; font-weight: bold; margin: 2px 0;">
+                ${w.unitCount * w.modelCount}M | ${w.attack}A | BS/WS ${w.BsWs}+ | S${w.strength} | AP${w.Ap}
+            </div>
+            <div style="color: #C48235; font-size: 0.7rem; font-weight: bold;">${modsStr}</div>
+        </div>`;
+    });
+
+
+    let targetMods = [];
+    if (targetUnit.modifiers.minusOneHit) targetMods.push("-1 Hit");
+    if (targetUnit.modifiers.minusOneWound) targetMods.push("-1 Wnd");
+    if (targetUnit.modifiers.minusOneWoundHighStr) targetMods.push("S>T -1 Wnd");
+    if (targetUnit.modifiers.cover) targetMods.push("Cover");
+    if (targetUnit.modifiers.halfDamage) targetMods.push("1/2 Dmg");
+    if (targetUnit.modifiers.minusOneDamage) targetMods.push("-1 Dmg");
+    if (targetUnit.fnp && targetUnit.fnp > 1) targetMods.push(`FNP ${targetUnit.fnp}+`);
+    let targetModsStr = targetMods.length > 0 ? targetMods.join(' | ') : "[No Mods]";
+
+    html += `
+    <div style="flex: 1; min-width: 180px; background: rgba(0,0,0,0.2); padding: 6px 12px; border-radius: 4px; border-left: 3px solid #E63946; display: flex; flex-direction: column; justify-content: center;">
+        <div style="color: #8C9BA8; font-size: 0.65rem; font-weight: bold; text-transform: uppercase;">Target Profile</div>
+        <div style="font-size: 0.85rem; color: #fff; font-weight: bold; margin: 2px 0;">
+            T${targetUnit.toughness} | W${targetUnit.wounds} | SV ${targetUnit.save}+ ${targetUnit.inVul ? '| ' + targetUnit.inVul + '++' : ''}
+        </div>
+        <div style="color: #E63946; font-size: 0.7rem; font-weight: bold;">${targetModsStr}</div>
+    </div>`;
+
+    html += `</div>`;
+    return html;
 }
 
 

@@ -35,89 +35,52 @@ export function renderChart(distribution, totalRuns, mode = 'exact') {
 
     // const yAxisLabel = isCumulative ? 'Chance to Deal THIS OR MORE (%)' : 'Chance to Deal EXACTLY THIS (%)';
 
-    damageChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: chartLabels,
-            datasets: [
-                {
-                    label: 'Exactly This Damage',
-                    data: exactData,
-                    borderColor: '#9ac1df', // --sw-light-blue
-                    backgroundColor: 'rgba(154, 193, 223, 0.15)',
-                    borderWidth: 2,
-                    pointBackgroundColor: '#0F1115',
-                    pointBorderColor: '#9ac1df',
-                    pointHoverBackgroundColor: '#9ac1df',
-                    pointHoverBorderColor: '#9ac1df',
-                    pointRadius: 2,
-                    pointHoverRadius: 6,
-                    fill: true,
-                    tension: 0.1
-                },
-                {
-                    label: 'At Least This Damage',
-                    data: cumulativeData,
-                    borderColor: '#C48235', // --accent-bronze
-                    backgroundColor: 'rgba(196, 130, 53, 0.15)',
-                    borderWidth: 2,
-                    pointBackgroundColor: '#0F1115',
-                    pointBorderColor: '#C48235',
-                    pointHoverBackgroundColor: '#C48235',
-                    pointHoverBorderColor: '#C48235',
-                    pointRadius: 2,
-                    pointHoverRadius: 6,
-                    fill: true,
-                    tension: 0.1
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-                mode: 'nearest', // closest line to cursor
-                intersect: false
-            },
-            scales: {
-                x: {
-                    title: { display: true, text: 'Total Damage Dealt', color: '#8C9BA8', font: { weight: 'bold' } },
-                    ticks: { color: '#9ac1df' },
-                    grid: { color: '#38424D' }
-                },
-                y: {
-                    title: { display: true, text: 'Probability (%)', color: '#8C9BA8', font: { weight: 'bold' } },
-                    ticks: {
-                        color: '#9ac1df',
-                        callback: function (value) { return value + '%'; }
+    damageChartInstance = // draw
+        new Chart(ctx, {
+            type: 'line',
+            data: { labels: chartLabels, datasets: datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+
+
+                interaction: { mode: 'nearest', intersect: false },
+
+                scales: {
+                    x: {
+                        title: { display: true, text: `Total Successful ${category}s`, color: '#8C9BA8', font: { weight: 'bold' } },
+                        ticks: { color: '#9ac1df' },
+                        grid: { color: '#38424D' }
                     },
-                    grid: { color: '#38424D' },
-                    beginAtZero: true,
-                    max: 100
-                }
-            },
-            plugins: {
-                legend: {
-                    display: true,
-                    labels: { color: '#fff' }
+                    y: {
+                        title: { display: true, text: `At Least - (%) Chance of ${category}`, color: '#8C9BA8', font: { weight: 'bold' } },
+                        ticks: { color: '#9ac1df' },
+                        grid: { color: '#38424D' },
+                        beginAtZero: true,
+
+                        //cap each graph at 100%
+                        max: 100
+                    }
                 },
-                tooltip: {
-                    backgroundColor: 'rgba(15, 17, 21, 0.95)',
-                    titleColor: '#9ac1df',
-                    bodyColor: '#DAE6EF',
-                    borderColor: '#C48235',
-                    borderWidth: 1,
-                    padding: 12,
-                    callbacks: {
-                        title: function (context) { return 'Damage: ' + context[0].label; },
-                        label: function (context) {
-                            return context.dataset.label + ': ' + context.raw.toFixed(2) + '%';
+                plugins: {
+                    legend: { display: true, labels: { color: '#fff' } },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 17, 21, 0.95)',
+                        titleColor: '#9ac1df',
+                        bodyColor: '#DAE6EF',
+                        borderColor: '#C48235',
+                        borderWidth: 1,
+                        padding: 12,
+                        callbacks: {
+                            label: function (context) {
+                                return context.dataset.label + ': ' + context.raw.toFixed(2) + '%';
+                            }
                         }
                     }
                 }
             }
-        }
-    });
+
+        });
 }
 
 // advChart
@@ -189,16 +152,31 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
         };
     });
 
+
     // draw
     new Chart(ctx, {
         type: 'line',
         data: { labels: chartLabels, datasets: datasets },
         options: {
             responsive: true, maintainAspectRatio: false,
+
+
             interaction: { mode: 'nearest', intersect: false },
+
             scales: {
-                x: { title: { display: true, text: `Total Successful ${category}s`, color: '#8C9BA8', font: { weight: 'bold' } }, ticks: { color: '#9ac1df' }, grid: { color: '#38424D' } },
-                y: { title: { display: true, text: `At Least - (%) Chance of ${category}`, color: '#8C9BA8', font: { weight: 'bold' } }, ticks: { color: '#9ac1df' }, grid: { color: '#38424D' }, beginAtZero: true }
+                x: {
+                    title: { display: true, text: `Total Successful ${category}s`, color: '#8C9BA8', font: { weight: 'bold' } },
+                    ticks: { color: '#9ac1df' },
+                    grid: { color: '#38424D' }
+                },
+                y: {
+                    title: { display: true, text: `At Least - (%) Chance of ${category}`, color: '#8C9BA8', font: { weight: 'bold' } },
+                    ticks: { color: '#9ac1df' },
+                    grid: { color: '#38424D' },
+                    beginAtZero: true,
+
+                    max: 100
+                }
             },
             plugins: {
                 legend: { display: true, labels: { color: '#fff' } },
