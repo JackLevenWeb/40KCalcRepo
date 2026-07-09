@@ -33,18 +33,18 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
             runWastedDamage += hurtSystem.damage.wastedDamage;
             currentTargetHealth = hurtSystem.finalHealth;
 
-            // Adv Sim Aggregations
+            // adv sim aggregations
             sumHits.rawSuccesses += hurtSystem.hits.rawSuccesses;
             sumHits.bonusHits += hurtSystem.hits.bonusHits;
             sumHits.autoWounds += hurtSystem.hits.autoWounds;
 
             // X-Axis Data collection for this specific iteration
-            // hits: Normal hits + Sustained bonus + Lethal 6s
+            // hits: normal hits + sustained bonus + lethal 6s
             runTotalHits += (hurtSystem.hits.rawSuccesses + hurtSystem.hits.bonusHits + hurtSystem.hits.autoWounds);
-            // wounds: Normal wounds + Devastating 6s + Lethal 6s that bypassed the roll
+            // wounds: normal wounds + devastating 6s + lethal 6s that bypassed the roll
             runTotalWounds += (hurtSystem.wounds.rawSuccesses + hurtSystem.wounds.devWounds + hurtSystem.hits.autoWounds);
-            // saves: Normal wounds + Lethal 6s (Devastating Wounds bypass saves, so they are correctly excluded here!)
-            runTotalSaves += (hurtSystem.wounds.rawSuccesses + hurtSystem.hits.autoWounds);
+            // saves: normal wounds done - failed saves gives you successful saves
+            runTotalSaves += (hurtSystem.wounds.normalWounds - hurtSystem.saves.failedSavesCount);
         }
 
         // Build the bell curves
@@ -110,7 +110,7 @@ export function runHurtSystem(weapon, unit, startingHealth) {
     let autoWounds = 0;
     let successfulHits = 0;
     let hitData = { successes: 0, bonus: 0 };
-    // 2. Hit Phase
+    // Hit Phase
     if (weapon.modifiers.torrent || weapon.BsWs === "NA") {
         successfulHits = totalAttacks;
     } else {
@@ -134,16 +134,18 @@ export function runHurtSystem(weapon, unit, startingHealth) {
         successfulHits = hitData.successes + hitData.bonus;
     }
 
+    // early return
     if (successfulHits === 0 && autoWounds === 0) {
         return {
             hits: { rawSuccesses: 0, bonusHits: 0, autoWounds: 0 },
-            wounds: { rawSuccesses: 0, devWounds: 0 },
+            wounds: { rawSuccesses: 0, devWounds: 0, normalWounds: 0 },
+            saves: { failedSavesCount: 0 },
             damage: { totalDamage: 0, modelsKilled: 0, wastedDamage: 0 },
             finalHealth: startingHealth
         };
     }
 
-    // 3. Wound Phase
+    // Wound Phase
     const baseWoundTarget = calculateWoundTarget(weapon.strength, unit.toughness);
 
     let targetWoundMod = unit.modifiers.minusOneWound ? -1 : 0;
@@ -166,16 +168,18 @@ export function runHurtSystem(weapon, unit, startingHealth) {
     const normalWounds = woundData.successes + autoWounds;
     const devWounds = woundData.autos;
 
+    //early return
     if (normalWounds === 0 && devWounds === 0) {
         return {
             hits: { rawSuccesses: hitData.successes, bonusHits: hitData.bonus, autoWounds: autoWounds },
-            wounds: { rawSuccesses: 0, devWounds: 0 },
+            wounds: { rawSuccesses: 0, devWounds: 0, normalWounds: 0 },
+            saves: { failedSavesCount: 0 },
             damage: { totalDamage: 0, modelsKilled: 0, wastedDamage: 0 },
             finalHealth: startingHealth
         };
     }
 
-    // 4. Save Phase
+    // Save Phase
     let failedSavesCount = 0;
     if (normalWounds > 0) {
         const apApplied = unit.save - weapon.Ap;
@@ -187,17 +191,19 @@ export function runHurtSystem(weapon, unit, startingHealth) {
         }
     }
 
+    //early return
     const totalDamageEvents = failedSavesCount + devWounds;
     if (totalDamageEvents === 0) {
         return {
             hits: { rawSuccesses: hitData.successes, bonusHits: hitData.bonus, autoWounds: autoWounds },
-            wounds: { rawSuccesses: woundData.successes, devWounds: devWounds },
+            wounds: { rawSuccesses: woundData.successes, devWounds: devWounds, normalWounds: normalWounds },
+            saves: { failedSavesCount: failedSavesCount },
             damage: { totalDamage: 0, modelsKilled: 0, wastedDamage: 0 },
             finalHealth: startingHealth
         };
     }
 
-    // 5. Damage Phase
+    // Damage Phase
     const damageDone = modelsKill(totalDamageEvents, weapon, unit, startingHealth);
 
     return {
@@ -208,7 +214,12 @@ export function runHurtSystem(weapon, unit, startingHealth) {
         },
         wounds: {
             rawSuccesses: woundData.successes,
-            devWounds: devWounds
+            devWounds: devWounds,
+            normalWounds: normalWounds
+        }, saves: {
+            failedSavesCount: failedSavesCount
+
+
         },
         damage: {
             totalDamage: damageDone.totalDamage,
