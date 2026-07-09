@@ -60,6 +60,7 @@ export function addAttackerModule(containerElement) {
                     <option value="reroll_wounds_1">Reroll 1s to Wound</option>
                     <option value="reroll_wounds_all">Reroll All (Wound)</option>
                     <option value="hit_plus_1">+1 to Hit</option>
+                    <option value="wound_plus_1">+1 to Wound</option>
                  </select>
               </div>
           </div>
