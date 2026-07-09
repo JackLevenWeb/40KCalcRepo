@@ -10,8 +10,8 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
     const saveDistribution = {};
 
     let sumHits = { rawSuccesses: 0, bonusHits: 0, autoWounds: 0 };
-    let sumWounds = { rawSuccesses: 0, devWounds: 0 };
-    let sumSaves = { normalWoundsToSave: 0, devWoundsBypass: 0 };
+    let sumWounds = { rawSuccesses: 0, devWounds: 0, normalWounds: 0 };
+    let sumSaves = { failedSavesCount: 0, passedSavesCount: 0 };
 
     let highestDamage = 0;
     let highestKills = 0;
@@ -37,6 +37,11 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
             sumHits.rawSuccesses += hurtSystem.hits.rawSuccesses;
             sumHits.bonusHits += hurtSystem.hits.bonusHits;
             sumHits.autoWounds += hurtSystem.hits.autoWounds;
+            sumWounds.rawSuccesses += hurtSystem.wounds.rawSuccesses;
+            sumWounds.devWounds += hurtSystem.wounds.devWounds;
+            sumWounds.normalWounds += hurtSystem.wounds.normalWounds;
+            sumSaves.failedSavesCount += hurtSystem.saves.failedSavesCount;
+            sumSaves.passedSavesCount += (hurtSystem.wounds.normalWounds - hurtSystem.saves.failedSavesCount);
 
             // X-Axis Data collection for this specific iteration
             // hits: normal hits + sustained bonus + lethal 6s
@@ -91,7 +96,15 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
             damage: avgTotalDamage,
             killed: avgModelsKilled,
             wasted: avgWastedDamage,
-            efficiency: avgTotalDamage > 0 ? (((avgTotalDamage - avgWastedDamage) / avgTotalDamage) * 100).toFixed(1) : 0
+            efficiency: avgTotalDamage > 0 ? (((avgTotalDamage - avgWastedDamage) / avgTotalDamage) * 100).toFixed(1) : 0,
+            hits_success: sumHits.rawSuccesses / iterationsTotal,
+            hits_bonus: sumHits.bonusHits / iterationsTotal,
+            hits_auto: sumHits.autoWounds / iterationsTotal,
+            wounds_success: sumWounds.rawSuccesses / iterationsTotal,
+            wounds_dev: sumWounds.devWounds / iterationsTotal,
+            saves_forced: sumWounds.normalWounds / iterationsTotal,
+            saves_passed: sumSaves.passedSavesCount / iterationsTotal,
+            saves_failed: sumSaves.failedSavesCount / iterationsTotal
         },
         extremes: {
             highestDamage: highestDamage,
