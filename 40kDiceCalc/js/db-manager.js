@@ -18,11 +18,19 @@ export async function initDataBase() {
                 value INTEGER,
                 occurrence_count INTEGER
             );
+            CREATE TABLE simulation_averages (
+                unit_name TEXT,
+                modifier_name TEXT,
+                avg_damage REAL,
+                avg_killed REAL,
+                avg_wasted REAL,
+                efficiency REAL
+            );
         `);
         console.log("SQLite Database Initialized");
     } catch (error) { console.error("Failed to initialize SQLite:", error); }
 }
-
+//for distibution
 export function loadDataIntoSQL(unitName, modifierName, category, distribution) {
     if (!db) return;
     const stmt = db.prepare(`INSERT INTO simulation_runs (unit_name, modifier_name, category, value, occurrence_count) VALUES (?, ?, ?, ?, ?)`);
@@ -34,12 +42,30 @@ export function loadDataIntoSQL(unitName, modifierName, category, distribution) 
     stmt.free();
 }
 
+//for averages
+export function loadAveragesIntoSQL(unitName, modifierName, averages) {
+    if (!db) return;
+    const stmt = db.prepare(`INSERT INTO simulation_averages (unit_name, modifier_name, avg_damage, avg_killed, avg_wasted, efficiency) VALUES (?, ?, ?, ?, ?, ?)`);
+    stmt.run([unitName, modifierName, averages.damage, averages.killed, averages.wasted, averages.efficiency]);
+    stmt.free();
+}
+//for distibution
 export function queryComparisonData(unitName) {
     const result = db.exec(`
         SELECT modifier_name, value, category, occurrence_count 
         FROM simulation_runs 
         WHERE unit_name = '${unitName}' 
         ORDER BY modifier_name ASC, value ASC;
+    `);
+    return result.length === 0 ? [] : result[0].values;
+}
+//for averages
+export function queryAveragesData(unitName) {
+    const result = db.exec(`
+        SELECT modifier_name, avg_damage, avg_killed, avg_wasted, efficiency 
+        FROM simulation_averages 
+        WHERE unit_name = '${unitName}'
+        ORDER BY avg_killed DESC;
     `);
     return result.length === 0 ? [] : result[0].values;
 }
@@ -63,6 +89,7 @@ export function clearDataBase() {
 
     if (db) {
         db.run("DELETE FROM simulation_runs;");
+        db.run("DELETE FROM simulation_averages;");
 
     }
 
