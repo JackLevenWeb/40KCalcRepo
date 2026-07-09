@@ -21,11 +21,57 @@ let currentSimulationResults = null;
 initDataBase();
 
 
-addAttackerModule(RosterContainer);
 
 
-RosterContainer.addEventListener("input", syncAppUI);
-RosterContainer.addEventListener("change", syncAppUI);
+if (localStorage.getItem("40kRoster")) {
+    const loadSavedRoster = localStorage.getItem("40kRoster");
+
+    try {
+
+        const jsonData = JSON.parse(loadSavedRoster);
+
+
+        if (Array.isArray(jsonData)) {
+
+
+            buildRosterFromJSON(RosterContainer, jsonData);
+        } else {
+
+
+            buildRosterFromJSON(RosterContainer, jsonData.roster);
+
+
+            if (jsonData.target) {
+                loadTargetProfile(jsonData.target);
+            }
+
+            if (jsonData.globalRule) {
+                const globalDrop = document.getElementById("global-mod-dropdown");
+                if (globalDrop) globalDrop.value = jsonData.globalRule;
+            }
+        }
+
+        ImportInput.value = "";
+    } catch (error) {
+        alert("Invalid JSON file! Could not parse roster.");
+        console.error(error);
+    }
+} else {
+    addAttackerModule(RosterContainer);
+}
+
+
+
+RosterContainer.addEventListener("input", () => {
+    syncAppUI();
+    autoSave();
+
+});
+RosterContainer.addEventListener("change", () => {
+    syncAppUI();
+    autoSave();
+
+});
 
 AddAttackerBtn.addEventListener("click", () => {
     addAttackerModule(RosterContainer);
@@ -33,7 +79,7 @@ AddAttackerBtn.addEventListener("click", () => {
 });
 
 
-// get needed data
+// get needed data from present modules
 function createWeaponsArray() {
     const modules = document.querySelectorAll('.attacker-module');
     const weaponsArray = [];
@@ -408,6 +454,7 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
 
     if (category === "Hit") {
 
+
         const hasBonus = filteredAverages.some(r => r.hits_bonus > 0);
         const hasAuto = filteredAverages.some(r => r.hits_auto > 0);
 
@@ -417,6 +464,7 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
         avgStatsHTML += `<tr>${headers}</tr>`;
 
         filteredAverages.forEach(row => {
+            console.log(filteredAverages);
             let name = ModLabels[row.modifier_name] || row.modifier_name;
             if (row.modifier_name === "Base") name = "Base Profile";
 
@@ -629,6 +677,10 @@ function exportRoster() {
 
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+
+
+
+
 }
 //button for above
 if (ExportBtn) ExportBtn.addEventListener("click", exportRoster);
@@ -656,11 +708,11 @@ if (ImportBtn && ImportInput) {
                 // check if its old file export type
                 if (Array.isArray(jsonData)) {
 
-                    console.log("Legacy roster imported.");
+
                     buildRosterFromJSON(RosterContainer, jsonData);
                 } else {
 
-                    console.log("Master State roster imported.");
+
                     buildRosterFromJSON(RosterContainer, jsonData.roster);
 
 
@@ -684,4 +736,19 @@ if (ImportBtn && ImportInput) {
 
         reader.readAsText(file);
     });
+}
+
+//auto save roster state
+function autoSave() {
+    const globalDrop = document.getElementById("global-mod-dropdown");
+    const rosterState = {
+        roster: createWeaponsArray(),
+        target: createUnit(),
+        globalRule: globalDrop.value
+    };
+
+    const jsonString = JSON.stringify(rosterState, null, 2);
+    localStorage.setItem("40kRoster", jsonString)
+
+
 }
