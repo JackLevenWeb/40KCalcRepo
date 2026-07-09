@@ -4,7 +4,7 @@ import { runSimulation } from './logic.js';
 import { addAttackerModule, syncAppUI, buildRosterFromJSON, spawnReportCard, addBadgeToModule } from './ui-manager.js';
 import { initDataBase, loadDataIntoSQL, queryComparisonData, clearDataBase, ModLabels, loadAveragesIntoSQL, queryAveragesData } from './db-manager.js';
 import { renderChart, renderAdvancedChart } from './chart-manager.js';
-const SIMULATION_ITERATIONS = 50000;
+const SIMULATION_ITERATIONS = 100000;
 
 const CalcBtn = document.getElementById("calculate-btn");
 const AddAttackerBtn = document.getElementById("add-attacker-btn");
@@ -484,7 +484,7 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
     else if (category === "Wound") {
         const hasDev = filteredAverages.some(r => r.wounds_dev > 0);
 
-        let headers = `<th style="${th}">Rule</th><th style="${th}">Avg Wounds</th>`;
+        let headers = `<th style="${th}">Rule</th><th style="${th}">Avg Total Wounds</th>`;
         if (hasDev) headers += `<th style="${th}">Devastating</th>`;
         avgStatsHTML += `<tr>${headers}</tr>`;
 
@@ -492,8 +492,16 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
             let name = ModLabels[row.modifier_name] || row.modifier_name;
             if (row.modifier_name === "Base") name = "Base Profile";
 
-            let cells = [row.wounds_success.toFixed(2)];
-            if (hasDev) cells.push(row.wounds_dev.toFixed(2));
+            let totalWounds = row.wounds_success + row.wounds_dev + row.hits_auto;
+            let cells = [totalWounds.toFixed(2)];
+
+            if (hasDev) {
+                if (row.wounds_dev > 0) {
+                    cells.push(row.wounds_dev.toFixed(2));
+                } else {
+                    cells.push('-');
+                }
+            }
 
             let rowHTML = `<tr><td style="${tdFirst}">${name}</td>`;
             cells.forEach((val, index) => {
