@@ -93,7 +93,12 @@ function createWeaponsArray() {
             rapidFire: getModVal("rapidfire")
         };
 
-        weaponsArray.push(new Weapon(unitName, attack, bsws, strength, ap, damage, modelCount, unitCount, modifiers));
+        const newWeapon = new Weapon(unitName, attack, bsws, strength, ap, damage, modelCount, unitCount, modifiers);
+        newWeapon.isLeader = isLeader;
+        newWeapon.attachTarget = attachTarget;
+        newWeapon.grantedKeyword = grantedKeyword;
+
+        weaponsArray.push(newWeapon);
     });
 
     return weaponsArray;
@@ -569,7 +574,38 @@ if (GlobalModBtn) {
 }
 
 
+//importing roster
+function loadTargetProfile(targetData) {
+    if (!targetData) return;
 
+
+    document.getElementById("toughness").value = targetData.toughness;
+    document.getElementById("wounds").value = targetData.wounds;
+    document.getElementById("save").value = targetData.save;
+    document.getElementById("inVul").value = targetData.inVul || "";
+    document.getElementById("target-models").value = targetData.modelCount;
+
+
+    document.getElementById("def-fnp").value = targetData.fnp || "0";
+
+
+    const mods = targetData.modifiers;
+    if (mods) {
+        document.getElementById("def-minus-hit").checked = mods.minusOneHit;
+        document.getElementById("def-minus-wound").checked = mods.minusOneWound;
+        document.getElementById("def-minus-wound-str").checked = mods.minusOneWoundHighStr;
+        document.getElementById("def-cover").checked = mods.cover;
+
+
+        if (mods.halfDamage) {
+            document.getElementById("def-reduce-dam").value = "half";
+        } else if (mods.minusOneDamage) {
+            document.getElementById("def-reduce-dam").value = "minus1";
+        } else {
+            document.getElementById("def-reduce-dam").value = "none";
+        }
+    }
+}
 
 
 // export
@@ -617,9 +653,26 @@ if (ImportBtn && ImportInput) {
                 const rawText = e.target.result;
                 const jsonData = JSON.parse(rawText);
 
+                // check if its old file export type
+                if (Array.isArray(jsonData)) {
 
-                buildRosterFromJSON(RosterContainer, jsonData);
+                    console.log("Legacy roster imported.");
+                    buildRosterFromJSON(RosterContainer, jsonData);
+                } else {
 
+                    console.log("Master State roster imported.");
+                    buildRosterFromJSON(RosterContainer, jsonData.roster);
+
+
+                    if (jsonData.target) {
+                        loadTargetProfile(jsonData.target);
+                    }
+
+                    if (jsonData.globalRule) {
+                        const globalDrop = document.getElementById("global-mod-dropdown");
+                        if (globalDrop) globalDrop.value = jsonData.globalRule;
+                    }
+                }
 
                 ImportInput.value = "";
             } catch (error) {

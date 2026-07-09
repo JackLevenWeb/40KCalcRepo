@@ -240,6 +240,22 @@ export function buildRosterFromJSON(containerElement, jsonData) {
         newModule.querySelector(".in-models").value = unitData.modelCount;
         newModule.querySelector(".in-units").value = unitData.unitCount;
 
+        // leader data
+        if (unitData.isLeader) {
+            newModule.querySelector('.is-leader').checked = true;
+
+            // have to temporarily create the option in the dropdown
+            if (unitData.attachTarget) {
+                const attachSelect = newModule.querySelector('.attach-to');
+                attachSelect.innerHTML = `<option value="${unitData.attachTarget}">${unitData.attachTarget}</option>`;
+                attachSelect.value = unitData.attachTarget;
+            }
+
+            if (unitData.grantedKeyword) {
+                newModule.querySelector('.grant-keyword').value = unitData.grantedKeyword;
+            }
+        }
+
 
         const mods = unitData.modifiers;
         if (mods) {
