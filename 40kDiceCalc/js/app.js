@@ -22,7 +22,7 @@ initDataBase();
 
 
 
-
+//auto save
 if (localStorage.getItem("40kRoster")) {
     const loadSavedRoster = localStorage.getItem("40kRoster");
 
