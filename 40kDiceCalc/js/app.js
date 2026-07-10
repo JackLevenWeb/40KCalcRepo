@@ -182,23 +182,26 @@ function applyModifierToWeapon(weapon, modKey) {
     }
 }
 
-// redundancy filter - 'skip' scenarios when mod is already applied
-function isModRedundant(weaponsArray, modKey) {
-    return weaponsArray.some(w => {
-        if (modKey === "hit_plus_1") return w.modifiers.hitMod > 0;
-        if (modKey === "reroll_hits_1") return w.modifiers.rerollHits === "ones" || w.modifiers.rerollHits === "all";
-        if (modKey === "reroll_hits_all") return w.modifiers.rerollHits === "all";
-        if (modKey === "sustained_hits") return w.modifiers.sustained > 0;
-        if (modKey === "wound_plus_1") return w.modifiers.woundMod > 0;
-        if (modKey === "reroll_wounds_1") return w.modifiers.rerollWounds === "ones" || w.modifiers.rerollWounds === "all";
-        if (modKey === "reroll_wounds_all") return w.modifiers.rerollWounds === "all";
-        if (modKey === "lethal") return w.modifiers.lethal === true;
-        if (modKey === "devastating") return w.modifiers.devastating === true;
-        if (modKey === "melta_range") return w.modifiers.melta === 0;
-        return false;
-    });
-}
+// redundancy filter - 'skip' scenarios when mod is already applied - returns "applied", "ineffective", or false to run the sim
+function checkSkipReason(weaponsArray, modKey) {
+    for (const w of weaponsArray) {
+        // "Already Applied" 
+        if (modKey === "hit_plus_1" && w.modifiers.hitMod > 0) return "applied";
+        if (modKey === "reroll_hits_1" && (w.modifiers.rerollHits === "ones" || w.modifiers.rerollHits === "all")) return "applied";
+        if (modKey === "reroll_hits_all" && w.modifiers.rerollHits === "all") return "applied";
+        if (modKey === "sustained_hits" && w.modifiers.sustained > 0) return "applied";
+        if (modKey === "wound_plus_1" && w.modifiers.woundMod > 0) return "applied";
+        if (modKey === "reroll_wounds_1" && (w.modifiers.rerollWounds === "ones" || w.modifiers.rerollWounds === "all")) return "applied";
+        if (modKey === "reroll_wounds_all" && w.modifiers.rerollWounds === "all") return "applied";
+        if (modKey === "lethal" && w.modifiers.lethal === true) return "applied";
+        if (modKey === "devastating" && w.modifiers.devastating === true) return "applied";
 
+        // "Ineffective / Redundant" 
+        if (modKey === "melta_range" && w.modifiers.melta === 0) return "not_applicable";
+        if (modKey === "hit_plus_1" && parseInt(w.BsWs) === 2) return "ineffective"; // 1s always fail
+    }
+    return false;
+}
 
 
 
@@ -319,7 +322,7 @@ if (advAnalyticsBtn) {
                 let allowedSaveMods = ["Base"];
                 let allowedDamageMods = ["Base"];
                 let allowedKilledMods = ["Base"];
-                let redundantMods = [];
+                let skippedMods = {};
 
                 let singleWeaponRoster = [baseWeapon];
 
@@ -345,24 +348,33 @@ if (advAnalyticsBtn) {
                     for (const modKey of mods) {
 
 
-                        if (isModRedundant([baseWeapon], modKey)) {
-                            redundantMods.push(modKey); // mark it as redundant
+                        //checking mods to 'skip'
+                        const skipReason = checkSkipReason([baseWeapon], modKey);
 
 
-                            if (category === "Hit Mods") allowedHitMods.push(modKey);
-                            if (category === "Wound Mods") allowedWoundMods.push(modKey);
-                            if (category === "Save/Ap") allowedSaveMods.push(modKey);
-                            if (category === "Damage Mods") {
-                                allowedDamageMods.push(modKey);
-                                allowedKilledMods.push(modKey);
-                            }
-                            continue; // Skip the heavy 100k simulation to save time!
+                        if (skipReason === "not_applicable") {
+                            continue;
+                        }
+
+
+                        if (category === "Hit Mods") allowedHitMods.push(modKey);
+                        if (category === "Wound Mods") allowedWoundMods.push(modKey);
+                        if (category === "Save/Ap") allowedSaveMods.push(modKey);
+                        if (category === "Damage Mods") {
+                            allowedDamageMods.push(modKey);
+                            allowedKilledMods.push(modKey);
+                        }
+
+
+                        if (skipReason) {
+                            skippedMods[modKey] = skipReason;
+                            continue;
                         }
 
                         let moddedWeapon = JSON.parse(JSON.stringify(baseWeapon));
                         applyModifierToWeapon(moddedWeapon, modKey);
 
-                        //pushing data into sql
+                        //run the actual simulation
                         let results = await runWorkerSimulation(SIMULATION_ITERATIONS, [moddedWeapon], targetUnit);
 
                         loadDataIntoSQL(unitName, modKey, "Hit", results.hitDistribution);
@@ -383,11 +395,11 @@ if (advAnalyticsBtn) {
                 const attackerUnitReport = unitAccordion.querySelector('.unit-reports-wrapper');
 
 
-                generateAdvancedReport(`${unitName}: Hit`, "Hit", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedHitMods, redundantMods, statsHTML, attackerUnitReport);
-                generateAdvancedReport(`${unitName}: Wound`, "Wound", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedWoundMods, redundantMods, statsHTML, attackerUnitReport);
-                generateAdvancedReport(`${unitName}: Save`, "Save", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedSaveMods, redundantMods, statsHTML, attackerUnitReport);
-                generateAdvancedReport(`${unitName}: Damage`, "Damage", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedDamageMods, redundantMods, statsHTML, attackerUnitReport);
-                generateAdvancedReport(`${unitName}: ModelsKilled`, "ModelsKilled", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedKilledMods, redundantMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: Hit`, "Hit", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedHitMods, skippedMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: Wound`, "Wound", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedWoundMods, skippedMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: Save`, "Save", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedSaveMods, skippedMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: Damage`, "Damage", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedDamageMods, skippedMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: ModelsKilled`, "ModelsKilled", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedKilledMods, skippedMods, statsHTML, attackerUnitReport);
 
                 //match roll stats block heights
                 const sidebars = attackerUnitReport.querySelectorAll('.avg-stats-sidebar');
@@ -409,20 +421,18 @@ if (advAnalyticsBtn) {
     });
 }
 
-// add an allowedMods parameter so we can filter out graph mods contamination
-// report generator
-function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns, allowedMods, redundantMods, statsHTML, targetContainer) {
-
+// report generator - add an allowedMods parameter so we can filter out graph mods contamination
+function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns, allowedMods, skippedMods, statsHTML, targetContainer) {
 
     const baseRow = sqlAvgData.find(r => r.modifier_name === "Base");
     const processedRows = allowedMods.map(modName => {
-        let isRedundant = redundantMods.includes(modName);
-        let dataRow = isRedundant ? baseRow : sqlAvgData.find(r => r.modifier_name === modName);
+        let skipReason = skippedMods[modName] || null;
+        let dataRow = skipReason ? baseRow : sqlAvgData.find(r => r.modifier_name === modName);
 
         return {
             ...dataRow,
             modifier_name: modName,
-            isRedundant: isRedundant
+            skipReason: skipReason
         };
     }).filter(r => r.unit_name);
 
@@ -433,12 +443,14 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
 
     let avgStatsHTML = `<table style="width: 100%; border-collapse: separate; border-spacing: 0 6px; font-size: 0.9rem; text-align: left;">`;
 
-    //  generate styled row names
+    // helper to generate styled row names based on the skip reason
     const getRowNameHTML = (row) => {
         let name = ModLabels[row.modifier_name] || row.modifier_name;
         if (row.modifier_name === "Base") name = "Base Profile";
 
-        if (row.isRedundant) {
+        if (row.skipReason === "applied") {
+            return `${name} <span style="margin-left: 8px; padding: 2px 6px; background: rgba(154, 193, 223, 0.15); color: #9ac1df; border-radius: 4px; font-size: 0.65rem; text-transform: uppercase;">Active</span>`;
+        } else if (row.skipReason === "ineffective") {
             return `${name} <span style="margin-left: 8px; padding: 2px 6px; background: #38424D; color: #8C9BA8; border-radius: 4px; font-size: 0.65rem; text-transform: uppercase;">Redundant</span>`;
         }
         return name;
@@ -454,7 +466,7 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
         avgStatsHTML += `<tr>${headers}</tr>`;
 
         processedRows.forEach(row => {
-            let rowStyle = row.isRedundant ? `opacity: 0.5;` : ``;
+            let rowStyle = row.skipReason ? `opacity: 0.5;` : ``;
             let cells = [row.hits_success.toFixed(2)];
             if (hasBonus) cells.push(row.hits_bonus.toFixed(2));
             if (hasAuto) cells.push(row.hits_auto.toFixed(2));
@@ -474,7 +486,7 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
         avgStatsHTML += `<tr>${headers}</tr>`;
 
         processedRows.forEach(row => {
-            let rowStyle = row.isRedundant ? `opacity: 0.5;` : ``;
+            let rowStyle = row.skipReason ? `opacity: 0.5;` : ``;
             let totalWounds = row.wounds_success + row.wounds_dev + row.hits_auto;
             let cells = [totalWounds.toFixed(2)];
 
@@ -492,21 +504,21 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
     else if (category === "Save") {
         avgStatsHTML += `<tr><th style="${th}">Rule</th><th style="${th}">Saves Forced</th><th style="${th}">Passed</th><th style="${th}">Failed (Dmg)</th></tr>`;
         processedRows.forEach(row => {
-            let rowStyle = row.isRedundant ? `opacity: 0.5;` : ``;
+            let rowStyle = row.skipReason ? `opacity: 0.5;` : ``;
             avgStatsHTML += `<tr style="${rowStyle}"><td style="${tdFirst}">${getRowNameHTML(row)}</td><td style="${td}">${row.saves_forced.toFixed(2)}</td><td style="${td}">${row.saves_passed.toFixed(2)}</td><td style="${tdLast}">${row.saves_failed.toFixed(2)}</td></tr>`;
         });
     }
     else if (category === "Damage") {
         avgStatsHTML += `<tr><th style="${th}">Rule</th><th style="${th}">Avg Total Damage</th></tr>`;
         processedRows.forEach(row => {
-            let rowStyle = row.isRedundant ? `opacity: 0.5;` : ``;
+            let rowStyle = row.skipReason ? `opacity: 0.5;` : ``;
             avgStatsHTML += `<tr style="${rowStyle}"><td style="${tdFirst}">${getRowNameHTML(row)}</td><td style="${tdLast}">${row.avg_damage.toFixed(2)}</td></tr>`;
         });
     }
     else if (category === "ModelsKilled") {
         avgStatsHTML += `<tr><th style="${th}">Rule</th><th style="${th}">Avg Killed</th><th style="${th}">Overkill</th><th style="${th}">Efficiency</th></tr>`;
         processedRows.forEach(row => {
-            let rowStyle = row.isRedundant ? `opacity: 0.5;` : ``;
+            let rowStyle = row.skipReason ? `opacity: 0.5;` : ``;
             avgStatsHTML += `<tr style="${rowStyle}"><td style="${tdFirst}">${getRowNameHTML(row)}</td><td style="${td}">${row.avg_killed.toFixed(3)}</td><td style="${td}">${row.avg_wasted.toFixed(2)}</td><td style="${tdLast}">${row.efficiency}%</td></tr>`;
         });
     }
@@ -514,8 +526,8 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
 
     const card = spawnReportCard(title, targetContainer, statsHTML, avgStatsHTML);
 
-    // strip redundant mods from the chart array so no invisible/duplicate lines are drawn
-    const chartMods = allowedMods.filter(m => !redundantMods.includes(m));
+    // check if the modKey exists in our skippedMods dictionary
+    const chartMods = allowedMods.filter(m => !skippedMods[m]);
     renderAdvancedChart(card.querySelector('.adv-chart'), category, sqlData, totalRuns, chartMods);
 }
 
