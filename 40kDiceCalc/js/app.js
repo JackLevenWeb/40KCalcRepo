@@ -73,6 +73,31 @@ RosterContainer.addEventListener("change", () => {
 
 });
 
+RosterContainer.addEventListener("click", (e) => {
+    if (e.target.classList.contains("add-mod-btn") ||
+        e.target.classList.contains("remove-mod-btn") ||
+        e.target.classList.contains("remove-btn")) {
+
+        // delay to allow html element changes
+        setTimeout(() => {
+            autoSave();
+        }, 50);
+    }
+});
+const targetIDs = [
+    "toughness", "wounds", "save", "inVul", "target-models",
+    "def-fnp", "def-minus-hit", "def-minus-wound", "def-minus-wound-str",
+    "def-cover", "def-reduce-dam"
+];
+
+targetIDs.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+        el.addEventListener("input", autoSave);
+        el.addEventListener("change", autoSave);
+    }
+});
+
 AddAttackerBtn.addEventListener("click", () => {
     addAttackerModule(RosterContainer);
     syncAppUI();
@@ -624,7 +649,7 @@ if (GlobalModBtn) {
         });
         GlobalModSelect.value = "none";
         syncAppUI();
-
+        autoSave();
 
     });
 }

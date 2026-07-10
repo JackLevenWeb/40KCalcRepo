@@ -267,6 +267,14 @@ export function buildRosterFromJSON(containerElement, jsonData) {
             if (mods.twinLinked) addBadgeToModule(newModule, "twinlinked", false);
             if (mods.blast) addBadgeToModule(newModule, "blast", false);
             if (mods.cleave) addBadgeToModule(newModule, "cleave", false);
+            if (mods.hitMod > 0) addBadgeToModule(newModule, "hit_plus_1", false);
+            if (mods.hitMod < 0) addBadgeToModule(newModule, "hit_minus_1", false);
+            if (mods.woundMod > 0) addBadgeToModule(newModule, "wound_plus_1", false);
+            if (mods.woundMod < 0) addBadgeToModule(newModule, "wound_minus_1", false);
+            if (mods.rerollHits === "all") addBadgeToModule(newModule, "reroll_hits_all", false);
+            if (mods.rerollHits === "ones") addBadgeToModule(newModule, "reroll_hits_1", false);
+            if (mods.rerollWounds === "all") addBadgeToModule(newModule, "reroll_wounds_all", false);
+            if (mods.rerollWounds === "ones") addBadgeToModule(newModule, "reroll_wounds_1", false);
 
             if (mods.sustained > 0) {
                 addBadgeToModule(newModule, "sustained", false);
@@ -279,6 +287,10 @@ export function buildRosterFromJSON(containerElement, jsonData) {
             if (mods.anti > 0) {
                 addBadgeToModule(newModule, "anti", false);
                 newModule.querySelector('.mod-badge[data-key="anti"] .badge-val').value = mods.anti;
+            }
+            if (mods.rapidFire > 0) {
+                addBadgeToModule(newModule, "rapidfire", false);
+                newModule.querySelector('.mod-badge[data-key="rapidfire"] .badge-val').value = mods.rapidFire;
             }
         }
 
