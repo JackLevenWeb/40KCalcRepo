@@ -48,10 +48,10 @@ export function initializeWatchers() {
 
             if (tutType === "base") {
                 tutTitle.textContent = "Base Profile Report";
-                tutBody.innerHTML = "This section shows the exact mathematical averages of your unit's current loadout against the target. <br><br><strong>Note:</strong> We will add more detailed instructions here later!";
+                tutBody.innerHTML = "This section shows the exact mathematical averages of your unit's current loadout against the target.";
             } else if (tutType === "scenario") {
                 tutTitle.textContent = "Scenario Testing Analytics";
-                tutBody.innerHTML = "This engine runs your weapon profile through every applicable keyword (Lethal, Devastating, Sustained, etc.) to show you which buffs provide the most value for your CP.<br><br><strong>Note:</strong> We will add more detailed instructions here later!";
+                tutBody.innerHTML = "This engine runs your weapon profile through every applicable keyword (Lethal, Devastating, Sustained, etc.) to show you which modifiers provide the most value";
             }
 
             tutorialModal.style.display = "block";
