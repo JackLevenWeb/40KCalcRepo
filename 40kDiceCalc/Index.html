@@ -10,7 +10,7 @@
   </head>
   <body>
     <main class="calculator-container">
-      <h1>Hurt System Cogitator</h1>
+      <h1>The Munitorum Auspex</h1>
 
       <div class="stats-grid">
         <section class="panel attacker-panel">
@@ -29,8 +29,17 @@
             <div style="display: flex; gap: 10px; align-items: center">
               <select
                 id="theme-dropdown"
-                style="width: auto; padding: 5px 10px; height: 42px"
+                style="
+                  width: auto;
+                  padding: 5px 10px;
+                  height: 42px;
+                  font-weight: bold;
+                  text-transform: uppercase;
+                "
               >
+                <option value="placeholder" disabled selected hidden>
+                  Theme
+                </option>
                 <option value="space_wolves">Space Wolves</option>
                 <option value="necrons">Necrons</option>
                 <option value="tyranids">Tyranids</option>
@@ -256,6 +265,17 @@
       </div>
 
       <section class="panel results-panel-wrapper" id="results-wrapper">
+        <h2
+          style="
+            grid-column: 1 / -1;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+          "
+        >
+          Base Profile Report
+          <button class="tutorial-btn" data-tutorial="base">?</button>
+        </h2>
         <div class="stat-cards-grid" id="stats-html"></div>
 
         <div style="display: flex; flex-direction: column; width: 100%">
@@ -285,10 +305,59 @@
         id="advanced-analytics-wrapper"
         style="display: none; margin-top: 20px"
       >
-        <h2>Advanced Tactical Reports</h2>
+        <h2
+          style="
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+          "
+        >
+          Scenario Testing Reports
+          <button class="tutorial-btn" data-tutorial="scenario">?</button>
+        </h2>
         <div id="advanced-reports-container"></div>
+
+        <div
+          style="
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px dashed var(--border-color);
+          "
+        >
+          <a
+            href="#"
+            id="raw-data-link"
+            style="
+              color: var(--theme-accent);
+              font-style: italic;
+              text-decoration: none;
+              font-weight: bold;
+            "
+          >
+            [Access Data-Loom: View 100,000+ raw simulation roll outputs]
+          </a>
+        </div>
       </section>
     </main>
     <script type="module" src="./js/app.js"></script>
+    <div id="tutorial-modal" class="tutorial-modal">
+      <div class="modal-content">
+        <span class="modal-close">&times;</span>
+        <h2 id="tutorial-title" style="color: var(--theme-accent)">
+          Tutorial Title
+        </h2>
+        <div
+          id="tutorial-body"
+          style="
+            color: var(--theme-text-light);
+            margin-top: 15px;
+            line-height: 1.8;
+          "
+        >
+          Placeholder text...
+        </div>
+      </div>
+    </div>
   </body>
 </html>

@@ -228,14 +228,26 @@ export function buildRosterFromJSON(containerElement, jsonData) {
         addAttackerModule(containerElement);
         const newModule = containerElement.lastElementChild;
 
-        newModule.querySelector(".in-unit-name").value = unitData.unitName;
-        newModule.querySelector(".in-attacks").value = unitData.attack;
-        newModule.querySelector(".in-bsws").value = unitData.BsWs;
-        newModule.querySelector(".in-str").value = unitData.strength;
-        newModule.querySelector(".in-ap").value = unitData.Ap;
-        newModule.querySelector(".in-dam").value = unitData.damage;
-        newModule.querySelector(".in-models").value = unitData.modelCount;
-        newModule.querySelector(".in-units").value = unitData.unitCount;
+        newModule.querySelector(".in-unit-name").value = unitData.unitName || "Attacker Unit";
+        newModule.querySelector(".in-attacks").value = unitData.attack || "1";
+        newModule.querySelector(".in-bsws").value = unitData.BsWs || "3";
+        newModule.querySelector(".in-str").value = unitData.strength || 4;
+        newModule.querySelector(".in-ap").value = unitData.Ap || 0;
+        newModule.querySelector(".in-dam").value = unitData.damage || "1";
+
+
+        newModule.querySelector(".in-models").value = unitData.modelCount || 5;
+        newModule.querySelector(".in-units").value = unitData.unitCount || 1;
+
+
+        if (unitData.modifiers) {
+            if (unitData.modifiers.critHitThreshold) {
+                newModule.querySelector(".in-crit-hit").value = unitData.modifiers.critHitThreshold;
+            }
+            if (unitData.modifiers.critWoundThreshold) {
+                newModule.querySelector(".in-crit-wound").value = unitData.modifiers.critWoundThreshold;
+            }
+        }
 
         if (unitData.isLeader) {
             newModule.querySelector('.is-leader').checked = true;

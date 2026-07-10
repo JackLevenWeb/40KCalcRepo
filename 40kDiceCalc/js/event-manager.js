@@ -35,6 +35,44 @@ export function initializeWatchers() {
         });
     }
 
+    // --- Tutorial Modal Logic ---
+    const tutorialModal = document.getElementById("tutorial-modal");
+    const modalClose = document.querySelector(".modal-close");
+    const tutTitle = document.getElementById("tutorial-title");
+    const tutBody = document.getElementById("tutorial-body");
+
+    // Listen for clicks on ANY tutorial button
+    document.addEventListener("click", (e) => {
+        if (e.target.classList.contains("tutorial-btn")) {
+            const tutType = e.target.getAttribute("data-tutorial");
+
+            if (tutType === "base") {
+                tutTitle.textContent = "Base Profile Report";
+                tutBody.innerHTML = "This section shows the exact mathematical averages of your unit's current loadout against the target. <br><br><strong>Note:</strong> We will add more detailed instructions here later!";
+            } else if (tutType === "scenario") {
+                tutTitle.textContent = "Scenario Testing Analytics";
+                tutBody.innerHTML = "This engine runs your weapon profile through every applicable keyword (Lethal, Devastating, Sustained, etc.) to show you which buffs provide the most value for your CP.<br><br><strong>Note:</strong> We will add more detailed instructions here later!";
+            }
+
+            tutorialModal.style.display = "block";
+        }
+    });
+
+    // Close the modal when the X is clicked
+    if (modalClose) {
+        modalClose.addEventListener("click", () => {
+            tutorialModal.style.display = "none";
+        });
+    }
+
+    // Close the modal if the user clicks anywhere outside of it
+    window.addEventListener("click", (e) => {
+        if (e.target === tutorialModal) {
+            tutorialModal.style.display = "none";
+        }
+    });
+    // ----------------------------
+
     RosterContainer.addEventListener("input", () => {
         syncAppUI();
         triggerSave();

@@ -186,6 +186,9 @@ function checkSkipReason(weaponsArray, modKey) {
 
 if (CalcBtn) {
     CalcBtn.addEventListener("click", () => {
+
+        document.dispatchEvent(new CustomEvent("App:AutoSave"));
+
         CalcBtn.textContent = "Rolling dice...";
         CalcBtn.disabled = true;
         const attackerWeapons = createWeaponsArray();
@@ -240,6 +243,8 @@ if (CalcBtn) {
 
 if (advAnalyticsBtn) {
     advAnalyticsBtn.addEventListener("click", async () => {
+        document.dispatchEvent(new CustomEvent("App:AutoSave"));
+
         advAnalyticsBtn.textContent = "Running Pipeline...";
         advAnalyticsBtn.disabled = true;
         clearDataBase();
@@ -257,13 +262,31 @@ if (advAnalyticsBtn) {
                 const unitName = baseWeapon.unitName;
 
                 const mainContainer = document.getElementById("advanced-reports-container");
+
+                if (!isFirstUnit) {
+                    const divider = document.createElement("hr");
+                    divider.style.border = "none";
+                    divider.style.borderTop = "4px solid var(--theme-divider)";
+                    divider.style.margin = "40px auto";
+                    divider.style.width = "20%";
+                    divider.style.borderRadius = "2px";
+                    mainContainer.appendChild(divider);
+                }
+
                 const unitAccordion = document.createElement("details");
+
+
                 unitAccordion.style.marginBottom = "20px";
+                unitAccordion.style.border = "1px solid var(--border-color)";
+                unitAccordion.style.borderRadius = "8px";
+                unitAccordion.style.overflow = "hidden";
+                unitAccordion.style.background = "var(--bg-color)";
+
                 unitAccordion.innerHTML = `
-                    <summary style="background: var(--surface-color); padding: 15px; cursor: pointer; font-weight: bold; border-radius: 6px; font-size: 1.1rem; margin-bottom: 15px;">
+                    <summary style="background: var(--surface-hover); padding: 15px; cursor: pointer; font-weight: bold; font-size: 1.1rem; outline: none;">
                         ${unitName} - Advanced Analytics
                     </summary>
-                    <div class="unit-reports-wrapper"></div>
+                    <div class="unit-reports-wrapper" style="padding: 15px;"></div>
                 `;
                 mainContainer.appendChild(unitAccordion);
 
@@ -587,6 +610,13 @@ function handleImport(file) {
                     if (globalDrop) globalDrop.value = jsonData.globalRule;
                 }
             }
+            syncAppUI();
+
+
+            setTimeout(() => {
+                document.dispatchEvent(new CustomEvent("App:AutoSave"));
+            }, 100);
+
         } catch (error) {
             alert("Invalid JSON file! Could not parse roster.");
             console.error(error);
@@ -596,11 +626,11 @@ function handleImport(file) {
 }
 
 if (localStorage.getItem("40kRoster")) {
-    console.log("💾 Found save data! Attempting to load...");
+    console.log("Found save data. Attempting to load...");
     const loadSavedRoster = localStorage.getItem("40kRoster");
     try {
         const jsonData = JSON.parse(loadSavedRoster);
-        console.log("📦 Parsed JSON:", jsonData);
+        console.log("Parsed JSON:", jsonData);
 
         if (Array.isArray(jsonData)) {
             buildRosterFromJSON(RosterContainer, jsonData);
@@ -613,15 +643,11 @@ if (localStorage.getItem("40kRoster")) {
             }
         }
         if (ImportInput) ImportInput.value = "";
-        console.log("✅ Load successful!");
-
     } catch (error) {
-        console.error("🚨 Save Data Crashed! Error details:", error);
-        RosterContainer.innerHTML = '';
-        addAttackerModule(RosterContainer);
+        console.error("Save Data Crashed. Error details:", error);
+
     }
 } else {
-    console.log("🆕 No save data found. Spawning default unit.");
     addAttackerModule(RosterContainer);
 }
 

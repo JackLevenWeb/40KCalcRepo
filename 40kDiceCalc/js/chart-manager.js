@@ -43,7 +43,7 @@ export function renderChart(damageDistribution, killedDistribution, totalRuns) {
 
     const datasets = [
         {
-            label: 'At Least X Models Killed',
+            label: 'Models Killed (At Least)',
             data: cumulativeKilled,
             borderColor: theme.chartColors[1],
             backgroundColor: theme.chartColors[1] + '22',
@@ -51,7 +51,7 @@ export function renderChart(damageDistribution, killedDistribution, totalRuns) {
             borderWidth: 2, tension: 0.1, pointRadius: 0, pointHoverRadius: 5, cubicInterpolationMode: 'monotone'
         },
         {
-            label: 'At Least X Damage',
+            label: 'Damage Dealt (At Least)',
             data: cumulativeDamage,
             borderColor: theme.chartColors[0],
             backgroundColor: theme.chartColors[0] + '22',

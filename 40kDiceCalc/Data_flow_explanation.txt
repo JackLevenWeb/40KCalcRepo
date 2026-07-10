@@ -7,13 +7,16 @@ This document outlines the high-level Extract, Transform, Load (ETL) pipeline us
 [User Input (UI)]
       |
       v
+[Event Manager]       <-- Intercepts inputs and broadcasts global events
+      |
+      v
 [Extract State]       <-- Parses DOM for Weapon/Unit profiles
       |
       v
-[Web Worker]          <-- Background Thread: Runs 50k iterations per weapon profile
+[Web Worker]          <-- Background Thread: Runs 100,000 waterfall iterations per profile
       |
       v
-[Logic Engine]        <-- Executes pure JS math; Returns structured JSON distributions
+[Logic Engine]        <-- Executes pure JS math sequentially (Hits -> Wounds -> Saves -> Damage); Returns structured JSON distributions
       |
       v
 [SQL Database]        <-- In-Memory SQLite (sql.js). INSERTS raw distribution rows
@@ -35,8 +38,8 @@ This document outlines the high-level Extract, Transform, Load (ETL) pipeline us
       v
 [webWorker.js]
       |
-      |-- Imports `runSimulation()`
-      |-- Executes loop
+      |-- Imports runSimulation()
+      |-- Executes waterfall loop (resolving hits, passing successes directly to wounds)
       |
       |-- postMessage(results)
       v
@@ -48,16 +51,16 @@ This document outlines the high-level Extract, Transform, Load (ETL) pipeline us
 ## 3. Database Aggregation Flow
 
 Application Logic
-│
-├── Extract Output
-│   └── JSON object: { "4": 1200, "5": 3000 }
-│
-├── Prepare Statement (db-manager.js)
-│   └── "INSERT INTO simulation_runs (modifier_name, category, value, occurrence_count) VALUES (?, ?, ?, ?)"
-│
-├── Execute Query
-│   └── stmt.run(["Lethal", "Hit", 4, 1200])
-│
-└── SQLite Engine (WASM)
-    │
-    └── Update Storage (RAM)
+|
+|-- Extract Output
+|   |-- JSON object: { "4": 1200, "5": 3000 }
+|
+|-- Prepare Statement (db-manager.js)
+|   |-- "INSERT INTO simulation_runs (modifier_name, category, value, occurrence_count) VALUES (?, ?, ?, ?)"
+|
+|-- Execute Query
+|   |-- stmt.run(["Lethal", "Hit", 4, 1200])
+|
+|-- SQLite Engine (WASM)
+    |
+    |-- Update Storage (RAM)
