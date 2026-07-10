@@ -15,21 +15,22 @@ export function initializeWatchers() {
 
     const triggerSave = () => document.dispatchEvent(new CustomEvent("App:AutoSave"));
 
-    // theme watcher with safe cleanup prompt
     if (ThemeSelect) {
         ThemeSelect.addEventListener("change", (e) => {
-            if (confirm("Changing themes requires a full dashboard clear to ensure layout sync. Proceed?")) {
-                const clearBtn = document.getElementById("clear-dashboard-btn");
-                if (clearBtn) {
-                    // trigger click cleanly to wipe tracking objects first
-                    clearBtn.click();
-                }
-                applyTheme(e.target.value);
+            const newTheme = e.target.value;
+            // Grab the currently saved theme to revert to if they cancel
+            const oldTheme = localStorage.getItem("40kTheme") || "space_wolves";
+
+            if (confirm("Changing the theme will wipe your current roster and reset the dashboard. Proceed?")) {
+                // Apply colors and update charts
+                applyTheme(newTheme);
                 document.dispatchEvent(new CustomEvent("App:ThemeChanged"));
+
+                // Trigger the full board reset
+                document.dispatchEvent(new CustomEvent("App:ClearDashboard"));
             } else {
-                // read old theme or revert dropdown state
-                const savedTheme = localStorage.getItem("40kTheme") || "space_wolves";
-                ThemeSelect.value = savedTheme;
+                // Revert the dropdown visual so it matches the unchanged UI
+                e.target.value = oldTheme;
             }
         });
     }

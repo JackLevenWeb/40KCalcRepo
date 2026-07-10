@@ -5,7 +5,6 @@ import { getCurrentTheme } from './theme-manager.js';
 
 let damageChartInstance = null;
 
-// standard chart
 export function renderChart(damageDistribution, killedDistribution, totalRuns) {
     const ctx = document.getElementById('damageChart').getContext('2d');
     const theme = getCurrentTheme();
@@ -46,16 +45,16 @@ export function renderChart(damageDistribution, killedDistribution, totalRuns) {
         {
             label: 'At Least X Models Killed',
             data: cumulativeKilled,
-            borderColor: theme.colors.accentSecondary,
-            backgroundColor: theme.colors.accentSecondary + '22',
+            borderColor: theme.chartColors[1],
+            backgroundColor: theme.chartColors[1] + '22',
             fill: true,
             borderWidth: 2, tension: 0.1, pointRadius: 0, pointHoverRadius: 5, cubicInterpolationMode: 'monotone'
         },
         {
             label: 'At Least X Damage',
             data: cumulativeDamage,
-            borderColor: theme.colors.accentPrimary,
-            backgroundColor: theme.colors.accentPrimary + '22',
+            borderColor: theme.chartColors[0],
+            backgroundColor: theme.chartColors[0] + '22',
             fill: true,
             borderWidth: 3, tension: 0.1, pointRadius: 0, pointHoverRadius: 5, cubicInterpolationMode: 'monotone'
         }
@@ -65,36 +64,29 @@ export function renderChart(damageDistribution, killedDistribution, totalRuns) {
         type: 'line',
         data: { labels: chartLabels, datasets: datasets },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
+            responsive: true, maintainAspectRatio: false,
             interaction: { mode: 'nearest', intersect: false },
             scales: {
                 x: {
-                    title: { display: true, text: 'Total Amount (Damage or Models)', color: theme.colors.textMuted, font: { weight: 'bold', family: theme.fontBody } },
-                    ticks: { color: '#ffffff', font: { family: theme.fontBody } },
-                    grid: { color: theme.colors.border }
+                    title: { display: true, text: 'Total Amount (Damage or Models)', color: '#8C9BA8', font: { weight: 'bold' } },
+                    ticks: { color: theme.chartColors[0] },
+                    grid: { color: '#38424D' }
                 },
                 y: {
-                    title: { display: true, text: 'Probability (%)', color: theme.colors.textMuted, font: { weight: 'bold', family: theme.fontBody } },
-                    ticks: { color: '#ffffff', font: { family: theme.fontBody } },
-                    grid: { color: theme.colors.border },
+                    title: { display: true, text: 'Probability (%)', color: '#8C9BA8', font: { weight: 'bold' } },
+                    ticks: { color: theme.chartColors[0] },
+                    grid: { color: '#38424D' },
                     beginAtZero: true,
                     max: 100
                 }
             },
             plugins: {
-                legend: { display: true, labels: { color: '#ffffff', font: { family: theme.fontBody } } },
+                legend: { display: true, labels: { color: '#fff' } },
                 tooltip: {
-                    backgroundColor: theme.colors.bg,
-                    titleColor: '#ffffff',
-                    bodyColor: theme.colors.textMuted,
-                    borderColor: theme.colors.border,
-                    borderWidth: 1,
-                    padding: 12,
+                    backgroundColor: 'rgba(15, 17, 21, 0.95)', titleColor: theme.chartColors[0], bodyColor: '#DAE6EF',
+                    borderColor: theme.chartColors[2], borderWidth: 1, padding: 12,
                     callbacks: {
-                        label: function (context) {
-                            return context.dataset.label + ': ' + context.raw.toFixed(2) + '%';
-                        }
+                        label: function (context) { return context.dataset.label + ': ' + context.raw.toFixed(2) + '%'; }
                     }
                 }
             }
@@ -102,7 +94,6 @@ export function renderChart(damageDistribution, killedDistribution, totalRuns) {
     });
 }
 
-// advchart
 export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns, allowedMods) {
     const ctx = canvasElement.getContext('2d');
     const theme = getCurrentTheme();
@@ -115,12 +106,12 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
 
     if (maxVal === 0) {
         maxVal = 1;
-        let warningText = category === "ModelsKilled" ? "(ZERO KILLS)" : "(ZERO IMPACT)";
+        let warningText = category === "ModelsKilled" ? "(ZERO MODELS KILLED)" : "(ZERO IMPACT)";
         const card = canvasElement.closest('.report-card');
         if (card) {
             const titleElement = card.querySelector('h4');
             if (titleElement && !titleElement.innerHTML.includes(warningText)) {
-                titleElement.innerHTML += ` <span style="color: var(--accent-secondary); font-size: 0.55rem;">${warningText}</span>`;
+                titleElement.innerHTML += ` <span style="color: ${theme.chartColors[1]}; font-size: 0.55rem;">${warningText}</span>`;
             }
         }
     }
@@ -145,18 +136,15 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
         let displayLabel = ModLabels[modName] || modName;
         if (modName === "Base" && category !== "Save") displayLabel = "Base Profile";
 
-        const cIndex = index % theme.colors.chartColors.length;
-        const assignedColor = theme.colors.chartColors[cIndex];
+        const assignedColor = theme.chartColors[index % theme.chartColors.length];
 
         return {
             label: displayLabel,
             data: cumulativeArray,
             borderColor: assignedColor,
-            backgroundColor: assignedColor + '1A',
+            backgroundColor: assignedColor + '22',
             fill: true,
-            borderWidth: index === 0 ? 3 : 2,
-            order: index === 0 ? 0 : 1,
-            tension: 0.1, pointRadius: 0, pointHoverRadius: 5, cubicInterpolationMode: 'monotone'
+            borderWidth: 2, tension: 0.1, pointRadius: 0, pointHoverRadius: 5, cubicInterpolationMode: 'monotone'
         };
     });
 
@@ -168,23 +156,23 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
             interaction: { mode: 'nearest', intersect: false },
             scales: {
                 x: {
-                    title: { display: true, text: `Total Successful ${category}s`, color: theme.colors.textMuted, font: { weight: 'bold', family: theme.fontBody } },
-                    ticks: { color: '#ffffff', font: { family: theme.fontBody } },
-                    grid: { color: theme.colors.border }
+                    title: { display: true, text: `Total Successful ${category}s`, color: '#8C9BA8', font: { weight: 'bold' } },
+                    ticks: { color: theme.chartColors[0] },
+                    grid: { color: '#38424D' }
                 },
                 y: {
-                    title: { display: true, text: `At Least - (%) Chance of ${category}`, color: theme.colors.textMuted, font: { weight: 'bold', family: theme.fontBody } },
-                    ticks: { color: '#ffffff', font: { family: theme.fontBody } },
-                    grid: { color: theme.colors.border },
+                    title: { display: true, text: `At Least - (%) Chance of ${category}`, color: '#8C9BA8', font: { weight: 'bold' } },
+                    ticks: { color: theme.chartColors[0] },
+                    grid: { color: '#38424D' },
                     beginAtZero: true,
                     max: 100
                 }
             },
             plugins: {
-                legend: { display: true, labels: { color: '#ffffff', font: { family: theme.fontBody } } },
+                legend: { display: true, labels: { color: '#fff' } },
                 tooltip: {
-                    backgroundColor: theme.colors.bg, titleColor: '#ffffff', bodyColor: theme.colors.textMuted,
-                    borderColor: theme.colors.border, borderWidth: 1, padding: 12,
+                    backgroundColor: 'rgba(15, 17, 21, 0.95)', titleColor: theme.chartColors[0], bodyColor: '#DAE6EF',
+                    borderColor: theme.chartColors[2], borderWidth: 1, padding: 12,
                     callbacks: {
                         label: function (context) { return context.dataset.label + ': ' + context.raw.toFixed(2) + '%'; }
                     }

@@ -10,9 +10,6 @@ import { initializeWatchers } from './event-manager.js';
 import { applyTheme, getCurrentTheme } from './theme-manager.js';
 const SIMULATION_ITERATIONS = 100000;
 
-// todo reminder: pull automated dataset profiles from the repository schema located at:
-// https://github.com/BSData/wh40k-11e
-
 initializeWatchers();
 
 const savedTheme = localStorage.getItem("40kTheme") || "space_wolves";
@@ -147,6 +144,46 @@ function runWorkerSimulation(iterations, weaponsArray, targetUnit) {
     });
 }
 
+const SIMULATION_SCENARIOS = {
+    "Hit Mods": ["hit_plus_1", "reroll_hits_1", "reroll_hits_all", "sustained_hits"],
+    "Wound Mods": ["wound_plus_1", "reroll_wounds_1", "reroll_wounds_all", "lethal"],
+    "Save/Ap": ["extra_ap_1"],
+    "Damage Mods": ["devastating", "melta_range"]
+};
+
+function applyModifierToWeapon(weapon, modKey) {
+    if (modKey === "hit_plus_1") weapon.modifiers.hitMod += 1;
+    if (modKey === "reroll_hits_1") weapon.modifiers.rerollHits = "ones";
+    if (modKey === "reroll_hits_all") weapon.modifiers.rerollHits = "all";
+    if (modKey === "sustained_hits") weapon.modifiers.sustained = 1;
+
+    if (modKey === "wound_plus_1") weapon.modifiers.woundMod += 1;
+    if (modKey === "reroll_wounds_1") weapon.modifiers.rerollWounds = "ones";
+    if (modKey === "reroll_wounds_all") weapon.modifiers.rerollWounds = "all";
+    if (modKey === "lethal") weapon.modifiers.lethal = true;
+
+    if (modKey === "extra_ap_1") weapon.Ap -= 1;
+    if (modKey === "devastating") weapon.modifiers.devastating = true;
+}
+
+function checkSkipReason(weaponsArray, modKey) {
+    for (const w of weaponsArray) {
+        if (modKey === "hit_plus_1" && w.modifiers.hitMod > 0) return "applied";
+        if (modKey === "reroll_hits_1" && (w.modifiers.rerollHits === "ones" || w.modifiers.rerollHits === "all")) return "applied";
+        if (modKey === "reroll_hits_all" && w.modifiers.rerollHits === "all") return "applied";
+        if (modKey === "sustained_hits" && w.modifiers.sustained > 0) return "applied";
+        if (modKey === "wound_plus_1" && w.modifiers.woundMod > 0) return "applied";
+        if (modKey === "reroll_wounds_1" && (w.modifiers.rerollWounds === "ones" || w.modifiers.rerollWounds === "all")) return "applied";
+        if (modKey === "reroll_wounds_all" && w.modifiers.rerollWounds === "all") return "applied";
+        if (modKey === "lethal" && w.modifiers.lethal === true) return "applied";
+        if (modKey === "devastating" && w.modifiers.devastating === true) return "applied";
+
+        if (modKey === "melta_range" && w.modifiers.melta === 0) return "not_applicable";
+        if (modKey === "hit_plus_1" && parseInt(w.BsWs) === 2) return "ineffective";
+    }
+    return false;
+}
+
 if (CalcBtn) {
     CalcBtn.addEventListener("click", () => {
         CalcBtn.textContent = "Rolling dice...";
@@ -158,7 +195,7 @@ if (CalcBtn) {
 
         worker.addEventListener('error', (error) => {
             console.error("PIPELINE CRASH:", error.message);
-            CalcBtn.textContent = "Pipeline Error";
+            CalcBtn.textContent = "Pipeline Error (Check Console)";
             CalcBtn.disabled = false;
             worker.terminate();
         });
@@ -169,25 +206,26 @@ if (CalcBtn) {
 
             document.getElementById("results-wrapper").style.display = "grid";
             document.getElementById("stats-html").innerHTML = `
-            <div class="stat-card" style="background: var(--surface-color); border: 1px solid var(--border-color); border-top: 4px solid var(--accent-primary); padding: 15px; text-align: center; box-shadow: 0 4px 10px var(--theme-shadow);">
-                <h5 class="section-heading-label" style="font-family: var(--font-header);">Average Damage Dealt</h5>
-                <div class="stat-value" style="font-size: 2rem; color: #ffffff; font-weight: bold; font-family: var(--font-body);">${results.averages.damage.toFixed(2)}</div>
-                <div class="stat-sub" style="color: var(--text-muted); font-size: 0.8rem; font-family: var(--font-body);">Highest Spike: ${results.extremes.highestDamage}</div>
+            <div class="stat-card">
+                <h5>Average Damage Dealt</h5>
+                <div class="stat-value">${results.averages.damage.toFixed(2)}</div>
+                <div class="stat-sub">Highest Spike: ${results.extremes.highestDamage}</div>
             </div>
-            <div class="stat-card" style="background: var(--surface-color); border: 1px solid var(--border-color); border-top: 4px solid var(--accent-primary); padding: 15px; text-align: center; box-shadow: 0 4px 10px var(--theme-shadow);">
-                <h5 class="section-heading-label" style="font-family: var(--font-header);">Average Models Killed</h5>
-                <div class="stat-value" style="font-size: 2rem; color: #ffffff; font-weight: bold; font-family: var(--font-body);">${results.averages.killed.toFixed(2)}</div>
-                <div class="stat-sub" style="color: var(--text-muted); font-size: 0.8rem; font-family: var(--font-body);">Max Killed: ${results.extremes.highestKills}</div>
+            <div class="stat-card">
+                <h5>Average Models Killed</h5>
+                <div class="stat-value">${results.averages.killed.toFixed(2)}</div>
+                <div class="stat-sub">Max Killed: ${results.extremes.highestKills}</div>
             </div>
-            <div class="stat-card" style="background: var(--surface-color); border: 1px solid var(--border-color); border-top: 4px solid var(--accent-secondary); padding: 15px; text-align: center; box-shadow: 0 4px 10px var(--theme-shadow);">
-                <h5 class="section-heading-label" style="font-family: var(--font-header);">Wasted Damage (Overkill)</h5>
-                <div class="stat-value" style="font-size: 2rem; color: var(--accent-secondary); font-weight: bold; font-family: var(--font-body);">${results.averages.wasted.toFixed(2)}</div>
-                <div class="stat-sub" style="color: var(--text-muted); font-size: 0.8rem; font-family: var(--font-body);">Damage Efficiency: ${results.averages.efficiency}%</div>
+            <div class="stat-card" style="border-left-color: var(--theme-btn-standard);">
+                <h5>Wasted Damage (Overkill)</h5>
+                <div class="stat-value" style="color: var(--theme-btn-standard);">${results.averages.wasted.toFixed(2)}</div>
+                <div class="stat-sub">Damage Efficiency: ${results.averages.efficiency}%</div>
             </div>
         `;
 
             renderChart(results.damageDistribution, results.killedDistribution, results.SimulatedRuns);
-            CalcBtn.textContent = getCurrentTheme().btnStandard;
+
+            CalcBtn.textContent = getCurrentTheme().btnStandardText;
             CalcBtn.disabled = false;
             worker.terminate();
         });
@@ -217,14 +255,15 @@ if (advAnalyticsBtn) {
 
             for (const baseWeapon of baseWeapons) {
                 const unitName = baseWeapon.unitName;
+
                 const mainContainer = document.getElementById("advanced-reports-container");
                 const unitAccordion = document.createElement("details");
                 unitAccordion.style.marginBottom = "20px";
                 unitAccordion.innerHTML = `
-                    <summary style="background: var(--surface-color); color: var(--accent-primary); padding: 15px; cursor: pointer; font-weight: bold; border-radius: 6px; font-size: 1.1rem; border: 1px solid var(--border-color); font-family: var(--font-header);">
+                    <summary style="background: var(--surface-color); padding: 15px; cursor: pointer; font-weight: bold; border-radius: 6px; font-size: 1.1rem; margin-bottom: 15px;">
                         ${unitName} - Advanced Analytics
                     </summary>
-                    <div class="unit-reports-wrapper" style="margin-top: 15px;"></div>
+                    <div class="unit-reports-wrapper"></div>
                 `;
                 mainContainer.appendChild(unitAccordion);
 
@@ -260,7 +299,9 @@ if (advAnalyticsBtn) {
 
                 for (const [category, mods] of Object.entries(SIMULATION_SCENARIOS)) {
                     for (const modKey of mods) {
+
                         const skipReason = checkSkipReason([baseWeapon], modKey);
+
                         if (skipReason === "not_applicable") continue;
 
                         if (category === "Hit Mods") allowedHitMods.push(modKey);
@@ -314,12 +355,13 @@ if (advAnalyticsBtn) {
             alert("Pipeline Failed.");
         }
 
-        advAnalyticsBtn.textContent = getCurrentTheme().btnAdvanced;
+        advAnalyticsBtn.textContent = getCurrentTheme().btnAdvancedText;
         advAnalyticsBtn.disabled = false;
     });
 }
 
 function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns, allowedMods, skippedMods, statsHTML, targetContainer) {
+
     const baseRow = sqlAvgData.find(r => r.modifier_name === "Base");
     const processedRows = allowedMods.map(modName => {
         let skipReason = skippedMods[modName] || null;
@@ -332,9 +374,9 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
         };
     }).filter(r => r.unit_name);
 
-    const th = `padding: 8px 10px; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid var(--border-color); font-family: var(--font-header);`;
-    const td = `padding: 10px; background: var(--surface-hover); color: #ffffff; font-weight: bold; margin-bottom: 5px; font-family: var(--font-body);`;
-    const tdFirst = td + `border-left: 3px solid var(--accent-primary); border-radius: 4px 0 0 4px;`;
+    const th = `padding: 8px 10px; color: var(--theme-text-muted); font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid var(--border-color);`;
+    const td = `padding: 10px; background: rgba(255,255,255,0.03); color: #fff; font-weight: bold; margin-bottom: 5px;`;
+    const tdFirst = td + `border-left: 3px solid var(--theme-text-light); border-radius: 4px 0 0 4px;`;
     const tdLast = td + `border-radius: 0 4px 4px 0;`;
 
     let avgStatsHTML = `<table style="width: 100%; border-collapse: separate; border-spacing: 0 6px; font-size: 0.9rem; text-align: left;">`;
@@ -344,9 +386,9 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
         if (row.modifier_name === "Base") name = "Base Profile";
 
         if (row.skipReason === "applied") {
-            return `${name} <span style="margin-left: 8px; padding: 2px 6px; background: var(--bg-color); color: var(--accent-primary); border-radius: 4px; font-size: 0.65rem; text-transform: uppercase; border: 1px solid var(--border-color);">Active</span>`;
+            return `${name} <span style="margin-left: 8px; padding: 2px 6px; background: rgba(255,255,255,0.1); color: var(--theme-text-light); border-radius: 4px; font-size: 0.65rem; text-transform: uppercase;">Active</span>`;
         } else if (row.skipReason === "ineffective") {
-            return `${name} <span style="margin-left: 8px; padding: 2px 6px; background: var(--bg-color); color: var(--text-muted); border-radius: 4px; font-size: 0.65rem; text-transform: uppercase; border: 1px solid var(--border-color);">Redundant</span>`;
+            return `${name} <span style="margin-left: 8px; padding: 2px 6px; background: var(--border-color); color: var(--theme-text-muted); border-radius: 4px; font-size: 0.65rem; text-transform: uppercase;">Redundant</span>`;
         }
         return name;
     };
@@ -449,12 +491,12 @@ function buildBaseStatsHTML(weaponsArray, targetUnit) {
         let modsStr = activeMods.length > 0 ? `[${activeMods.join(', ')}]` : `[No Mods]`;
 
         html += `
-        <div style="flex: 1; min-width: 200px; background: var(--bg-color); padding: 6px 12px; border-radius: 4px; border-left: 3px solid var(--accent-secondary); display: flex; flex-direction: column; justify-content: center; font-family: var(--font-body);">
-            <div style="color: var(--text-muted); font-size: 0.65rem; font-weight: bold; text-transform: uppercase;">Attacker: ${w.unitName}</div>
-            <div style="font-size: 0.85rem; color: #ffffff; font-weight: bold; margin: 2px 0;">
+        <div style="flex: 1; min-width: 200px; background: rgba(0,0,0,0.2); padding: 6px 12px; border-radius: 4px; border-left: 3px solid var(--theme-accent); display: flex; flex-direction: column; justify-content: center;">
+            <div style="color: var(--theme-text-muted); font-size: 0.65rem; font-weight: bold; text-transform: uppercase;">Attacker: ${w.unitName}</div>
+            <div style="font-size: 0.85rem; color: #fff; font-weight: bold; margin: 2px 0;">
                 ${w.unitCount * w.modelCount}M | ${w.attack}A | BS/WS ${w.BsWs}+ | S${w.strength} | AP${w.Ap}
             </div>
-            <div style="color: var(--accent-secondary); font-size: 0.7rem; font-weight: bold;">${modsStr}</div>
+            <div style="color: var(--theme-accent); font-size: 0.7rem; font-weight: bold;">${modsStr}</div>
         </div>`;
     });
 
@@ -469,12 +511,12 @@ function buildBaseStatsHTML(weaponsArray, targetUnit) {
     let targetModsStr = targetMods.length > 0 ? targetMods.join(' | ') : "[No Mods]";
 
     html += `
-    <div style="flex: 1; min-width: 180px; background: var(--bg-color); padding: 6px 12px; border-radius: 4px; border-left: 3px solid var(--accent-primary); display: flex; flex-direction: column; justify-content: center; font-family: var(--font-body);">
-        <div style="color: var(--text-muted); font-size: 0.65rem; font-weight: bold; text-transform: uppercase;">Target Profile</div>
-        <div style="font-size: 0.85rem; color: #ffffff; font-weight: bold; margin: 2px 0;">
-            T${targetUnit.toughness} | W${targetUnit.wounds} | SV var(--accent-primary)+ ${targetUnit.inVul ? '| ' + targetUnit.inVul + '++' : ''}
+    <div style="flex: 1; min-width: 180px; background: rgba(0,0,0,0.2); padding: 6px 12px; border-radius: 4px; border-left: 3px solid var(--theme-btn-standard); display: flex; flex-direction: column; justify-content: center;">
+        <div style="color: var(--theme-text-muted); font-size: 0.65rem; font-weight: bold; text-transform: uppercase;">Target Profile</div>
+        <div style="font-size: 0.85rem; color: #fff; font-weight: bold; margin: 2px 0;">
+            T${targetUnit.toughness} | W${targetUnit.wounds} | SV ${targetUnit.save}+ ${targetUnit.inVul ? '| ' + targetUnit.inVul + '++' : ''}
         </div>
-        <div style="color: var(--accent-primary); font-size: 0.7rem; font-weight: bold;">${targetModsStr}</div>
+        <div style="color: var(--theme-btn-standard); font-size: 0.7rem; font-weight: bold;">${targetModsStr}</div>
     </div>`;
 
     html += `</div>`;
@@ -528,12 +570,18 @@ function handleImport(file) {
     const reader = new FileReader();
     reader.onload = (e) => {
         try {
-            const jsonData = JSON.parse(e.target.result);
+            const rawText = e.target.result;
+            const jsonData = JSON.parse(rawText);
+
             if (Array.isArray(jsonData)) {
                 buildRosterFromJSON(RosterContainer, jsonData);
             } else {
                 buildRosterFromJSON(RosterContainer, jsonData.roster);
-                if (jsonData.target) loadTargetProfile(jsonData.target);
+
+                if (jsonData.target) {
+                    loadTargetProfile(jsonData.target);
+                }
+
                 if (jsonData.globalRule) {
                     const globalDrop = document.getElementById("global-mod-dropdown");
                     if (globalDrop) globalDrop.value = jsonData.globalRule;
@@ -541,14 +589,19 @@ function handleImport(file) {
             }
         } catch (error) {
             alert("Invalid JSON file! Could not parse roster.");
+            console.error(error);
         }
     };
     reader.readAsText(file);
 }
 
 if (localStorage.getItem("40kRoster")) {
+    console.log("💾 Found save data! Attempting to load...");
+    const loadSavedRoster = localStorage.getItem("40kRoster");
     try {
-        const jsonData = JSON.parse(localStorage.getItem("40kRoster"));
+        const jsonData = JSON.parse(loadSavedRoster);
+        console.log("📦 Parsed JSON:", jsonData);
+
         if (Array.isArray(jsonData)) {
             buildRosterFromJSON(RosterContainer, jsonData);
         } else {
@@ -559,57 +612,79 @@ if (localStorage.getItem("40kRoster")) {
                 if (globalDrop) globalDrop.value = jsonData.globalRule;
             }
         }
-        ImportInput.value = "";
+        if (ImportInput) ImportInput.value = "";
+        console.log("✅ Load successful!");
+
     } catch (error) {
-        alert("Invalid JSON file! Could not parse roster.");
+        console.error("🚨 Save Data Crashed! Error details:", error);
+        RosterContainer.innerHTML = '';
+        addAttackerModule(RosterContainer);
     }
 } else {
+    console.log("🆕 No save data found. Spawning default unit.");
     addAttackerModule(RosterContainer);
 }
 
+//autosave
 function autoSave() {
-    const globalDrop = document.getElementById("global-mod-dropdown");
-    const rosterState = {
-        roster: createWeaponsArray(),
-        target: createUnit(),
-        globalRule: globalDrop.value
-    };
-    localStorage.setItem("40kRoster", JSON.stringify(rosterState, null, 2));
+    try {
+        const globalDrop = document.getElementById("global-mod-dropdown");
+        const rosterState = {
+            roster: createWeaponsArray(),
+            target: createUnit(),
+            globalRule: globalDrop ? globalDrop.value : "none"
+        };
+        localStorage.setItem("40kRoster", JSON.stringify(rosterState, null, 2));
+        console.log("💾 Auto-saved successfully!");
+    } catch (error) {
+        console.error("🚨 Failed to auto-save:", error);
+    }
 }
 
+
+// Centralized function to wipe the board completely
+function clearDashboard() {
+    localStorage.removeItem("40kRoster");
+
+    RosterContainer.innerHTML = '';
+    addAttackerModule(RosterContainer);
+
+    // Reset Target Profile Stats
+    document.getElementById("toughness").value = 4;
+    document.getElementById("wounds").value = 2;
+    document.getElementById("save").value = 3;
+    document.getElementById("inVul").value = "";
+    document.getElementById("target-models").value = 5;
+    document.getElementById("def-fnp").value = "0";
+
+    ["def-minus-hit", "def-minus-wound", "def-minus-wound-str", "def-cover"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.checked = false;
+    });
+
+    const reduceDam = document.getElementById("def-reduce-dam");
+    if (reduceDam) reduceDam.value = "none";
+
+    const globalDrop = document.getElementById("global-mod-dropdown");
+    if (globalDrop) globalDrop.value = "none";
+
+    const stdResults = document.getElementById("results-wrapper");
+    if (stdResults) stdResults.style.display = "none";
+
+    const advResults = document.getElementById("advanced-analytics-wrapper");
+    if (advResults) advResults.style.display = "none";
+
+    syncAppUI();
+}
+
+// Listen for the custom event from the Theme Changer
+document.addEventListener("App:ClearDashboard", clearDashboard);
+
+// The manual Clear Dashboard Button
 if (ClearBtn) {
     ClearBtn.addEventListener("click", () => {
         if (confirm("Are you sure you want to clear all units and reset the dashboard?")) {
-            localStorage.removeItem("40kRoster");
-
-            RosterContainer.innerHTML = '';
-            addAttackerModule(RosterContainer);
-
-            document.getElementById("toughness").value = 4;
-            document.getElementById("wounds").value = 2;
-            document.getElementById("save").value = 3;
-            document.getElementById("inVul").value = "";
-            document.getElementById("target-models").value = 5;
-            document.getElementById("def-fnp").value = "0";
-
-            ["def-minus-hit", "def-minus-wound", "def-minus-wound-str", "def-cover"].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.checked = false;
-            });
-
-            const reduceDam = document.getElementById("def-reduce-dam");
-            if (reduceDam) reduceDam.value = "none";
-
-            const globalDrop = document.getElementById("global-mod-dropdown");
-            if (globalDrop) globalDrop.value = "none";
-
-            const stdResults = document.getElementById("results-wrapper");
-            if (stdResults) stdResults.style.display = "none";
-
-            const advResults = document.getElementById("advanced-analytics-wrapper");
-            if (advResults) advResults.style.display = "none";
-
-            syncAppUI();
+            clearDashboard();
         }
     });
 }

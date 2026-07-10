@@ -3,20 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>40k Dice Calculator | Structural Multi-Pattern</title>
+    <title>40k Dice Calculator | Dynamic Pattern</title>
     <link rel="stylesheet" href="style.css" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Audiowide&family=Cinzel:wght@400;700&family=Creepster&family=Exo+2:wght@400;700&family=Montserrat:wght@400;700&family=Nosifer&family=Orbitron:wght@400;700&family=Rajdhani:wght@400;700&family=Uncial+Antiqua&family=Roboto:wght@400;700&display=swap"
-      rel="stylesheet"
-    />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
   </head>
   <body>
     <main class="calculator-container">
-      <h1 class="main-title-header">Hurt System Cogitator</h1>
+      <h1>Hurt System Cogitator</h1>
 
       <div class="stats-grid">
         <section class="panel attacker-panel">
@@ -30,36 +24,38 @@
               gap: 10px;
             "
           >
-            <h2 class="section-heading-label">Attacker Roster</h2>
+            <h2>Attacker Roster</h2>
 
-            <select
-              id="theme-dropdown"
-              style="padding: 8px; font-weight: bold; cursor: pointer"
-            >
-              <option value="space_wolves">Space Wolves</option>
-              <option value="necrons">Necrons</option>
-              <option value="tyranids">Tyranids</option>
-              <option value="votann">Leagues of Votann</option>
-            </select>
+            <div style="display: flex; gap: 10px; align-items: center">
+              <select
+                id="theme-dropdown"
+                style="width: auto; padding: 5px 10px; height: 42px"
+              >
+                <option value="space_wolves">Space Wolves</option>
+                <option value="necrons">Necrons</option>
+                <option value="tyranids">Tyranids</option>
+                <option value="votann">Leagues of Votann</option>
+              </select>
 
-            <button
-              id="clear-dashboard-btn"
-              style="
-                border-radius: 4px;
-                padding: 8px 15px;
-                cursor: pointer;
-                font-weight: bold;
-                transition: 0.2s;
-              "
-            >
-              ⚠️ Clear Dashboard
-            </button>
+              <button
+                id="clear-dashboard-btn"
+                class="btn-primary"
+                style="
+                  height: 42px;
+                  background-color: var(--bg-color);
+                  color: var(--danger-red);
+                  border-color: var(--danger-red);
+                "
+              >
+                ⚠️ Clear Dashboard
+              </button>
+            </div>
 
             <div style="display: flex; gap: 10px; align-items: center">
               <input
                 type="text"
                 id="roster-name"
-                value="SpaceWolves_Roster"
+                value="Custom_Roster"
                 placeholder="Name your roster..."
                 style="width: 220px; height: 42px; padding: 5px 10px"
               />
@@ -72,7 +68,7 @@
               <button
                 id="import-roster-btn"
                 class="btn-primary"
-                style="height: 42px"
+                style="height: 42px; background-color: var(--theme-mid)"
               >
                 Import JSON
               </button>
@@ -95,10 +91,16 @@
 
           <div
             class="global-rules-panel"
-            style="padding: 15px; border-radius: 6px; margin-bottom: 15px"
+            style="
+              background: rgba(0, 0, 0, 0.2);
+              padding: 15px;
+              border-radius: 6px;
+              margin-bottom: 15px;
+              border: 1px dashed var(--theme-accent);
+            "
           >
             <div style="display: flex; gap: 10px; align-items: center">
-              <label class="section-heading-label" style="font-weight: bold"
+              <label style="font-weight: bold; color: var(--theme-accent)"
                 >Army Wide Rules:</label
               >
               <select id="global-mod-dropdown" style="flex-grow: 1">
@@ -115,7 +117,11 @@
                 <option value="reroll_wounds_1">Reroll 1s to Wound</option>
                 <option value="reroll_wounds_all">Reroll All (Wound)</option>
               </select>
-              <button id="add-global-mod-btn" class="btn-primary">
+              <button
+                id="add-global-mod-btn"
+                class="btn-primary"
+                style="background-color: var(--theme-accent); color: #0f1115"
+              >
                 Apply to All
               </button>
             </div>
@@ -124,25 +130,25 @@
         </section>
 
         <section class="panel target-panel">
-          <h2 class="section-heading-label">Target Profile</h2>
+          <h2>Target Profile</h2>
 
-          <h4 class="section-heading-label">Defensive Stats</h4>
+          <h4>Defensive Stats</h4>
           <div class="core-stats-row">
             <div class="input-field">
-              <label>Toughness (T)</label
-              ><input type="number" id="toughness" value="10" min="1" />
+              <label>Toughness (T)</label>
+              <input type="number" id="toughness" value="10" min="1" />
             </div>
             <div class="input-field">
-              <label>Wounds (W)</label
-              ><input type="number" id="wounds" value="12" min="1" />
+              <label>Wounds (W)</label>
+              <input type="number" id="wounds" value="12" min="1" />
             </div>
             <div class="input-field">
-              <label>Save (SV)</label
-              ><input type="number" id="save" value="4" min="2" max="7" />
+              <label>Save (SV)</label>
+              <input type="number" id="save" value="4" min="2" max="7" />
             </div>
             <div class="input-field">
-              <label>Invulnerable</label
-              ><input
+              <label>Invulnerable</label>
+              <input
                 type="number"
                 id="inVul"
                 min="2"
@@ -152,7 +158,7 @@
             </div>
           </div>
 
-          <h4 class="section-heading-label">Defensive Modifiers</h4>
+          <h4>Defensive Modifiers</h4>
           <div style="display: flex; flex-direction: column; gap: 8px">
             <label
               style="
@@ -160,6 +166,7 @@
                 align-items: center;
                 gap: 10px;
                 cursor: pointer;
+                color: var(--theme-text-light);
                 text-transform: none;
               "
               ><input type="checkbox" id="def-minus-hit" style="width: 16px" />
@@ -171,6 +178,7 @@
                 align-items: center;
                 gap: 10px;
                 cursor: pointer;
+                color: var(--theme-text-light);
                 text-transform: none;
               "
               ><input
@@ -186,6 +194,7 @@
                 align-items: center;
                 gap: 10px;
                 cursor: pointer;
+                color: var(--theme-text-light);
                 text-transform: none;
               "
               ><input
@@ -193,7 +202,7 @@
                 id="def-minus-wound-str"
                 style="width: 16px"
               />
-              -1 Wound (if S &gt; T)</label
+              -1 Wound (if S > T)</label
             >
             <label
               style="
@@ -201,6 +210,7 @@
                 align-items: center;
                 gap: 10px;
                 cursor: pointer;
+                color: var(--theme-text-light);
                 text-transform: none;
               "
               ><input type="checkbox" id="def-cover" style="width: 16px" />
@@ -208,7 +218,7 @@
             >
           </div>
 
-          <h4 class="section-heading-label">Damage Mitigation</h4>
+          <h4>Damage Mitigation</h4>
           <div class="core-stats-row">
             <div class="input-field">
               <label>Reduce Damage</label>
@@ -230,23 +240,33 @@
           </div>
 
           <div class="input-field" style="margin-top: 15px">
-            <label>Models in Target Unit (Blast)</label>
+            <label>Models in Target Unit (For Blast Maths)</label>
             <input type="number" id="target-models" value="10" min="1" />
           </div>
         </section>
       </div>
 
       <div style="display: flex; gap: 15px; margin-bottom: 20px">
-        <button id="calculate-btn" style="flex: 1; height: 54px"></button>
-        <button
-          id="advanced-analytics-btn"
-          style="flex: 1; height: 54px"
-        ></button>
+        <button id="calculate-btn" style="flex: 1">
+          FOR THE EMPEROR! (Standard)
+        </button>
+        <button id="advanced-analytics-btn" style="flex: 1">
+          FOR THE ADVANCED EMPEROR!
+        </button>
       </div>
 
       <section class="panel results-panel-wrapper" id="results-wrapper">
         <div class="stat-cards-grid" id="stats-html"></div>
+
         <div style="display: flex; flex-direction: column; width: 100%">
+          <div
+            style="
+              display: flex;
+              justify-content: flex-end;
+              align-items: center;
+              margin-bottom: 10px;
+            "
+          ></div>
           <div
             style="
               position: relative;
@@ -265,10 +285,10 @@
         id="advanced-analytics-wrapper"
         style="display: none; margin-top: 20px"
       >
-        <h2 class="section-heading-label">Advanced Tactical Reports</h2>
+        <h2>Advanced Tactical Reports</h2>
         <div id="advanced-reports-container"></div>
       </section>
     </main>
-    <script type="module" src="app.js"></script>
+    <script type="module" src="./js/app.js"></script>
   </body>
 </html>
