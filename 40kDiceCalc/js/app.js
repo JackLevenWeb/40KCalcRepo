@@ -19,11 +19,8 @@ document.addEventListener("App:ExportRoster", exportRoster);
 document.addEventListener("App:ImportRoster", (e) => handleImport(e.detail.file));
 
 const CalcBtn = document.getElementById("calculate-btn");
-const AddAttackerBtn = document.getElementById("add-attacker-btn");
 const RosterContainer = document.getElementById("attacker-roster");
-const ExportBtn = document.getElementById("export-roster-btn");
 const RosterNameInput = document.getElementById("roster-name");
-const ImportBtn = document.getElementById("import-roster-btn");
 const ImportInput = document.getElementById("import-file-input");
 const advAnalyticsBtn = document.getElementById("advanced-analytics-btn");
 
@@ -34,43 +31,6 @@ initDataBase();
 
 
 
-//auto save
-if (localStorage.getItem("40kRoster")) {
-    const loadSavedRoster = localStorage.getItem("40kRoster");
-
-    try {
-
-        const jsonData = JSON.parse(loadSavedRoster);
-
-
-        if (Array.isArray(jsonData)) {
-
-
-            buildRosterFromJSON(RosterContainer, jsonData);
-        } else {
-
-
-            buildRosterFromJSON(RosterContainer, jsonData.roster);
-
-
-            if (jsonData.target) {
-                loadTargetProfile(jsonData.target);
-            }
-
-            if (jsonData.globalRule) {
-                const globalDrop = document.getElementById("global-mod-dropdown");
-                if (globalDrop) globalDrop.value = jsonData.globalRule;
-            }
-        }
-
-        ImportInput.value = "";
-    } catch (error) {
-        alert("Invalid JSON file! Could not parse roster.");
-        console.error(error);
-    }
-} else {
-    addAttackerModule(RosterContainer);
-}
 
 
 
@@ -222,7 +182,7 @@ function applyModifierToWeapon(weapon, modKey) {
     }
 }
 
-// redundancy filter - used to 'skip' scenarios when mod is already applied or has no affect(eg metla 0)
+// redundancy filter - 'skip' scenarios when mod is already applied
 function isModRedundant(weaponsArray, modKey) {
     return weaponsArray.some(w => {
         if (modKey === "hit_plus_1") return w.modifiers.hitMod > 0;
@@ -242,7 +202,7 @@ function isModRedundant(weaponsArray, modKey) {
 
 
 
-// execution
+// execution - standard/adv PIPELINE ORCHESTRATOR LOOPS>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 //standard btn
 if (CalcBtn) {
     CalcBtn.addEventListener("click", () => {
@@ -304,8 +264,8 @@ if (CalcBtn) {
     });
 }
 
-//ADV PIPELINE ORCHESTRATOR LOOP
-// adv analytics button here>>
+
+// adv analytics btn
 if (advAnalyticsBtn) {
     advAnalyticsBtn.addEventListener("click", async () => {
         advAnalyticsBtn.textContent = "Running Pipeline...";
@@ -359,6 +319,7 @@ if (advAnalyticsBtn) {
                 let allowedSaveMods = ["Base"];
                 let allowedDamageMods = ["Base"];
                 let allowedKilledMods = ["Base"];
+                let redundantMods = [];
 
                 let singleWeaponRoster = [baseWeapon];
 
@@ -383,13 +344,19 @@ if (advAnalyticsBtn) {
                 for (const [category, mods] of Object.entries(SIMULATION_SCENARIOS)) {
                     for (const modKey of mods) {
 
-                        if (isModRedundant([baseWeapon], modKey)) continue;
-                        if (category === "Hit Mods") allowedHitMods.push(modKey);
-                        if (category === "Wound Mods") allowedWoundMods.push(modKey);
-                        if (category === "Save/Ap") allowedSaveMods.push(modKey);
-                        if (category === "Damage Mods") {
-                            allowedDamageMods.push(modKey);
-                            allowedKilledMods.push(modKey);
+
+                        if (isModRedundant([baseWeapon], modKey)) {
+                            redundantMods.push(modKey); // mark it as redundant
+
+
+                            if (category === "Hit Mods") allowedHitMods.push(modKey);
+                            if (category === "Wound Mods") allowedWoundMods.push(modKey);
+                            if (category === "Save/Ap") allowedSaveMods.push(modKey);
+                            if (category === "Damage Mods") {
+                                allowedDamageMods.push(modKey);
+                                allowedKilledMods.push(modKey);
+                            }
+                            continue; // Skip the heavy 100k simulation to save time!
                         }
 
                         let moddedWeapon = JSON.parse(JSON.stringify(baseWeapon));
@@ -416,13 +383,21 @@ if (advAnalyticsBtn) {
                 const attackerUnitReport = unitAccordion.querySelector('.unit-reports-wrapper');
 
 
-                generateAdvancedReport(`${unitName}: Hit`, "Hit", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedHitMods, statsHTML, attackerUnitReport);
-                generateAdvancedReport(`${unitName}: Wound`, "Wound", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedWoundMods, statsHTML, attackerUnitReport);
-                generateAdvancedReport(`${unitName}: Save`, "Save", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedSaveMods, statsHTML, attackerUnitReport);
-                generateAdvancedReport(`${unitName}: Damage`, "Damage", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedDamageMods, statsHTML, attackerUnitReport);
-                generateAdvancedReport(`${unitName}: ModelsKilled`, "ModelsKilled", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedKilledMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: Hit`, "Hit", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedHitMods, redundantMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: Wound`, "Wound", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedWoundMods, redundantMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: Save`, "Save", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedSaveMods, redundantMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: Damage`, "Damage", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedDamageMods, redundantMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: ModelsKilled`, "ModelsKilled", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedKilledMods, redundantMods, statsHTML, attackerUnitReport);
 
-
+                //match roll stats block heights
+                const sidebars = attackerUnitReport.querySelectorAll('.avg-stats-sidebar');
+                let maxHeight = 0;
+                sidebars.forEach(sidebar => {
+                    if (sidebar.offsetHeight > maxHeight) maxHeight = sidebar.offsetHeight;
+                });
+                sidebars.forEach(sidebar => {
+                    sidebar.style.minHeight = maxHeight + 'px';
+                });
             }
         } catch (error) {
             console.error("Pipeline Failed:", error);
@@ -436,9 +411,20 @@ if (advAnalyticsBtn) {
 
 // add an allowedMods parameter so we can filter out graph mods contamination
 // report generator
-function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns, allowedMods, statsHTML, targetContainer) {
-    const filteredAverages = sqlAvgData.filter(row => allowedMods.includes(row.modifier_name));
+function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns, allowedMods, redundantMods, statsHTML, targetContainer) {
 
+
+    const baseRow = sqlAvgData.find(r => r.modifier_name === "Base");
+    const processedRows = allowedMods.map(modName => {
+        let isRedundant = redundantMods.includes(modName);
+        let dataRow = isRedundant ? baseRow : sqlAvgData.find(r => r.modifier_name === modName);
+
+        return {
+            ...dataRow,
+            modifier_name: modName,
+            isRedundant: isRedundant
+        };
+    }).filter(r => r.unit_name);
 
     const th = `padding: 8px 10px; color: #8C9BA8; font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid #38424D;`;
     const td = `padding: 10px; background: rgba(255,255,255,0.03); color: #fff; font-weight: bold; margin-bottom: 5px;`;
@@ -447,92 +433,90 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
 
     let avgStatsHTML = `<table style="width: 100%; border-collapse: separate; border-spacing: 0 6px; font-size: 0.9rem; text-align: left;">`;
 
+    //  generate styled row names
+    const getRowNameHTML = (row) => {
+        let name = ModLabels[row.modifier_name] || row.modifier_name;
+        if (row.modifier_name === "Base") name = "Base Profile";
+
+        if (row.isRedundant) {
+            return `${name} <span style="margin-left: 8px; padding: 2px 6px; background: #38424D; color: #8C9BA8; border-radius: 4px; font-size: 0.65rem; text-transform: uppercase;">Redundant</span>`;
+        }
+        return name;
+    };
+
     if (category === "Hit") {
-
-
-        const hasBonus = filteredAverages.some(r => r.hits_bonus > 0);
-        const hasAuto = filteredAverages.some(r => r.hits_auto > 0);
+        const hasBonus = processedRows.some(r => r.hits_bonus > 0);
+        const hasAuto = processedRows.some(r => r.hits_auto > 0);
 
         let headers = `<th style="${th}">Rule</th><th style="${th}">Avg Hits</th>`;
         if (hasBonus) headers += `<th style="${th}">Sustained</th>`;
         if (hasAuto) headers += `<th style="${th}">Lethal (Auto)</th>`;
         avgStatsHTML += `<tr>${headers}</tr>`;
 
-        filteredAverages.forEach(row => {
-            console.log(filteredAverages);
-            let name = ModLabels[row.modifier_name] || row.modifier_name;
-            if (row.modifier_name === "Base") name = "Base Profile";
-
-
+        processedRows.forEach(row => {
+            let rowStyle = row.isRedundant ? `opacity: 0.5;` : ``;
             let cells = [row.hits_success.toFixed(2)];
             if (hasBonus) cells.push(row.hits_bonus.toFixed(2));
             if (hasAuto) cells.push(row.hits_auto.toFixed(2));
 
-            let rowHTML = `<tr><td style="${tdFirst}">${name}</td>`;
+            let rowHTML = `<tr style="${rowStyle}"><td style="${tdFirst}">${getRowNameHTML(row)}</td>`;
             cells.forEach((val, index) => {
-                let isLast = index === cells.length - 1;
-                rowHTML += `<td style="${isLast ? tdLast : td}">${val}</td>`;
+                rowHTML += `<td style="${index === cells.length - 1 ? tdLast : td}">${val}</td>`;
             });
             avgStatsHTML += rowHTML + `</tr>`;
         });
     }
     else if (category === "Wound") {
-        const hasDev = filteredAverages.some(r => r.wounds_dev > 0);
+        const hasDev = processedRows.some(r => r.wounds_dev > 0);
 
         let headers = `<th style="${th}">Rule</th><th style="${th}">Avg Total Wounds</th>`;
         if (hasDev) headers += `<th style="${th}">Devastating</th>`;
         avgStatsHTML += `<tr>${headers}</tr>`;
 
-        filteredAverages.forEach(row => {
-            let name = ModLabels[row.modifier_name] || row.modifier_name;
-            if (row.modifier_name === "Base") name = "Base Profile";
-
+        processedRows.forEach(row => {
+            let rowStyle = row.isRedundant ? `opacity: 0.5;` : ``;
             let totalWounds = row.wounds_success + row.wounds_dev + row.hits_auto;
             let cells = [totalWounds.toFixed(2)];
 
             if (hasDev) {
-                if (row.wounds_dev > 0) {
-                    cells.push(row.wounds_dev.toFixed(2));
-                } else {
-                    cells.push('-');
-                }
+                cells.push(row.wounds_dev > 0 ? row.wounds_dev.toFixed(2) : '-');
             }
 
-            let rowHTML = `<tr><td style="${tdFirst}">${name}</td>`;
+            let rowHTML = `<tr style="${rowStyle}"><td style="${tdFirst}">${getRowNameHTML(row)}</td>`;
             cells.forEach((val, index) => {
-                let isLast = index === cells.length - 1;
-                rowHTML += `<td style="${isLast ? tdLast : td}">${val}</td>`;
+                rowHTML += `<td style="${index === cells.length - 1 ? tdLast : td}">${val}</td>`;
             });
             avgStatsHTML += rowHTML + `</tr>`;
         });
     }
     else if (category === "Save") {
         avgStatsHTML += `<tr><th style="${th}">Rule</th><th style="${th}">Saves Forced</th><th style="${th}">Passed</th><th style="${th}">Failed (Dmg)</th></tr>`;
-        filteredAverages.forEach(row => {
-            let name = ModLabels[row.modifier_name] || row.modifier_name;
-            avgStatsHTML += `<tr><td style="${tdFirst}">${name}</td><td style="${td}">${row.saves_forced.toFixed(2)}</td><td style="${td}">${row.saves_passed.toFixed(2)}</td><td style="${tdLast}">${row.saves_failed.toFixed(2)}</td></tr>`;
+        processedRows.forEach(row => {
+            let rowStyle = row.isRedundant ? `opacity: 0.5;` : ``;
+            avgStatsHTML += `<tr style="${rowStyle}"><td style="${tdFirst}">${getRowNameHTML(row)}</td><td style="${td}">${row.saves_forced.toFixed(2)}</td><td style="${td}">${row.saves_passed.toFixed(2)}</td><td style="${tdLast}">${row.saves_failed.toFixed(2)}</td></tr>`;
         });
     }
     else if (category === "Damage") {
         avgStatsHTML += `<tr><th style="${th}">Rule</th><th style="${th}">Avg Total Damage</th></tr>`;
-        filteredAverages.forEach(row => {
-            let name = ModLabels[row.modifier_name] || row.modifier_name;
-            if (row.modifier_name === "Base") name = "Base Profile";
-            avgStatsHTML += `<tr><td style="${tdFirst}">${name}</td><td style="${tdLast}">${row.avg_damage.toFixed(2)}</td></tr>`;
+        processedRows.forEach(row => {
+            let rowStyle = row.isRedundant ? `opacity: 0.5;` : ``;
+            avgStatsHTML += `<tr style="${rowStyle}"><td style="${tdFirst}">${getRowNameHTML(row)}</td><td style="${tdLast}">${row.avg_damage.toFixed(2)}</td></tr>`;
         });
     }
     else if (category === "ModelsKilled") {
         avgStatsHTML += `<tr><th style="${th}">Rule</th><th style="${th}">Avg Killed</th><th style="${th}">Overkill</th><th style="${th}">Efficiency</th></tr>`;
-        filteredAverages.forEach(row => {
-            let name = ModLabels[row.modifier_name] || row.modifier_name;
-            if (row.modifier_name === "Base") name = "Base Profile";
-            avgStatsHTML += `<tr><td style="${tdFirst}">${name}</td><td style="${td}">${row.avg_killed.toFixed(3)}</td><td style="${td}">${row.avg_wasted.toFixed(2)}</td><td style="${tdLast}">${row.efficiency}%</td></tr>`;
+        processedRows.forEach(row => {
+            let rowStyle = row.isRedundant ? `opacity: 0.5;` : ``;
+            avgStatsHTML += `<tr style="${rowStyle}"><td style="${tdFirst}">${getRowNameHTML(row)}</td><td style="${td}">${row.avg_killed.toFixed(3)}</td><td style="${td}">${row.avg_wasted.toFixed(2)}</td><td style="${tdLast}">${row.efficiency}%</td></tr>`;
         });
     }
     avgStatsHTML += `</table>`;
 
     const card = spawnReportCard(title, targetContainer, statsHTML, avgStatsHTML);
-    renderAdvancedChart(card.querySelector('.adv-chart'), category, sqlData, totalRuns, allowedMods);
+
+    // strip redundant mods from the chart array so no invisible/duplicate lines are drawn
+    const chartMods = allowedMods.filter(m => !redundantMods.includes(m));
+    renderAdvancedChart(card.querySelector('.adv-chart'), category, sqlData, totalRuns, chartMods);
 }
 
 
@@ -693,6 +677,45 @@ function handleImport(file) {
     };
     reader.readAsText(file);
 }
+
+//auto save
+if (localStorage.getItem("40kRoster")) {
+    const loadSavedRoster = localStorage.getItem("40kRoster");
+
+    try {
+
+        const jsonData = JSON.parse(loadSavedRoster);
+
+
+        if (Array.isArray(jsonData)) {
+
+
+            buildRosterFromJSON(RosterContainer, jsonData);
+        } else {
+
+
+            buildRosterFromJSON(RosterContainer, jsonData.roster);
+
+
+            if (jsonData.target) {
+                loadTargetProfile(jsonData.target);
+            }
+
+            if (jsonData.globalRule) {
+                const globalDrop = document.getElementById("global-mod-dropdown");
+                if (globalDrop) globalDrop.value = jsonData.globalRule;
+            }
+        }
+
+        ImportInput.value = "";
+    } catch (error) {
+        alert("Invalid JSON file! Could not parse roster.");
+        console.error(error);
+    }
+} else {
+    addAttackerModule(RosterContainer);
+}
+
 
 //auto save roster state
 function autoSave() {
