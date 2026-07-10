@@ -71,22 +71,22 @@ export function renderChart(damageDistribution, killedDistribution, totalRuns) {
             scales: {
                 x: {
                     title: { display: true, text: 'Total Amount (Damage or Models)', color: theme.colors.textMuted, font: { weight: 'bold', family: theme.fontBody } },
-                    ticks: { color: theme.colors.textMain, font: { family: theme.fontBody } },
+                    ticks: { color: '#ffffff', font: { family: theme.fontBody } },
                     grid: { color: theme.colors.border }
                 },
                 y: {
                     title: { display: true, text: 'Probability (%)', color: theme.colors.textMuted, font: { weight: 'bold', family: theme.fontBody } },
-                    ticks: { color: theme.colors.textMain, font: { family: theme.fontBody } },
+                    ticks: { color: '#ffffff', font: { family: theme.fontBody } },
                     grid: { color: theme.colors.border },
                     beginAtZero: true,
                     max: 100
                 }
             },
             plugins: {
-                legend: { display: true, labels: { color: theme.colors.textMain, font: { family: theme.fontBody } } },
+                legend: { display: true, labels: { color: '#ffffff', font: { family: theme.fontBody } } },
                 tooltip: {
                     backgroundColor: theme.colors.bg,
-                    titleColor: theme.colors.textMain,
+                    titleColor: '#ffffff',
                     bodyColor: theme.colors.textMuted,
                     borderColor: theme.colors.border,
                     borderWidth: 1,
@@ -102,7 +102,7 @@ export function renderChart(damageDistribution, killedDistribution, totalRuns) {
     });
 }
 
-// advChart
+// advchart
 export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns, allowedMods) {
     const ctx = canvasElement.getContext('2d');
     const theme = getCurrentTheme();
@@ -120,7 +120,7 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
         if (card) {
             const titleElement = card.querySelector('h4');
             if (titleElement && !titleElement.innerHTML.includes(warningText)) {
-                titleElement.innerHTML += ` <span style="color: ${theme.colors.accentSecondary}; font-size: 0.55rem;">${warningText}</span>`;
+                titleElement.innerHTML += ` <span style="color: var(--accent-secondary); font-size: 0.55rem;">${warningText}</span>`;
             }
         }
     }
@@ -154,7 +154,6 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
             borderColor: assignedColor,
             backgroundColor: assignedColor + '1A',
             fill: true,
-            // draw base line thicker and strictly on top
             borderWidth: index === 0 ? 3 : 2,
             order: index === 0 ? 0 : 1,
             tension: 0.1, pointRadius: 0, pointHoverRadius: 5, cubicInterpolationMode: 'monotone'
@@ -170,21 +169,21 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
             scales: {
                 x: {
                     title: { display: true, text: `Total Successful ${category}s`, color: theme.colors.textMuted, font: { weight: 'bold', family: theme.fontBody } },
-                    ticks: { color: theme.colors.textMain, font: { family: theme.fontBody } },
+                    ticks: { color: '#ffffff', font: { family: theme.fontBody } },
                     grid: { color: theme.colors.border }
                 },
                 y: {
                     title: { display: true, text: `At Least - (%) Chance of ${category}`, color: theme.colors.textMuted, font: { weight: 'bold', family: theme.fontBody } },
-                    ticks: { color: theme.colors.textMain, font: { family: theme.fontBody } },
+                    ticks: { color: '#ffffff', font: { family: theme.fontBody } },
                     grid: { color: theme.colors.border },
                     beginAtZero: true,
                     max: 100
                 }
             },
             plugins: {
-                legend: { display: true, labels: { color: theme.colors.textMain, font: { family: theme.fontBody } } },
+                legend: { display: true, labels: { color: '#ffffff', font: { family: theme.fontBody } } },
                 tooltip: {
-                    backgroundColor: theme.colors.bg, titleColor: theme.colors.textMain, bodyColor: theme.colors.textMuted,
+                    backgroundColor: theme.colors.bg, titleColor: '#ffffff', bodyColor: theme.colors.textMuted,
                     borderColor: theme.colors.border, borderWidth: 1, padding: 12,
                     callbacks: {
                         label: function (context) { return context.dataset.label + ': ' + context.raw.toFixed(2) + '%'; }

@@ -1,25 +1,21 @@
 :root {
-  /* THE FENRISIAN PALETTE */
-  --bg-color: #0F1115; /* Deep, dark charcoal void */
-  --surface-color: #1A1D24; /* Slightly lighter charcoal for panels */
+  --bg-color: #0F1115;
+  --surface-color: #1A1D24;
   --surface-hover: #242830;
   --border-color: #38424D;
-  
-  --sw-light-blue: #9ac1df; /* Main Space Wolves Ice Grey/Blue */
-  --sw-input-bg: #c5ddef; /* 35% Lighter Blue-Grey for inputs */
-  --sw-mid-blue: rgb(74, 99, 123); /* Darker Fenrisian armor blue */
-  --sw-mid-blue-hover: #293846; /* Blue Hover */
-  
-  --text-primary: #9ac1df; 
-  --text-secondary: #8C9BA8;
-  
-  --accent-red: #9B2226; /* Grey Hunter / Blood Claw Red */
-  --accent-red-hover: #7A1A1E;
-  
-  --accent-bronze: #C48235; /* True weathered Bronze (Subtle Accent Only) */
-  --accent-bronze-glow: rgba(196, 130, 53, 0.4);
-  
-  --danger: #E63946;
+  --text-main: #ffffff;
+  --text-muted: #8C9BA8;
+  --accent-primary: #9ac1df;
+  --accent-secondary: #C48235;
+  --accent-danger: #9B2226;
+  --btn-std-bg: #9B2226;
+  --btn-std-hover: #7A1A1E;
+  --btn-adv-bg: rgb(74, 99, 123);
+  --btn-adv-hover: #293846;
+  --theme-shadow: rgba(0, 0, 0, 0.4);
+  --font-title: 'Cinzel', serif;
+  --font-header: 'Cinzel', serif;
+  --font-body: 'Roboto', sans-serif;
 }
 
 * {
@@ -30,10 +26,10 @@
 
 body {
   background-color: var(--bg-color);
-  color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #ffffff;
+  font-family: var(--font-body);
   line-height: 1.6;
-  padding: 20px 40px; 
+  padding: 20px 40px;
 }
 
 .calculator-container {
@@ -41,46 +37,17 @@ body {
   margin: 0 auto;
 }
 
-h1 {
-  text-align: center;
-  font-size: 2.5rem;
-  font-weight: 800;
-  margin-bottom: 20px;
-  color: var(--sw-light-blue);
-  text-transform: uppercase;
-  letter-spacing: 3px;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-}
-
-h2, h3, h4 {
-  color: var(--sw-light-blue);
-  font-weight: 600;
-  margin-bottom: 15px;
-}
-
-/* Stripped bronze from headers, replaced with subtle dark blue */
-h4 {
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--sw-light-blue);
-  margin-top: 15px;
-  border-bottom: 1px solid var(--sw-mid-blue);
-  padding-bottom: 5px;
-}
-
 .stats-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr; 
+  grid-template-columns: 2fr 1fr;
   gap: 20px;
   margin-bottom: 20px;
 }
 
-/* Stripped bronze from panel tops, replaced with dark blue */
 .panel {
   background-color: var(--surface-color);
   border: 1px solid var(--border-color);
-  border-top: 4px solid var(--sw-mid-blue); 
+  border-top: 4px solid var(--accent-primary);
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
@@ -100,35 +67,13 @@ h4 {
 
 label {
   font-size: 0.8rem;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   margin-bottom: 4px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-input[type="text"], input[type="number"], select {
-  background-color: var(--sw-input-bg); 
-  color: #0F1115; 
-  border: 2px solid var(--sw-mid-blue);
-  border-radius: 4px;
-  padding: 10px;
-  font-size: 1rem;
-  font-weight: 700;
-  outline: none;
-  transition: all 0.2s ease-in-out;
-  width: 100%;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
-}
-
-/* Bronze appears ONLY when interacting with an input */
-input:focus, select:focus {
-  border-color: var(--accent-bronze);
-  box-shadow: 0 0 6px var(--accent-bronze-glow), inset 0 2px 4px rgba(0,0,0,0.2);
-  transform: translateY(-1px);
-}
-
-/* --- THE MODIFIER BADGE SYSTEM --- */
 .modifier-adder-row {
   display: flex;
   gap: 10px;
@@ -144,191 +89,18 @@ input:focus, select:focus {
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 15px;
-  min-height: 40px; 
+  min-height: 40px;
 }
 
-.mod-badge {
-  background-color: var(--surface-hover);
-  color: var(--sw-light-blue);
-  font-weight: bold;
-  font-size: 0.85rem;
-  padding: 4px 12px;
-  border: 1px solid var(--sw-mid-blue);
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-  transition: all 0.2s;
-}
-
-.mod-badge input {
-  width: 40px;
-  padding: 2px 4px;
-  text-align: center;
-  border: 1px solid #111;
-  border-radius: 4px;
-  background: rgba(0,0,0,0.2); 
-  color: var(--sw-light-blue);
-  font-weight: bold;
-  height: 24px;
-  box-shadow: none;
-}
-
-.mod-badge .remove-mod-btn {
-  background: none;
-  border: none;
-  color: var(--sw-light-blue);
-  font-weight: 900;
-  cursor: pointer;
-  font-size: 1.1rem;
-  line-height: 1;
-  padding: 0 2px;
-}
-
-.mod-badge .remove-mod-btn:hover {
-  transform: scale(1.2);
-  color: var(--danger);
-}
-
-/* Granted badges use subtle bronze so you know they are locked */
-.mod-badge[data-granted="true"] {
-  border-color: var(--accent-bronze);
-  color: var(--accent-bronze);
-  box-shadow: 0 0 6px var(--accent-bronze-glow);
-}
-
-.mod-badge[data-granted="true"] input {
-  color: var(--accent-bronze);
-}
-
-/* --- BUTTONS --- */
-.btn-primary {
-  background-color: var(--sw-light-blue);
-  color: #0F1115; 
-  border: 1px solid var(--sw-mid-blue);
-  border-radius: 4px;
-  padding: 10px 20px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-primary:hover { 
-  background-color: #b0d0e6; 
-  box-shadow: 0 2px 8px rgba(154, 193, 223, 0.5);
-}
-
-button#calculate-btn {
-  width: 100%;
-  background-color: var(--accent-red);
-  color: #fff;
-  border: 2px solid #000;
-  border-radius: 6px;
-  padding: 18px 20px;
-  font-size: 1.2rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 10px rgba(155, 34, 38, 0.4);
-}
-
-button#calculate-btn:hover { 
-  background-color: var(--accent-red-hover); 
-  box-shadow: 0 6px 14px rgba(155, 34, 38, 0.6);
-  transform: translateY(-2px);
-}
-
-button#calculate-btn:disabled { 
-  background-color: var(--border-color); 
-  cursor: not-allowed; 
-  transform: none;
-  box-shadow: none;
-}
-
-
-button#advanced-analytics-btn{
-  width: 100%;
-  background-color: var(--sw-mid-blue);
-  color: #fff;
-  border: 2px solid #000;
-  border-radius: 6px;
-  padding: 18px 20px;
-  font-size: 1.2rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 10px  rgb(92, 124, 153);;
-}
-
-button#advanced-analytics-btn:hover { 
-  background-color: var(--sw-mid-blue-hover); 
-  box-shadow: 0 6px 14px  rgb(39, 55, 70);;
-  transform: translateY(-2px);
-}
-
-button#advanced-analytics-btn:disabled { 
-  background-color: var(--border-color); 
-  cursor: not-allowed; 
-  transform: none;
-  box-shadow: none;
-}
-
-/* --- ANALYTICS PANEL --- */
 .results-panel-wrapper {
   display: grid;
-  grid-template-columns: 350px 1fr; 
+  grid-template-columns: 350px 1fr;
   gap: 20px;
-  display: none; 
+  display: none;
 }
 
 .stat-cards-grid {
   display: flex;
   flex-direction: column;
   gap: 15px;
-}
-
-/* Stripped bronze from stat cards, replaced with dark blue */
-.stat-card {
-  background: var(--bg-color);
-  border: 1px solid var(--border-color);
-  border-left: 4px solid var(--sw-mid-blue); 
-  padding: 15px;
-  border-radius: 6px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-}
-
-.stat-card h5 {
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  margin-bottom: 5px;
-}
-
-.stat-card .stat-value {
-  color: var(--sw-light-blue);
-  font-size: 1.8rem;
-  font-weight: 800;
-}
-
-.stat-card .stat-sub {
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-  margin-top: 5px;
-}
-
-.active-border-glow {
-  border-color: var(--accent-bronze) !important;
-  box-shadow: 0 0 6px var(--accent-bronze-glow);
-}
-
-.active-text-glow {
-  color: var(--accent-bronze) !important;
-  text-shadow: 0 0 6px var(--accent-bronze-glow);
 }

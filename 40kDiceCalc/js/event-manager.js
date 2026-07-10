@@ -15,12 +15,22 @@ export function initializeWatchers() {
 
     const triggerSave = () => document.dispatchEvent(new CustomEvent("App:AutoSave"));
 
-    // theme watcher
+    // theme watcher with safe cleanup prompt
     if (ThemeSelect) {
         ThemeSelect.addEventListener("change", (e) => {
-            applyTheme(e.target.value);
-            // broadcast an event so charts know to re-render in the new colors
-            document.dispatchEvent(new CustomEvent("App:ThemeChanged"));
+            if (confirm("Changing themes requires a full dashboard clear to ensure layout sync. Proceed?")) {
+                const clearBtn = document.getElementById("clear-dashboard-btn");
+                if (clearBtn) {
+                    // trigger click cleanly to wipe tracking objects first
+                    clearBtn.click();
+                }
+                applyTheme(e.target.value);
+                document.dispatchEvent(new CustomEvent("App:ThemeChanged"));
+            } else {
+                // read old theme or revert dropdown state
+                const savedTheme = localStorage.getItem("40kTheme") || "space_wolves";
+                ThemeSelect.value = savedTheme;
+            }
         });
     }
 

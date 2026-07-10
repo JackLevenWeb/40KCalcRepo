@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>40k Dice Calculator | Space Wolves Pattern</title>
+    <title>40k Dice Calculator | Structural Multi-Pattern</title>
     <link rel="stylesheet" href="style.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -16,7 +16,7 @@
   </head>
   <body>
     <main class="calculator-container">
-      <h1>Hurt System Cogitator</h1>
+      <h1 class="main-title-header">Hurt System Cogitator</h1>
 
       <div class="stats-grid">
         <section class="panel attacker-panel">
@@ -30,30 +30,21 @@
               gap: 10px;
             "
           >
-            <h2>Attacker Roster</h2>
+            <h2 class="section-heading-label">Attacker Roster</h2>
+
             <select
               id="theme-dropdown"
-              style="
-                background: rgba(0, 0, 0, 0.5);
-                color: var(--text-main);
-                border: 1px solid var(--border-color);
-                border-radius: 4px;
-                padding: 8px;
-                font-weight: bold;
-                cursor: pointer;
-              "
+              style="padding: 8px; font-weight: bold; cursor: pointer"
             >
-              <option value="space_wolves">🐺 Space Wolves</option>
-              <option value="necrons">💀 Necrons</option>
-              <option value="tyranids">👾 Tyranids</option>
-              <option value="votann">⛏️ Leagues of Votann</option>
+              <option value="space_wolves">Space Wolves</option>
+              <option value="necrons">Necrons</option>
+              <option value="tyranids">Tyranids</option>
+              <option value="votann">Leagues of Votann</option>
             </select>
+
             <button
               id="clear-dashboard-btn"
               style="
-                background: rgba(155, 34, 38, 0.2);
-                color: #e63946;
-                border: 1px solid #9b2226;
                 border-radius: 4px;
                 padding: 8px 15px;
                 cursor: pointer;
@@ -72,7 +63,6 @@
                 placeholder="Name your roster..."
                 style="width: 220px; height: 42px; padding: 5px 10px"
               />
-
               <input
                 type="file"
                 id="import-file-input"
@@ -82,11 +72,10 @@
               <button
                 id="import-roster-btn"
                 class="btn-primary"
-                style="height: 42px; background-color: var(--sw-mid-blue)"
+                style="height: 42px"
               >
                 Import JSON
               </button>
-
               <button
                 id="export-roster-btn"
                 class="btn-primary"
@@ -103,18 +92,13 @@
               </button>
             </div>
           </div>
+
           <div
             class="global-rules-panel"
-            style="
-              background: rgba(196, 130, 53, 0.1);
-              padding: 15px;
-              border-radius: 6px;
-              margin-bottom: 15px;
-              border: 1px dashed var(--accent-bronze);
-            "
+            style="padding: 15px; border-radius: 6px; margin-bottom: 15px"
           >
             <div style="display: flex; gap: 10px; align-items: center">
-              <label style="font-weight: bold; color: var(--accent-bronze)"
+              <label class="section-heading-label" style="font-weight: bold"
                 >Army Wide Rules:</label
               >
               <select id="global-mod-dropdown" style="flex-grow: 1">
@@ -131,11 +115,7 @@
                 <option value="reroll_wounds_1">Reroll 1s to Wound</option>
                 <option value="reroll_wounds_all">Reroll All (Wound)</option>
               </select>
-              <button
-                id="add-global-mod-btn"
-                class="btn-primary"
-                style="background-color: var(--accent-bronze); color: #0f1115"
-              >
+              <button id="add-global-mod-btn" class="btn-primary">
                 Apply to All
               </button>
             </div>
@@ -144,9 +124,9 @@
         </section>
 
         <section class="panel target-panel">
-          <h2>Target Profile</h2>
+          <h2 class="section-heading-label">Target Profile</h2>
 
-          <h4>Defensive Stats</h4>
+          <h4 class="section-heading-label">Defensive Stats</h4>
           <div class="core-stats-row">
             <div class="input-field">
               <label>Toughness (T)</label
@@ -172,7 +152,7 @@
             </div>
           </div>
 
-          <h4>Defensive Modifiers</h4>
+          <h4 class="section-heading-label">Defensive Modifiers</h4>
           <div style="display: flex; flex-direction: column; gap: 8px">
             <label
               style="
@@ -180,7 +160,6 @@
                 align-items: center;
                 gap: 10px;
                 cursor: pointer;
-                color: var(--text-primary);
                 text-transform: none;
               "
               ><input type="checkbox" id="def-minus-hit" style="width: 16px" />
@@ -192,7 +171,6 @@
                 align-items: center;
                 gap: 10px;
                 cursor: pointer;
-                color: var(--text-primary);
                 text-transform: none;
               "
               ><input
@@ -208,7 +186,6 @@
                 align-items: center;
                 gap: 10px;
                 cursor: pointer;
-                color: var(--text-primary);
                 text-transform: none;
               "
               ><input
@@ -216,7 +193,7 @@
                 id="def-minus-wound-str"
                 style="width: 16px"
               />
-              -1 Wound (if S > T)</label
+              -1 Wound (if S &gt; T)</label
             >
             <label
               style="
@@ -224,7 +201,6 @@
                 align-items: center;
                 gap: 10px;
                 cursor: pointer;
-                color: var(--text-primary);
                 text-transform: none;
               "
               ><input type="checkbox" id="def-cover" style="width: 16px" />
@@ -232,7 +208,7 @@
             >
           </div>
 
-          <h4>Damage Mitigation</h4>
+          <h4 class="section-heading-label">Damage Mitigation</h4>
           <div class="core-stats-row">
             <div class="input-field">
               <label>Reduce Damage</label>
@@ -254,33 +230,23 @@
           </div>
 
           <div class="input-field" style="margin-top: 15px">
-            <label>Models in Target Unit (For Blast Maths)</label>
+            <label>Models in Target Unit (Blast)</label>
             <input type="number" id="target-models" value="10" min="1" />
           </div>
         </section>
       </div>
 
       <div style="display: flex; gap: 15px; margin-bottom: 20px">
-        <button id="calculate-btn" style="flex: 1">
-          FOR THE EMPEROR! (Standard)
-        </button>
-        <button id="advanced-analytics-btn" style="flex: 1">
-          FOR THE ADVANCED EMPEROR!
-        </button>
+        <button id="calculate-btn" style="flex: 1; height: 54px"></button>
+        <button
+          id="advanced-analytics-btn"
+          style="flex: 1; height: 54px"
+        ></button>
       </div>
 
       <section class="panel results-panel-wrapper" id="results-wrapper">
         <div class="stat-cards-grid" id="stats-html"></div>
-
         <div style="display: flex; flex-direction: column; width: 100%">
-          <div
-            style="
-              display: flex;
-              justify-content: flex-end;
-              align-items: center;
-              margin-bottom: 10px;
-            "
-          ></div>
           <div
             style="
               position: relative;
@@ -293,16 +259,16 @@
           </div>
         </div>
       </section>
+
       <section
         class="panel"
         id="advanced-analytics-wrapper"
         style="display: none; margin-top: 20px"
       >
-        <h2>Advanced Tactical Reports</h2>
+        <h2 class="section-heading-label">Advanced Tactical Reports</h2>
         <div id="advanced-reports-container"></div>
       </section>
     </main>
-
-    <script type="module" src="js/app.js"></script>
+    <script type="module" src="app.js"></script>
   </body>
 </html>

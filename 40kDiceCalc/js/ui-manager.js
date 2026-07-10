@@ -28,7 +28,7 @@ export function addAttackerModule(containerElement) {
         
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
             <div class="input-field" style="flex-grow: 1; margin-right: 15px;">
-                <input type="text" class="in-unit-name" value="Attacker Unit" style="font-family: var(--font-header); font-weight: bold; font-size: 1.2rem; color: var(--accent-primary); border: none; border-bottom: 1px solid var(--border-color); border-radius: 0; padding: 5px 0; background: transparent !important; box-shadow: none;" />
+                <input type="text" class="in-unit-name" value="Attacker Unit" style="font-family: var(--font-header) !important; font-weight: bold; font-size: 1.2rem; color: var(--accent-primary); border: none; border-bottom: 1px solid var(--border-color); border-radius: 0; padding: 5px 0; background: transparent !important; box-shadow: none;" />
                 <div class="attached-leaders-display" style="color: var(--accent-primary); font-size: 0.85rem; font-weight: bold; margin-top: 5px; font-family: var(--font-body);"></div>
             </div>
             <button class="remove-btn" style="background: var(--accent-danger) !important; color: #ffffff !important; border: none; border-radius: 4px; padding: 5px 10px; font-weight: bold;">X</button>
@@ -36,18 +36,18 @@ export function addAttackerModule(containerElement) {
 
         <div style="margin-bottom: 15px;">
           <label style="cursor: pointer; color: var(--accent-primary); font-family: var(--font-header); font-weight: bold; font-size: 0.9rem; text-transform: uppercase;">
-             <input type="checkbox" class="is-leader" style="margin-right: 5px;"> 👑 Declare Leader
+             <input type="checkbox" class="is-leader" style="margin-right: 5px;"> Declare Leader
           </label>
         </div>
 
         <div class="leader-options" style="display: none; background: var(--surface-hover); padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid var(--border-color);">
           <div class="core-stats-row" style="display: flex; gap: 15px;">
               <div class="input-field">
-                 <label style="color: var(--text-muted); font-family: var(--font-header);">Attach to Unit:</label>
+                 <label class="section-heading-label" style="font-family: var(--font-header);">Attach to Unit:</label>
                  <select class="attach-to" style="padding: 5px;"><option value="">-- Select Unit --</option></select>
               </div>
               <div class="input-field">
-                 <label style="color: var(--text-muted); font-family: var(--font-header);">Grant Keyword to Unit:</label>
+                 <label class="section-heading-label" style="font-family: var(--font-header);">Grant Keyword to Unit:</label>
                  <select class="grant-keyword" style="padding: 5px;">
                     <option value="none">None</option>
                     <option value="lethal">Lethal Hits</option>
@@ -65,7 +65,7 @@ export function addAttackerModule(containerElement) {
           </div>
         </div>
 
-        <h4 style="font-family: var(--font-header); color: var(--text-main); margin-bottom: 10px;">Core Profile</h4>
+        <h4 class="section-heading-label" style="font-family: var(--font-header); margin-bottom: 10px;">Core Profile</h4>
         <div class="core-stats-row" style="display: flex; gap: 10px; flex-wrap: wrap;">
           <div class="input-field"><label style="color: var(--text-muted);">Units</label><input type="number" class="in-units" value="1" min="1" style="width: 60px;" /></div>
           <div class="input-field"><label style="color: var(--text-muted);">Models</label><input type="number" class="in-models" value="5" min="1" style="width: 60px;" /></div>
@@ -78,8 +78,8 @@ export function addAttackerModule(containerElement) {
           <div class="input-field"><label style="color: var(--text-muted);">Crit Wnd</label><input type="number" class="in-crit-wound" value="6" min="2" max="6" style="width: 60px;" /></div>
         </div>
 
-        <h4 style="font-family: var(--font-header); color: var(--text-main); margin-top: 15px; margin-bottom: 10px;">Active Modifiers</h4>
-        <div class="modifier-adder-row" style="display: flex; gap: 10px; margin-bottom: 15px;">
+        <h4 class="section-heading-label" style="font-family: var(--font-header); margin-top: 15px; margin-bottom: 10px;">Active Modifiers</h4>
+        <div class="modifier-adder-row" style="display: flex; gap: 10px; margin-bottom: 15px; background-color: var(--bg-color) !important;">
             <select class="mod-dropdown" style="flex-grow: 1; padding: 8px;">
                 <option value="none">-- Select a Rule to Add --</option>
                 <optgroup label="Weapon Rules">
@@ -152,12 +152,12 @@ export function addBadgeToModule(moduleNode, modKey, isGranted) {
 
     badge.style.display = "flex";
     badge.style.alignItems = "center";
-    badge.style.background = "var(--surface-hover)";
+    badge.style.background = "var(--bg-color)";
     badge.style.border = "1px solid var(--border-color)";
     badge.style.borderRadius = "4px";
     badge.style.padding = "4px 8px";
     badge.style.fontSize = "0.85rem";
-    badge.style.color = "var(--text-main)";
+    badge.style.color = "#ffffff";
     badge.style.fontFamily = "var(--font-body)";
 
     let innerHTML = `<span>${modData.name}</span>`;
@@ -182,7 +182,6 @@ export function addBadgeToModule(moduleNode, modKey, isGranted) {
     list.appendChild(badge);
 }
 
-// ui reconciliation
 export function syncAppUI() {
     const modules = document.querySelectorAll('.attacker-module');
     const allNames = Array.from(modules).map(m => m.querySelector('.in-unit-name').value.trim());
@@ -220,7 +219,7 @@ export function syncAppUI() {
             const targetModule = Array.from(modules).find(m => m.querySelector('.in-unit-name').value.trim() === targetName);
 
             if (targetModule) {
-                targetModule.querySelector('.attached-leaders-display').innerHTML += `🛡️ Led by: ${leaderName}`;
+                targetModule.querySelector('.attached-leaders-display').innerHTML += `Led by: ${leaderName}`;
                 targetModule.querySelector('.in-units').value = 1;
                 targetModule.querySelector('.in-units').disabled = true;
 
@@ -302,11 +301,11 @@ export function buildRosterFromJSON(containerElement, jsonData) {
 
 export function spawnReportCard(title, container, statsHTML, avgStatsHTML) {
     const cardHTML = `
-        <div class="report-card" style="margin-bottom: 20px; background: var(--surface-color); border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden;">
+        <div class="report-card" style="margin-bottom: 20px; background: var(--surface-color); border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden; box-shadow: 0 4px 10px var(--theme-shadow);">
             
             <div style="display: grid; grid-template-columns: 375px 1fr; gap: 0; align-items: stretch;">
                 <div class="avg-stats-sidebar" style="background: var(--bg-color); padding: 15px; border-right: 1px solid var(--border-color);">
-                    <h4 style="color: var(--accent-primary); font-family: var(--font-header); margin-top: 0; margin-bottom: 10px; font-size: 1.1rem;">${title} Averages</h4>
+                    <h4 class="section-heading-label" style="font-family: var(--font-header) !important; margin-top: 0; margin-bottom: 10px; font-size: 1.1rem;">${title} Averages</h4>
                     ${avgStatsHTML}
                 </div>
                 
