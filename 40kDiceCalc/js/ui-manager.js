@@ -1,6 +1,5 @@
 // handles all dom manipulation, html generation, and visual updates.
 
-
 export const ModifierDictionary = {
     "lethal": { name: "Lethal Hits", hasInput: false },
     "devastating": { name: "Devastating Wounds", hasInput: false },
@@ -25,31 +24,31 @@ export const ModifierDictionary = {
 
 export function addAttackerModule(containerElement) {
     const moduleHTML = `
-      <div class="attacker-module" style="background: var(--bg-color); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px;">
+      <div class="attacker-module" style="background: var(--surface-color); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px;">
         
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
             <div class="input-field" style="flex-grow: 1; margin-right: 15px;">
-                <input type="text" class="in-unit-name" value="Attacker Unit" style="font-weight: bold; font-size: 1.2rem; color: var(--sw-light-blue); border: none; border-bottom: 1px solid var(--sw-mid-blue); border-radius: 0; padding: 5px 0; background: transparent; box-shadow: none;" />
-                <div class="attached-leaders-display" style="color: var(--sw-light-blue); font-size: 0.85rem; font-weight: bold; margin-top: 5px;"></div>
+                <input type="text" class="in-unit-name" value="Attacker Unit" style="font-family: var(--font-header); font-weight: bold; font-size: 1.2rem; color: var(--accent-primary); border: none; border-bottom: 1px solid var(--border-color); border-radius: 0; padding: 5px 0; background: transparent !important; box-shadow: none;" />
+                <div class="attached-leaders-display" style="color: var(--accent-primary); font-size: 0.85rem; font-weight: bold; margin-top: 5px; font-family: var(--font-body);"></div>
             </div>
-            <button class="remove-btn" style="background: var(--sw-light-blue); color: #0F1115; border: 1px solid var(--sw-mid-blue); border-radius: 4px; cursor: pointer; padding: 5px 10px; font-weight: bold;">X</button>
+            <button class="remove-btn" style="background: var(--accent-danger) !important; color: #ffffff !important; border: none; border-radius: 4px; padding: 5px 10px; font-weight: bold;">X</button>
         </div>
 
         <div style="margin-bottom: 15px;">
-          <label style="cursor: pointer; color: var(--sw-light-blue); font-weight: bold; font-size: 0.9rem; text-transform: uppercase;">
+          <label style="cursor: pointer; color: var(--accent-primary); font-family: var(--font-header); font-weight: bold; font-size: 0.9rem; text-transform: uppercase;">
              <input type="checkbox" class="is-leader" style="margin-right: 5px;"> 👑 Declare Leader
           </label>
         </div>
 
-        <div class="leader-options" style="display: none; background: var(--surface-hover); padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid var(--sw-mid-blue);">
-          <div class="core-stats-row">
+        <div class="leader-options" style="display: none; background: var(--surface-hover); padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid var(--border-color);">
+          <div class="core-stats-row" style="display: flex; gap: 15px;">
               <div class="input-field">
-                 <label>Attach to Unit:</label>
-                 <select class="attach-to"><option value="">-- Select Unit --</option></select>
+                 <label style="color: var(--text-muted); font-family: var(--font-header);">Attach to Unit:</label>
+                 <select class="attach-to" style="padding: 5px;"><option value="">-- Select Unit --</option></select>
               </div>
               <div class="input-field">
-                 <label>Grant Keyword to Unit:</label>
-                 <select class="grant-keyword">
+                 <label style="color: var(--text-muted); font-family: var(--font-header);">Grant Keyword to Unit:</label>
+                 <select class="grant-keyword" style="padding: 5px;">
                     <option value="none">None</option>
                     <option value="lethal">Lethal Hits</option>
                     <option value="devastating">Devastating Wounds</option>
@@ -66,22 +65,22 @@ export function addAttackerModule(containerElement) {
           </div>
         </div>
 
-        <h4>Core Profile</h4>
-        <div class="core-stats-row">
-          <div class="input-field"><label>Units</label><input type="number" class="in-units" value="1" min="1" /></div>
-          <div class="input-field"><label>Models</label><input type="number" class="in-models" value="5" min="1" /></div>
-          <div class="input-field"><label>Attacks</label><input type="text" class="in-attacks" value="4" min="1" placeholder="D3+1" /></div>
-          <div class="input-field"><label>BS/WS</label><input type="text" class="in-bsws" value="3" placeholder="NA" /></div>
-          <div class="input-field"><label>Strength</label><input type="number" class="in-str" value="4" min="1" /></div>
-          <div class="input-field"><label>AP</label><input type="number" class="in-ap" value="-1" max="0" /></div>
-          <div class="input-field"><label>Damage</label><input type="text" class="in-dam" value="1" placeholder="D6+1" /></div>
-          <div class="input-field"><label>Crit Hit</label><input type="number" class="in-crit-hit" value="6" min="2" max="6" /></div>
-          <div class="input-field"><label>Crit Wnd</label><input type="number" class="in-crit-wound" value="6" min="2" max="6" /></div>
+        <h4 style="font-family: var(--font-header); color: var(--text-main); margin-bottom: 10px;">Core Profile</h4>
+        <div class="core-stats-row" style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <div class="input-field"><label style="color: var(--text-muted);">Units</label><input type="number" class="in-units" value="1" min="1" style="width: 60px;" /></div>
+          <div class="input-field"><label style="color: var(--text-muted);">Models</label><input type="number" class="in-models" value="5" min="1" style="width: 60px;" /></div>
+          <div class="input-field"><label style="color: var(--text-muted);">Attacks</label><input type="text" class="in-attacks" value="4" min="1" placeholder="D3+1" style="width: 80px;" /></div>
+          <div class="input-field"><label style="color: var(--text-muted);">BS/WS</label><input type="text" class="in-bsws" value="3" placeholder="NA" style="width: 60px;" /></div>
+          <div class="input-field"><label style="color: var(--text-muted);">Strength</label><input type="number" class="in-str" value="4" min="1" style="width: 60px;" /></div>
+          <div class="input-field"><label style="color: var(--text-muted);">AP</label><input type="number" class="in-ap" value="-1" max="0" style="width: 60px;" /></div>
+          <div class="input-field"><label style="color: var(--text-muted);">Damage</label><input type="text" class="in-dam" value="1" placeholder="D6+1" style="width: 80px;" /></div>
+          <div class="input-field"><label style="color: var(--text-muted);">Crit Hit</label><input type="number" class="in-crit-hit" value="6" min="2" max="6" style="width: 60px;" /></div>
+          <div class="input-field"><label style="color: var(--text-muted);">Crit Wnd</label><input type="number" class="in-crit-wound" value="6" min="2" max="6" style="width: 60px;" /></div>
         </div>
 
-        <h4>Active Modifiers</h4>
-        <div class="modifier-adder-row">
-            <select class="mod-dropdown" style="flex-grow: 1;">
+        <h4 style="font-family: var(--font-header); color: var(--text-main); margin-top: 15px; margin-bottom: 10px;">Active Modifiers</h4>
+        <div class="modifier-adder-row" style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <select class="mod-dropdown" style="flex-grow: 1; padding: 8px;">
                 <option value="none">-- Select a Rule to Add --</option>
                 <optgroup label="Weapon Rules">
                     <option value="lethal">Lethal Hits</option>
@@ -109,10 +108,10 @@ export function addAttackerModule(containerElement) {
                     <option value="reroll_wounds_all">Reroll All Wounds</option>
                 </optgroup>
             </select>
-            <button class="btn-primary add-mod-btn">Add Rule</button>
+            <button class="btn-primary add-mod-btn" style="padding: 8px 15px; border-radius: 4px; font-weight: bold;">Add Rule</button>
         </div>
         
-        <div class="active-modifiers-list"></div>
+        <div class="active-modifiers-list" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
       </div>
     `;
 
@@ -151,14 +150,24 @@ export function addBadgeToModule(moduleNode, modKey, isGranted) {
     badge.dataset.key = modKey;
     if (isGranted) badge.dataset.granted = "true";
 
+    badge.style.display = "flex";
+    badge.style.alignItems = "center";
+    badge.style.background = "var(--surface-hover)";
+    badge.style.border = "1px solid var(--border-color)";
+    badge.style.borderRadius = "4px";
+    badge.style.padding = "4px 8px";
+    badge.style.fontSize = "0.85rem";
+    badge.style.color = "var(--text-main)";
+    badge.style.fontFamily = "var(--font-body)";
+
     let innerHTML = `<span>${modData.name}</span>`;
 
     if (modData.hasInput) {
-        innerHTML += `<input type="number" class="badge-val" value="${modData.defaultVal}" min="1" ${isGranted ? 'disabled' : ''} />`;
+        innerHTML += `<input type="number" class="badge-val" value="${modData.defaultVal}" min="1" ${isGranted ? 'disabled' : ''} style="width: 40px; margin-left: 8px; padding: 2px;" />`;
     }
 
     if (!isGranted) {
-        innerHTML += `<button class="remove-mod-btn">×</button>`;
+        innerHTML += `<button class="remove-mod-btn" style="background: transparent; border: none; color: var(--accent-primary); margin-left: 8px; cursor: pointer; font-weight: bold;">×</button>`;
     }
 
     badge.innerHTML = innerHTML;
@@ -173,8 +182,7 @@ export function addBadgeToModule(moduleNode, modKey, isGranted) {
     list.appendChild(badge);
 }
 
-
-//ui Reconciliation
+// ui reconciliation
 export function syncAppUI() {
     const modules = document.querySelectorAll('.attacker-module');
     const allNames = Array.from(modules).map(m => m.querySelector('.in-unit-name').value.trim());
@@ -233,7 +241,6 @@ export function buildRosterFromJSON(containerElement, jsonData) {
 
         newModule.querySelector(".in-unit-name").value = unitData.unitName;
         newModule.querySelector(".in-attacks").value = unitData.attack;
-        newModule.querySelector(".in-unit-name").value = unitData.unitName;
         newModule.querySelector(".in-bsws").value = unitData.BsWs;
         newModule.querySelector(".in-str").value = unitData.strength;
         newModule.querySelector(".in-ap").value = unitData.Ap;
@@ -241,22 +248,17 @@ export function buildRosterFromJSON(containerElement, jsonData) {
         newModule.querySelector(".in-models").value = unitData.modelCount;
         newModule.querySelector(".in-units").value = unitData.unitCount;
 
-        // leader data
         if (unitData.isLeader) {
             newModule.querySelector('.is-leader').checked = true;
-
-            // have to temporarily create the option in the dropdown
             if (unitData.attachTarget) {
                 const attachSelect = newModule.querySelector('.attach-to');
                 attachSelect.innerHTML = `<option value="${unitData.attachTarget}">${unitData.attachTarget}</option>`;
                 attachSelect.value = unitData.attachTarget;
             }
-
             if (unitData.grantedKeyword) {
                 newModule.querySelector('.grant-keyword').value = unitData.grantedKeyword;
             }
         }
-
 
         const mods = unitData.modifiers;
         if (mods) {
@@ -293,34 +295,31 @@ export function buildRosterFromJSON(containerElement, jsonData) {
                 newModule.querySelector('.mod-badge[data-key="rapidfire"] .badge-val').value = mods.rapidFire;
             }
         }
-
-
     });
 
     syncAppUI();
 };
 
-
-//creating graph roll stat and base stat blocks
 export function spawnReportCard(title, container, statsHTML, avgStatsHTML) {
     const cardHTML = `
-        <div class="report-card" style="margin-bottom: 20px; background: rgba(15, 17, 21, 0.4); border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden;">
+        <div class="report-card" style="margin-bottom: 20px; background: var(--surface-color); border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden;">
             
             <div style="display: grid; grid-template-columns: 375px 1fr; gap: 0; align-items: stretch;">
-                <div class="avg-stats-sidebar" style="background: rgba(0,0,0,0.25); padding: 15px; border-right: 1px solid var(--border-color);">
-                    <h4 style="color: var(--sw-light-blue); margin-top: 0; margin-bottom: 10px; font-size: 1rem;">${title} Averages</h4>
+                <div class="avg-stats-sidebar" style="background: var(--bg-color); padding: 15px; border-right: 1px solid var(--border-color);">
+                    <h4 style="color: var(--accent-primary); font-family: var(--font-header); margin-top: 0; margin-bottom: 10px; font-size: 1.1rem;">${title} Averages</h4>
                     ${avgStatsHTML}
                 </div>
                 
-                <div style="padding: 15px; min-height: 250px; position: relative;">
-                    <canvas class="adv-chart"></canvas>
+                <div style="padding: 15px; min-height: 250px; display: flex; flex-direction: column;">
+                    <div style="position: relative; flex-grow: 1; width: 100%;">
+                        <canvas class="adv-chart"></canvas>
+                    </div>
                 </div>
             </div>
 
-            <div class="core-stats-header" style="padding: 10px 15px; background: rgba(255,255,255,0.02); border-top: 1px solid var(--border-color);">
+            <div class="core-stats-header" style="padding: 10px 15px; background: var(--surface-hover); border-top: 1px solid var(--border-color);">
                 ${statsHTML}
             </div>
-
         </div>
     `;
     container.insertAdjacentHTML('beforeend', cardHTML);

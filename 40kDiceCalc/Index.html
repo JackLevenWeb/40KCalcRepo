@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>40k Dice Calculator | Space Wolves Pattern</title>
     <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Audiowide&family=Cinzel:wght@400;700&family=Creepster&family=Exo+2:wght@400;700&family=Montserrat:wght@400;700&family=Nosifer&family=Orbitron:wght@400;700&family=Rajdhani:wght@400;700&family=Uncial+Antiqua&family=Roboto:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
   </head>
@@ -25,6 +31,39 @@
             "
           >
             <h2>Attacker Roster</h2>
+            <select
+              id="theme-dropdown"
+              style="
+                background: rgba(0, 0, 0, 0.5);
+                color: var(--text-main);
+                border: 1px solid var(--border-color);
+                border-radius: 4px;
+                padding: 8px;
+                font-weight: bold;
+                cursor: pointer;
+              "
+            >
+              <option value="space_wolves">🐺 Space Wolves</option>
+              <option value="necrons">💀 Necrons</option>
+              <option value="tyranids">👾 Tyranids</option>
+              <option value="votann">⛏️ Leagues of Votann</option>
+            </select>
+            <button
+              id="clear-dashboard-btn"
+              style="
+                background: rgba(155, 34, 38, 0.2);
+                color: #e63946;
+                border: 1px solid #9b2226;
+                border-radius: 4px;
+                padding: 8px 15px;
+                cursor: pointer;
+                font-weight: bold;
+                transition: 0.2s;
+              "
+            >
+              ⚠️ Clear Dashboard
+            </button>
+
             <div style="display: flex; gap: 10px; align-items: center">
               <input
                 type="text"

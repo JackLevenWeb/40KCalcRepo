@@ -1,6 +1,7 @@
 // central nervous system. manages dom event listeners and broadcasts custom events.
 
 import { syncAppUI, addBadgeToModule, addAttackerModule } from './ui-manager.js';
+import { applyTheme } from './theme-manager.js';
 
 export function initializeWatchers() {
     const RosterContainer = document.getElementById("attacker-roster");
@@ -10,11 +11,19 @@ export function initializeWatchers() {
     const ExportBtn = document.getElementById("export-roster-btn");
     const ImportBtn = document.getElementById("import-roster-btn");
     const ImportInput = document.getElementById("import-file-input");
+    const ThemeSelect = document.getElementById("theme-dropdown");
 
-    // helper function to broadcast our save event
     const triggerSave = () => document.dispatchEvent(new CustomEvent("App:AutoSave"));
 
-    // roster text & dropdown changes
+    // theme watcher
+    if (ThemeSelect) {
+        ThemeSelect.addEventListener("change", (e) => {
+            applyTheme(e.target.value);
+            // broadcast an event so charts know to re-render in the new colors
+            document.dispatchEvent(new CustomEvent("App:ThemeChanged"));
+        });
+    }
+
     RosterContainer.addEventListener("input", () => {
         syncAppUI();
         triggerSave();
@@ -25,7 +34,6 @@ export function initializeWatchers() {
         triggerSave();
     });
 
-    // roster clicks - add/remove badges
     RosterContainer.addEventListener("click", (e) => {
         if (e.target.classList.contains("add-mod-btn") ||
             e.target.classList.contains("remove-mod-btn") ||
@@ -37,7 +45,6 @@ export function initializeWatchers() {
         }
     });
 
-    // target profile watcher
     const targetIDs = [
         "toughness", "wounds", "save", "inVul", "target-models",
         "def-fnp", "def-minus-hit", "def-minus-wound", "def-minus-wound-str",
@@ -52,7 +59,6 @@ export function initializeWatchers() {
         }
     });
 
-    // global mod watcher
     if (GlobalModBtn) {
         GlobalModBtn.addEventListener("click", () => {
             const modKey = GlobalModSelect.value;
@@ -69,7 +75,6 @@ export function initializeWatchers() {
         });
     }
 
-    // add attacker button
     if (AddAttackerBtn) {
         AddAttackerBtn.addEventListener("click", () => {
             addAttackerModule(RosterContainer);
@@ -77,14 +82,12 @@ export function initializeWatchers() {
         });
     }
 
-    // export button
     if (ExportBtn) {
         ExportBtn.addEventListener("click", () => {
             document.dispatchEvent(new CustomEvent("App:ExportRoster"));
         });
     }
 
-    // import buttons
     if (ImportBtn && ImportInput) {
         ImportBtn.addEventListener("click", () => {
             ImportInput.click();
@@ -93,11 +96,7 @@ export function initializeWatchers() {
         ImportInput.addEventListener("change", (event) => {
             const file = event.target.files[0];
             if (!file) return;
-
-            // broadcast the import event and pass the file data inside the "detail" payload
             document.dispatchEvent(new CustomEvent("App:ImportRoster", { detail: { file: file } }));
-
-            // reset the input so the user can import the exact same file twice if they want to
             ImportInput.value = "";
         });
     }

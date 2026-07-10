@@ -1,57 +1,63 @@
 // handles the rendering and updating of all chart.js visual graphs.
 
 import { ModLabels } from './db-manager.js';
+import { getCurrentTheme } from './theme-manager.js';
 
 let damageChartInstance = null;
 
-
-
-
 // standard chart
-export function renderChart(distribution, totalRuns) {
+export function renderChart(damageDistribution, killedDistribution, totalRuns) {
     const ctx = document.getElementById('damageChart').getContext('2d');
+    const theme = getCurrentTheme();
 
     if (damageChartInstance) {
         damageChartInstance.destroy();
     }
 
-    const rawDamageNumbers = Object.keys(distribution).map(Number).sort((a, b) => a - b);
-    const minDamage = rawDamageNumbers[0] || 0;
-    const maxDamage = rawDamageNumbers[rawDamageNumbers.length - 1] || 0;
+    const rawDamageNumbers = Object.keys(damageDistribution).map(Number);
+    const rawKilledNumbers = Object.keys(killedDistribution).map(Number);
+    const maxVal = Math.max(...rawDamageNumbers, ...rawKilledNumbers, 0);
 
     const chartLabels = [];
-    const exactData = [];
-    const cumulativeData = [];
+    const exactDamageData = [];
+    const exactKilledData = [];
+    const cumulativeDamage = [];
+    const cumulativeKilled = [];
 
-    for (let i = minDamage; i <= maxDamage; i++) {
+    for (let i = 0; i <= maxVal; i++) {
         chartLabels.push(i);
-        const occurrenceCount = distribution[i] || 0;
-        exactData.push((occurrenceCount / totalRuns) * 100);
+        const dmgCount = damageDistribution[i] || 0;
+        const killCount = killedDistribution[i] || 0;
+        exactDamageData.push((dmgCount / totalRuns) * 100);
+        exactKilledData.push((killCount / totalRuns) * 100);
     }
 
-    let runningTotal = 0;
-    for (let i = exactData.length - 1; i >= 0; i--) {
-        runningTotal += exactData[i];
-        cumulativeData[i] = runningTotal;
-    }
+    let runningDmgTotal = 0;
+    let runningKillTotal = 0;
+    for (let i = exactDamageData.length - 1; i >= 0; i--) {
+        runningDmgTotal += exactDamageData[i];
+        cumulativeDamage[i] = runningDmgTotal;
 
+        runningKillTotal += exactKilledData[i];
+        cumulativeKilled[i] = runningKillTotal;
+    }
 
     const datasets = [
         {
-            label: 'Exact Chance',
-            data: exactData,
-            borderColor: '#9B2226',
-            backgroundColor: 'rgba(155, 34, 38, 0.1)',
+            label: 'At Least X Models Killed',
+            data: cumulativeKilled,
+            borderColor: theme.colors.accentSecondary,
+            backgroundColor: theme.colors.accentSecondary + '22',
             fill: true,
             borderWidth: 2, tension: 0.1, pointRadius: 0, pointHoverRadius: 5, cubicInterpolationMode: 'monotone'
         },
         {
-            label: 'At Least (Cumulative)',
-            data: cumulativeData,
-            borderColor: '#9ac1df',
-            backgroundColor: 'rgba(154, 193, 223, 0.2)',
+            label: 'At Least X Damage',
+            data: cumulativeDamage,
+            borderColor: theme.colors.accentPrimary,
+            backgroundColor: theme.colors.accentPrimary + '22',
             fill: true,
-            borderWidth: 2, tension: 0.1, pointRadius: 0, pointHoverRadius: 5, cubicInterpolationMode: 'monotone'
+            borderWidth: 3, tension: 0.1, pointRadius: 0, pointHoverRadius: 5, cubicInterpolationMode: 'monotone'
         }
     ];
 
@@ -61,29 +67,28 @@ export function renderChart(distribution, totalRuns) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-
             interaction: { mode: 'nearest', intersect: false },
             scales: {
                 x: {
-                    title: { display: true, text: 'Total Damage Done', color: '#8C9BA8', font: { weight: 'bold' } },
-                    ticks: { color: '#9ac1df' },
-                    grid: { color: '#38424D' }
+                    title: { display: true, text: 'Total Amount (Damage or Models)', color: theme.colors.textMuted, font: { weight: 'bold', family: theme.fontBody } },
+                    ticks: { color: theme.colors.textMain, font: { family: theme.fontBody } },
+                    grid: { color: theme.colors.border }
                 },
                 y: {
-                    title: { display: true, text: 'Probability (%)', color: '#8C9BA8', font: { weight: 'bold' } },
-                    ticks: { color: '#9ac1df' },
-                    grid: { color: '#38424D' },
+                    title: { display: true, text: 'Probability (%)', color: theme.colors.textMuted, font: { weight: 'bold', family: theme.fontBody } },
+                    ticks: { color: theme.colors.textMain, font: { family: theme.fontBody } },
+                    grid: { color: theme.colors.border },
                     beginAtZero: true,
                     max: 100
                 }
             },
             plugins: {
-                legend: { display: true, labels: { color: '#fff' } },
+                legend: { display: true, labels: { color: theme.colors.textMain, font: { family: theme.fontBody } } },
                 tooltip: {
-                    backgroundColor: 'rgba(15, 17, 21, 0.95)',
-                    titleColor: '#9ac1df',
-                    bodyColor: '#DAE6EF',
-                    borderColor: '#C48235',
+                    backgroundColor: theme.colors.bg,
+                    titleColor: theme.colors.textMain,
+                    bodyColor: theme.colors.textMuted,
+                    borderColor: theme.colors.border,
                     borderWidth: 1,
                     padding: 12,
                     callbacks: {
@@ -100,40 +105,31 @@ export function renderChart(distribution, totalRuns) {
 // advChart
 export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns, allowedMods) {
     const ctx = canvasElement.getContext('2d');
-
-    // only allow rows matching the category AND allowed mods
+    const theme = getCurrentTheme();
     const categoryRows = sqlRows.filter(r => r[2] === category && allowedMods.includes(r[0]));
 
-    // fix the X-Axis scale
     let minVal = 0, maxVal = 0;
     categoryRows.forEach(r => {
         if (r[1] > maxVal) maxVal = r[1];
     });
 
-    //acounting for when no damage can be dealt across all sims
     if (maxVal === 0) {
         maxVal = 1;
-        let warningColur = "#39FF14"
-        let warningText = category === "ModelsKilled" ? "(ZERO MODELS KILLED)" : "(ZERO IMPACT)";
+        let warningText = category === "ModelsKilled" ? "(ZERO KILLS)" : "(ZERO IMPACT)";
         const card = canvasElement.closest('.report-card');
-
         if (card) {
-            const titleElement = card.querySelector('h3');
+            const titleElement = card.querySelector('h4');
             if (titleElement && !titleElement.innerHTML.includes(warningText)) {
-                titleElement.innerHTML += ` <span style="color: ${warningColur}; font-size: 0.55rem;">${warningText}</span>`;
+                titleElement.innerHTML += ` <span style="color: ${theme.colors.accentSecondary}; font-size: 0.55rem;">${warningText}</span>`;
             }
         }
-
     }
 
     const chartLabels = [];
     for (let i = minVal; i <= maxVal; i++) chartLabels.push(i);
 
-    //  build
     const datasets = allowedMods.map((modName, index) => {
         const modRows = categoryRows.filter(r => r[0] === modName);
-
-        // map exact values to the X-Axis so lines draw correctly
         const dataArray = chartLabels.map(label => {
             const row = modRows.find(r => r[1] === label);
             return row ? (row[3] / totalRuns) * 100 : 0;
@@ -141,62 +137,55 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
 
         const cumulativeArray = [];
         let runningTotal = 0;
-
         for (let i = dataArray.length - 1; i >= 0; i--) {
             runningTotal += dataArray[i];
             cumulativeArray[i] = runningTotal;
-
-
         }
-        //only want "AP-2 in profile for saves graph"
+
         let displayLabel = ModLabels[modName] || modName;
+        if (modName === "Base" && category !== "Save") displayLabel = "Base Profile";
 
-        if (modName === "Base" && category !== "Save") {
-            displayLabel = "Base Profile";
-        }
+        const cIndex = index % theme.colors.chartColors.length;
+        const assignedColor = theme.colors.chartColors[cIndex];
 
-        const colors = ['#8C9BA8', '#9B2226', '#9ac1df', '#C48235', '#55efc4'];
         return {
             label: displayLabel,
             data: cumulativeArray,
-            borderColor: colors[index % colors.length],
-            backgroundColor: colors[index % colors.length] + '22',
+            borderColor: assignedColor,
+            backgroundColor: assignedColor + '1A',
             fill: true,
-            borderWidth: 2, tension: 0.1, pointRadius: 0, pointHoverRadius: 5, cubicInterpolationMode: 'monotone'
+            // draw base line thicker and strictly on top
+            borderWidth: index === 0 ? 3 : 2,
+            order: index === 0 ? 0 : 1,
+            tension: 0.1, pointRadius: 0, pointHoverRadius: 5, cubicInterpolationMode: 'monotone'
         };
     });
 
-
-    // draw
     new Chart(ctx, {
         type: 'line',
         data: { labels: chartLabels, datasets: datasets },
         options: {
             responsive: true, maintainAspectRatio: false,
-
-
             interaction: { mode: 'nearest', intersect: false },
-
             scales: {
                 x: {
-                    title: { display: true, text: `Total Successful ${category}s`, color: '#8C9BA8', font: { weight: 'bold' } },
-                    ticks: { color: '#9ac1df' },
-                    grid: { color: '#38424D' }
+                    title: { display: true, text: `Total Successful ${category}s`, color: theme.colors.textMuted, font: { weight: 'bold', family: theme.fontBody } },
+                    ticks: { color: theme.colors.textMain, font: { family: theme.fontBody } },
+                    grid: { color: theme.colors.border }
                 },
                 y: {
-                    title: { display: true, text: `At Least - (%) Chance of ${category}`, color: '#8C9BA8', font: { weight: 'bold' } },
-                    ticks: { color: '#9ac1df' },
-                    grid: { color: '#38424D' },
+                    title: { display: true, text: `At Least - (%) Chance of ${category}`, color: theme.colors.textMuted, font: { weight: 'bold', family: theme.fontBody } },
+                    ticks: { color: theme.colors.textMain, font: { family: theme.fontBody } },
+                    grid: { color: theme.colors.border },
                     beginAtZero: true,
-
                     max: 100
                 }
             },
             plugins: {
-                legend: { display: true, labels: { color: '#fff' } },
+                legend: { display: true, labels: { color: theme.colors.textMain, font: { family: theme.fontBody } } },
                 tooltip: {
-                    backgroundColor: 'rgba(15, 17, 21, 0.95)', titleColor: '#9ac1df', bodyColor: '#DAE6EF',
-                    borderColor: '#C48235', borderWidth: 1, padding: 12,
+                    backgroundColor: theme.colors.bg, titleColor: theme.colors.textMain, bodyColor: theme.colors.textMuted,
+                    borderColor: theme.colors.border, borderWidth: 1, padding: 12,
                     callbacks: {
                         label: function (context) { return context.dataset.label + ': ' + context.raw.toFixed(2) + '%'; }
                     }
