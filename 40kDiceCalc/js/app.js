@@ -1,10 +1,22 @@
+// main orchestrator file. handles initialization and high-level pipeline execution.
+
 import { Unit } from './classes/Unit.js';
 import { Weapon } from './classes/Weapon.js';
 import { runSimulation } from './logic.js';
 import { addAttackerModule, syncAppUI, buildRosterFromJSON, spawnReportCard, addBadgeToModule } from './ui-manager.js';
 import { initDataBase, loadDataIntoSQL, queryComparisonData, clearDataBase, ModLabels, loadAveragesIntoSQL, queryAveragesData } from './db-manager.js';
 import { renderChart, renderAdvancedChart } from './chart-manager.js';
+import { initializeWatchers } from './event-manager.js';
 const SIMULATION_ITERATIONS = 100000;
+
+
+// boot up the standalone event manager
+initializeWatchers();
+
+// listen for global app events
+document.addEventListener("App:AutoSave", autoSave);
+document.addEventListener("App:ExportRoster", exportRoster);
+document.addEventListener("App:ImportRoster", (e) => handleImport(e.detail.file));
 
 const CalcBtn = document.getElementById("calculate-btn");
 const AddAttackerBtn = document.getElementById("add-attacker-btn");
@@ -60,48 +72,6 @@ if (localStorage.getItem("40kRoster")) {
     addAttackerModule(RosterContainer);
 }
 
-
-
-RosterContainer.addEventListener("input", () => {
-    syncAppUI();
-    autoSave();
-
-});
-RosterContainer.addEventListener("change", () => {
-    syncAppUI();
-    autoSave();
-
-});
-
-RosterContainer.addEventListener("click", (e) => {
-    if (e.target.classList.contains("add-mod-btn") ||
-        e.target.classList.contains("remove-mod-btn") ||
-        e.target.classList.contains("remove-btn")) {
-
-        // delay to allow html element changes
-        setTimeout(() => {
-            autoSave();
-        }, 50);
-    }
-});
-const targetIDs = [
-    "toughness", "wounds", "save", "inVul", "target-models",
-    "def-fnp", "def-minus-hit", "def-minus-wound", "def-minus-wound-str",
-    "def-cover", "def-reduce-dam"
-];
-
-targetIDs.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-        el.addEventListener("input", autoSave);
-        el.addEventListener("change", autoSave);
-    }
-});
-
-AddAttackerBtn.addEventListener("click", () => {
-    addAttackerModule(RosterContainer);
-    syncAppUI();
-});
 
 
 // get needed data from present modules
@@ -627,32 +597,6 @@ function buildBaseStatsHTML(weaponsArray, targetUnit) {
 }
 
 
-//global army mods
-const GlobalModBtn = document.getElementById("add-global-mod-btn");
-const GlobalModSelect = document.getElementById("global-mod-dropdown");
-
-if (GlobalModBtn) {
-    GlobalModBtn.addEventListener("click", () => {
-        const modKey = GlobalModSelect.value;
-
-
-        if (modKey === "none") return;
-
-
-        const allModules = document.querySelectorAll('.attacker-module');
-
-
-
-        allModules.forEach(module => {
-            addBadgeToModule(module, modKey, false);
-
-        });
-        GlobalModSelect.value = "none";
-        syncAppUI();
-        autoSave();
-
-    });
-}
 
 
 //importing roster
@@ -715,60 +659,39 @@ function exportRoster() {
 
 
 }
-//button for above
-if (ExportBtn) ExportBtn.addEventListener("click", exportRoster);
 
 // import
-if (ImportBtn && ImportInput) {
+// handles the logic of parsing an imported file
+function handleImport(file) {
+    if (!file) return;
 
-    ImportBtn.addEventListener("click", () => {
-        ImportInput.click();
-    });
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const rawText = e.target.result;
+            const jsonData = JSON.parse(rawText);
 
+            // check if its old file export type
+            if (Array.isArray(jsonData)) {
+                buildRosterFromJSON(RosterContainer, jsonData);
+            } else {
+                buildRosterFromJSON(RosterContainer, jsonData.roster);
 
-    ImportInput.addEventListener("change", (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-
-
-        reader.onload = (e) => {
-            try {
-                const rawText = e.target.result;
-                const jsonData = JSON.parse(rawText);
-
-                // check if its old file export type
-                if (Array.isArray(jsonData)) {
-
-
-                    buildRosterFromJSON(RosterContainer, jsonData);
-                } else {
-
-
-                    buildRosterFromJSON(RosterContainer, jsonData.roster);
-
-
-                    if (jsonData.target) {
-                        loadTargetProfile(jsonData.target);
-                    }
-
-                    if (jsonData.globalRule) {
-                        const globalDrop = document.getElementById("global-mod-dropdown");
-                        if (globalDrop) globalDrop.value = jsonData.globalRule;
-                    }
+                if (jsonData.target) {
+                    loadTargetProfile(jsonData.target);
                 }
 
-                ImportInput.value = "";
-            } catch (error) {
-                alert("Invalid JSON file! Could not parse roster.");
-                console.error(error);
+                if (jsonData.globalRule) {
+                    const globalDrop = document.getElementById("global-mod-dropdown");
+                    if (globalDrop) globalDrop.value = jsonData.globalRule;
+                }
             }
-        };
-
-
-        reader.readAsText(file);
-    });
+        } catch (error) {
+            alert("Invalid JSON file! Could not parse roster.");
+            console.error(error);
+        }
+    };
+    reader.readAsText(file);
 }
 
 //auto save roster state

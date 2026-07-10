@@ -1,3 +1,5 @@
+// contains the core math, dice rolling formulas, and simulation rules.
+
 import { Dice } from './classes/Dice.js';
 
 export function runSimulation(iterationsTotal, weaponsArray, unit) {

@@ -1,5 +1,6 @@
+// manages the in-memory sqlite database, data formatting, and querying.
 
-const SIMULATION_ITERATIONS = 50000;
+const SIMULATION_ITERATIONS = 100000;
 
 
 //In-Memory SQLite Database via WebAssembly

@@ -1,3 +1,5 @@
+// handles the rendering and updating of all chart.js visual graphs.
+
 import { ModLabels } from './db-manager.js';
 
 let damageChartInstance = null;

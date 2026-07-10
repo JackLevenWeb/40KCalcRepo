@@ -1,4 +1,4 @@
-// ONLY handles HTML generation and visual updates
+// handles all dom manipulation, html generation, and visual updates.
 
 
 export const ModifierDictionary = {
