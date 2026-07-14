@@ -154,7 +154,7 @@ const SIMULATION_SCENARIOS = {
 const target_SIMULATION_SCENARIOS = {
     "Hit Mods": ["hit_minus_1", "cover"],
     "Wound Mods": ["wound_minus_1", "SgT_wound_minus_1"],
-    "Save/Ap": ["place_Holder"],
+    "Save/Ap": [],//not used for now
     "Damage Mods": ["damage_minus_1", "damage_half", "FNP"]
 
 
@@ -205,7 +205,7 @@ function applyModifiersToTarget(targetUnit, modKey) {
 
 };
 
-function checkSkipReasonTarget(targetUnit, modKey) {
+function checkSkipReasonTarget(targetUnit, weaponsArray, modKey) {
 
     if (modKey === "hit_minus_1" && targetUnit.modifiers.minusOneHit) return "applied";
     if (modKey === "cover" && targetUnit.modifiers.cover) return "applied";
@@ -214,6 +214,9 @@ function checkSkipReasonTarget(targetUnit, modKey) {
     if (modKey === "damage_minus_1" && targetUnit.modifiers.minusOneDamage) return "applied";
     if (modKey === "damage_half" && targetUnit.modifiers.halfDamage) return "applied";
     if (modKey === "FNP" && targetUnit.fnp > 0) return "applied";
+    if (modKey === "SgT_wound_minus_1" && targetUnit.toughness >= weaponsArray[0].strength) return "ineffective";
+    if (modKey === "damage_minus_1" && weaponsArray[0].damage === "1") return "ineffective";
+    if (modKey === "damage_half" && weaponsArray[0].damage === "1") return "ineffective";
 
     return false;
 }
@@ -389,37 +392,29 @@ if (advAnalyticsBtn) {
                     }
                 }
 
-                let allowedTargetHitMods = ["Base"];
-                let allowedTargetWoundMods = ["Base"];
-                let allowedTargetSaveMods = ["Base"];
-                let allowedTargetDamageMods = ["Base"];
-                let allowedTargetKilledMods = ["Base"];
-                let TargetskippedMods = {};
-
 
                 //target unit sim loop
                 for (const [category, mods] of Object.entries(target_SIMULATION_SCENARIOS)) {
                     for (const modKey of mods) {
 
-                        const skipReason = checkSkipReasonTarget(targetUnit, modKey);
+                        const skipReason = checkSkipReasonTarget(targetUnit, [baseWeapon], modKey);
 
                         if (skipReason === "not_applicable") continue;
 
-                        if (category === "Hit Mods") allowedTargetHitMods.push(modKey);
-                        if (category === "Wound Mods") allowedTargetWoundMods.push(modKey);
-                        if (category === "Save/Ap") allowedTargetSaveMods.push(modKey);
+                        //these arrays are now shared by attacking and target unit
+                        if (category === "Save/Ap") allowedSaveMods.push(modKey);
                         if (category === "Damage Mods") {
-                            allowedTargetDamageMods.push(modKey);
-                            allowedTargetKilledMods.push(modKey);
+                            allowedDamageMods.push(modKey);
+                            allowedKilledMods.push(modKey);
                         }
 
                         if (skipReason) {
-                            TargetskippedMods[modKey] = skipReason;
+                            //skipped mods is also shared
+                            skippedMods[modKey] = skipReason;
                             continue;
                         }
 
                         let moddedTarget = JSON.parse(JSON.stringify(targetUnit));
-
 
                         applyModifiersToTarget(moddedTarget, modKey);
 
@@ -432,10 +427,7 @@ if (advAnalyticsBtn) {
                         loadDataIntoSQL(unitName, modKey, "ModelsKilled", results.killedDistribution);
                         loadAveragesIntoSQL(unitName, modKey, results.averages);
 
-
                     }
-
-
                 }
 
                 const sqlData = queryComparisonData(unitName);

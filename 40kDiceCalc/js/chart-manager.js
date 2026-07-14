@@ -144,7 +144,12 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
             borderColor: assignedColor,
             backgroundColor: assignedColor + '22',
             fill: true,
-            borderWidth: 2, tension: 0.1, pointRadius: 0, pointHoverRadius: 5, cubicInterpolationMode: 'monotone'
+            borderWidth: 2,
+            tension: 0.1,
+            pointRadius: 0,
+            pointHoverRadius: 5,
+            cubicInterpolationMode: 'monotone',
+            borderDash: displayLabel.includes("Target:") ? [5, 5] : []
         };
     });
 
