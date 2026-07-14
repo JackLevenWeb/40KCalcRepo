@@ -151,6 +151,15 @@ const SIMULATION_SCENARIOS = {
     "Damage Mods": ["devastating", "melta_range"]
 };
 
+const target_SIMULATION_SCENARIOS = {
+    "Hit Mods": ["hit_minus_1", "cover"],
+    "Wound Mods": ["wound_minus_1", "SgT_wound_minus_1"],
+    "Save/Ap": ["place_Holder"],
+    "Damage Mods": ["damage_minus_1", "damage_half", "FNP"]
+
+
+};
+
 function applyModifierToWeapon(weapon, modKey) {
     if (modKey === "hit_plus_1") weapon.modifiers.hitMod += 1;
     if (modKey === "reroll_hits_1") weapon.modifiers.rerollHits = "ones";
@@ -180,6 +189,20 @@ function checkSkipReason(weaponsArray, modKey) {
 
         if (modKey === "melta_range" && w.modifiers.melta === 0) return "not_applicable";
         if (modKey === "hit_plus_1" && parseInt(w.BsWs) === 2) return "ineffective";
+    }
+    return false;
+}
+
+
+function checkSkipReasonTarget(targetUnit, modKey) {
+    for (const w of targetUnit) {
+        if (modKey === "hit_minus_1" && w.modifiers.minusOneHit) return "applied";
+        if (modKey === "cover" && w.modifiers.cover) return "applied";
+        if (modKey === "wound_minus_1" && w.modifiers.minusOneWound) return "applied";
+        if (modKey === "SgT_wound_minus_1" && w.modifiers.minusOneWoundHighStr) return "applied";
+        if (modKey === "damage_minus_1" && w.modifiers.minusOneDamage) return "applied";
+        if (modKey === "damage_half" && w.modifiers.halfDamage) return "applied";
+        if (modKey === "FNP" && w.modifiers.rerollWounds === "all") return "applied";
     }
     return false;
 }
@@ -320,6 +343,7 @@ if (advAnalyticsBtn) {
 
                 baseWeapon.modifiers.melta = originalMelta;
 
+                //attacker sim loop
                 for (const [category, mods] of Object.entries(SIMULATION_SCENARIOS)) {
                     for (const modKey of mods) {
 
@@ -352,6 +376,42 @@ if (advAnalyticsBtn) {
                         loadDataIntoSQL(unitName, modKey, "ModelsKilled", results.killedDistribution);
                         loadAveragesIntoSQL(unitName, modKey, results.averages);
                     }
+                }
+
+                let allowedTargetHitMods = ["Base"];
+                let allowedTargetWoundMods = ["Base"];
+                let allowedTargetSaveMods = ["Base"];
+                let allowedTargetDamageMods = ["Base"];
+                let allowedTargetKilledMods = ["Base"];
+                let TargetskippedMods = {};
+
+
+                //target unit sim loop
+                for (const [category, mods] of Object.entries(target_SIMULATION_SCENARIOS)) {
+                    for (const modKey of mods) {
+
+                        const skipReason = checkSkipReasonTarget(targetUnit, modKey);
+
+                        if (skipReason === "not_applicable") continue;
+
+                        if (category === "Hit Mods") allowedTargetHitMods.push(modKey);
+                        if (category === "Wound Mods") allowedTargetWoundMods.push(modKey);
+                        if (category === "Save/Ap") allowedTargetSaveMods.push(modKey);
+                        if (category === "Damage Mods") {
+                            allowedTargetDamageMods.push(modKey);
+                            allowedTargetKilledMods.push(modKey);
+                        }
+
+                        if (skipReason) {
+                            TargetskippedMods[modKey] = skipReason;
+                            continue;
+                        }
+
+                        let moddedTarget = JSON.parse(JSON.stringify(targetUnit));
+
+                    }
+
+
                 }
 
                 const sqlData = queryComparisonData(unitName);
