@@ -154,7 +154,7 @@ const SIMULATION_SCENARIOS = {
 const target_SIMULATION_SCENARIOS = {
     "Hit Mods": ["hit_minus_1", "cover"],
     "Wound Mods": ["wound_minus_1", "SgT_wound_minus_1"],
-    "Save/Ap": [],//not used for now
+    "Save/Ap": ["plus_1_save"],
     "Damage Mods": ["damage_minus_1", "damage_half", "FNP"]
 
 
@@ -202,6 +202,7 @@ function applyModifiersToTarget(targetUnit, modKey) {
     if (modKey === "damage_minus_1") targetUnit.modifiers.minusOneDamage = true;
     if (modKey === "damage_half") targetUnit.modifiers.halfDamage = true;
     if (modKey === "FNP") targetUnit.fnp = 5;
+    if (modKey === "plus_1_save") targetUnit.modifiers.plusOneSave = true;
 
 };
 
@@ -217,6 +218,9 @@ function checkSkipReasonTarget(targetUnit, weaponsArray, modKey) {
     if (modKey === "SgT_wound_minus_1" && targetUnit.toughness >= weaponsArray[0].strength) return "ineffective";
     if (modKey === "damage_minus_1" && weaponsArray[0].damage === "1") return "ineffective";
     if (modKey === "damage_half" && weaponsArray[0].damage === "1") return "ineffective";
+
+    if (modKey === "plus_1_save" && targetUnit.modifiers.plusOneSave) return "applied";
+    if (modKey === "plus_1_save" && weaponsArray[0].Ap >= 0 && targetUnit.save <= 3) return "ineffective";
 
     return false;
 }

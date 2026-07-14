@@ -197,7 +197,7 @@ export function runHurtSystem(weapon, unit, startingHealth) {
     // Save Phase
     let failedSavesCount = 0;
     if (normalWounds > 0) {
-        const apApplied = unit.save - weapon.Ap;
+        const apApplied = unit.save - weapon.Ap - (unit.modifiers.plusOneSave ? 1 : 0);
         const bestSave = unit.inVul ? Math.min(apApplied, unit.inVul) : apApplied;
 
         const saveRolls = Dice.rollRaw(normalWounds);
@@ -245,7 +245,7 @@ export function runHurtSystem(weapon, unit, startingHealth) {
     };
 }
 
-// helper functions
+// helper functions>>>>>>>
 function calculateAttacks(weapon, unit) {
     let baseAttacks = resolveDamage(weapon.attack); //reusing function for variable damage here
     if (weapon.modifiers.blast || weapon.modifiers.cleave) {

@@ -15,6 +15,7 @@ export class Unit {
             cover: modifiers.cover || false, // Worsens Attacker BS by 1
             halfDamage: modifiers.halfDamage || false,
             minusOneDamage: modifiers.minusOneDamage || false,
+            plusOneSave: modifiers.plusOneSave || false,
             keywords: modifiers.keywords || []
         };
     }
