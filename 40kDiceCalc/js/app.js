@@ -193,17 +193,28 @@ function checkSkipReason(weaponsArray, modKey) {
     return false;
 }
 
+function applyModifiersToTarget(targetUnit, modKey) {
+
+    if (modKey === "hit_minus_1") targetUnit.modifiers.minusOneHit = true;
+    if (modKey === "cover") targetUnit.modifiers.cover = true;
+    if (modKey === "wound_minus_1") targetUnit.modifiers.minusOneWound = true;
+    if (modKey === "SgT_wound_minus_1") targetUnit.modifiers.minusOneWoundHighStr = true;
+    if (modKey === "damage_minus_1") targetUnit.modifiers.minusOneDamage = true;
+    if (modKey === "damage_half") targetUnit.modifiers.halfDamage = true;
+    if (modKey === "FNP") targetUnit.fnp = 5;
+
+};
 
 function checkSkipReasonTarget(targetUnit, modKey) {
-    for (const w of targetUnit) {
-        if (modKey === "hit_minus_1" && w.modifiers.minusOneHit) return "applied";
-        if (modKey === "cover" && w.modifiers.cover) return "applied";
-        if (modKey === "wound_minus_1" && w.modifiers.minusOneWound) return "applied";
-        if (modKey === "SgT_wound_minus_1" && w.modifiers.minusOneWoundHighStr) return "applied";
-        if (modKey === "damage_minus_1" && w.modifiers.minusOneDamage) return "applied";
-        if (modKey === "damage_half" && w.modifiers.halfDamage) return "applied";
-        if (modKey === "FNP" && w.modifiers.rerollWounds === "all") return "applied";
-    }
+
+    if (modKey === "hit_minus_1" && targetUnit.modifiers.minusOneHit) return "applied";
+    if (modKey === "cover" && targetUnit.modifiers.cover) return "applied";
+    if (modKey === "wound_minus_1" && targetUnit.modifiers.minusOneWound) return "applied";
+    if (modKey === "SgT_wound_minus_1" && targetUnit.modifiers.minusOneWoundHighStr) return "applied";
+    if (modKey === "damage_minus_1" && targetUnit.modifiers.minusOneDamage) return "applied";
+    if (modKey === "damage_half" && targetUnit.modifiers.halfDamage) return "applied";
+    if (modKey === "FNP" && targetUnit.fnp > 0) return "applied";
+
     return false;
 }
 
@@ -408,6 +419,19 @@ if (advAnalyticsBtn) {
                         }
 
                         let moddedTarget = JSON.parse(JSON.stringify(targetUnit));
+
+
+                        applyModifiersToTarget(moddedTarget, modKey);
+
+                        let results = await runWorkerSimulation(SIMULATION_ITERATIONS, [baseWeapon], moddedTarget);
+
+                        loadDataIntoSQL(unitName, modKey, "Hit", results.hitDistribution);
+                        loadDataIntoSQL(unitName, modKey, "Wound", results.woundDistribution);
+                        loadDataIntoSQL(unitName, modKey, "Save", results.saveDistribution);
+                        loadDataIntoSQL(unitName, modKey, "Damage", results.damageDistribution);
+                        loadDataIntoSQL(unitName, modKey, "ModelsKilled", results.killedDistribution);
+                        loadAveragesIntoSQL(unitName, modKey, results.averages);
+
 
                     }
 
