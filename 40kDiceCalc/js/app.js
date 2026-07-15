@@ -37,6 +37,8 @@ let currentSimulationResults = null;
 
 initDataBase();
 
+
+//create weapon array from modules(html elements)
 function createWeaponsArray() {
     const modules = document.querySelectorAll('.attacker-module');
     const weaponsArray = [];
@@ -107,6 +109,7 @@ function createWeaponsArray() {
     return weaponsArray;
 }
 
+//create unit from html elements
 function createUnit() {
     const toughness = parseInt(document.getElementById("toughness").value, 10);
     const wounds = parseInt(document.getElementById("wounds").value, 10);
@@ -217,7 +220,6 @@ function checkSkipReasonTarget(targetUnit, weaponsArray, modKey) {
     if (modKey === "damage_half" && targetUnit.modifiers.halfDamage) return "applied";
     if (modKey === "FNP" && targetUnit.fnp > 0) return "applied";
     if (modKey === "SgT_wound_minus_1" && targetUnit.toughness >= weaponsArray[0].strength) return "ineffective";
-
     if (modKey === "damage_minus_1" && weaponsArray[0].damage === "1") return "ineffective";
     if (modKey === "damage_half" && weaponsArray[0].damage === "1") return "ineffective";
 
@@ -760,14 +762,14 @@ function autoSave() {
 }
 
 
-// Centralized function to wipe the board completely
+// function to wipe the board completely
 function clearDashboard() {
     localStorage.removeItem("40kRoster");
 
     RosterContainer.innerHTML = '';
     addAttackerModule(RosterContainer);
 
-    // Reset Target Profile Stats
+    // reset Target Profile Stats
     document.getElementById("toughness").value = 4;
     document.getElementById("wounds").value = 2;
     document.getElementById("save").value = 3;
@@ -798,7 +800,7 @@ function clearDashboard() {
 // Listen for the custom event from the Theme Changer
 document.addEventListener("App:ClearDashboard", clearDashboard);
 
-// The manual Clear Dashboard Button
+// manual Clear Dashboard Button
 if (ClearBtn) {
     ClearBtn.addEventListener("click", () => {
         if (confirm("Are you sure you want to clear all units and reset the dashboard?")) {

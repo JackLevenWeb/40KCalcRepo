@@ -32,7 +32,6 @@ export const Themes = {
         btnStandardHover: "#8C9196",
         accent: "#E8E8E8",
         accentGlow: "rgba(232, 232, 232, 0.4)",
-        // Added a rich oxidized rust (#A04010) to break up the silver and green
         chartColors: ["#8FE07F", "#B0B5B9", "#A04010", "#E8E8E8", "#1F6A3A"],
         btnStandardText: "AWAKEN (Base Profile)",
         btnAdvancedText: "WE REMEMBER. WE ENDURE. (Scenario Testing)",
@@ -100,7 +99,7 @@ export function applyTheme(themeKey) {
     const theme = Themes[currentThemeKey];
     const root = document.documentElement;
 
-    // Structural Backgrounds (Shared Dark Neutrals across all themes)
+    // Structural Backgrounds
     root.style.setProperty('--bg-color', "#0F1115");
     root.style.setProperty('--surface-color', "#1A1D24");
     root.style.setProperty('--surface-hover', "#242830");
@@ -121,7 +120,7 @@ export function applyTheme(themeKey) {
     root.style.setProperty('--theme-accent-glow', theme.accentGlow);
     root.style.setProperty('--theme-divider', theme.divider);
 
-    // Update Button Text dynamically
+    // update Button Text dynamically
     const calcBtn = document.getElementById("calculate-btn");
     if (calcBtn) calcBtn.textContent = theme.btnStandardText;
     const advBtn = document.getElementById("advanced-analytics-btn");

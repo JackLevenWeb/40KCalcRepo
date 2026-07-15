@@ -96,7 +96,7 @@ export function renderChart(damageDistribution, killedDistribution, totalRuns) {
                 legend: {
                     display: true,
                     labels: { color: '#fff' },
-                    // Change cursor to pointer (hand) on hover
+                    // cursor to pointer on hover
                     onHover: function (event, legendItem, legend) {
                         event.native.target.style.cursor = 'pointer';
                     },

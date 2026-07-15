@@ -264,7 +264,7 @@ function calculateWoundTarget(strength, toughness) {
     return 5;
 }
 
-// Resolves variable damage like "D3", "D6+2", "2D6"
+// variable damage like "D3", "D6+2", "2D6"
 function resolveDamage(damageString) {
     let str = String(damageString).toUpperCase().replace(/\s/g, '');
     if (/^\d+$/.test(str)) return parseInt(str, 10);

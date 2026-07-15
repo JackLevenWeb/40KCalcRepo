@@ -18,18 +18,18 @@ export function initializeWatchers() {
     if (ThemeSelect) {
         ThemeSelect.addEventListener("change", (e) => {
             const newTheme = e.target.value;
-            // Grab the currently saved theme to revert to if they cancel
+
             const oldTheme = localStorage.getItem("40kTheme") || "space_wolves";
 
             if (confirm("Changing the theme will wipe your current roster and reset the dashboard. Proceed?")) {
-                // Apply colors and update charts
+                // apply colors and update charts
                 applyTheme(newTheme);
                 document.dispatchEvent(new CustomEvent("App:ThemeChanged"));
 
-                // Trigger the full board reset
+                // trigger the full board reset
                 document.dispatchEvent(new CustomEvent("App:ClearDashboard"));
             } else {
-                // Revert the dropdown visual so it matches the unchanged UI
+
                 e.target.value = oldTheme;
             }
         });
@@ -138,20 +138,20 @@ export function initializeWatchers() {
         }
     });
 
-    // Close the modal when the X is clicked
+
     if (modalClose) {
         modalClose.addEventListener("click", () => {
             tutorialModal.style.display = "none";
         });
     }
 
-    // Close the modal if the user clicks anywhere outside of it
+
     window.addEventListener("click", (e) => {
         if (e.target === tutorialModal) {
             tutorialModal.style.display = "none";
         }
     });
-    // ----------------------------
+
 
     RosterContainer.addEventListener("input", () => {
         syncAppUI();
