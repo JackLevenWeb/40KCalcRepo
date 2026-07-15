@@ -8,6 +8,7 @@ import { initDataBase, loadDataIntoSQL, queryComparisonData, clearDataBase, ModL
 import { renderChart, renderAdvancedChart } from './chart-manager.js';
 import { initializeWatchers } from './event-manager.js';
 import { applyTheme, getCurrentTheme } from './theme-manager.js';
+import './fetchUnitStats.js'
 const SIMULATION_ITERATIONS = 100000;
 
 initializeWatchers();
