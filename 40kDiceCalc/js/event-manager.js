@@ -132,6 +132,7 @@ export function initializeWatchers() {
                 tutBody.innerHTML = `
                     <p>Why are <strong>Devastating Wounds</strong> tracked here?</p>
                     <p style="margin-top: 10px;">Because Devastating Wounds bypass the target's Save phase entirely and convert directly into damage, their impact is best visualized in the final Damage and Models Killed reports.</p>
+                    <p style="margin-top: 10px;"><strong>Overkill/Efficiency (Wasted Damage):</strong> The amount of damage dealt that exceeded a model's remaining wounds (e.g., dealing 3 damage to a 1-wound model results in 2 wasted damage).</p>
                 `;
             }
             tutorialModal.style.display = "block";

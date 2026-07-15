@@ -45,6 +45,7 @@ export function renderChart(damageDistribution, killedDistribution, totalRuns) {
         {
             label: 'Models Killed (At Least)',
             data: cumulativeKilled,
+            exactData: exactKilledData,
             borderColor: theme.chartColors[1],
             backgroundColor: theme.chartColors[1] + '70',
             fill: true,
@@ -53,6 +54,7 @@ export function renderChart(damageDistribution, killedDistribution, totalRuns) {
         {
             label: 'Damage Dealt (At Least)',
             data: cumulativeDamage,
+            exactData: exactDamageData,
             borderColor: theme.chartColors[0],
             backgroundColor: theme.chartColors[0] + '70',
             fill: true,
@@ -127,7 +129,11 @@ export function renderChart(damageDistribution, killedDistribution, totalRuns) {
                             const labelText = context.dataset.label;
                             const percentage = context.raw.toFixed(2);
 
-                            return `${xValue} ${labelText}: ${percentage}%`;
+                            if (context.dataset.exactData[context.dataIndex] === 0) {
+                                return `${xValue} ${labelText}: N/A`;
+                            } else {
+                                return `${xValue} ${labelText}: ${percentage}%`;
+                            }
                         }
                     }
                 }
@@ -185,6 +191,7 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
         return {
             label: displayLabel,
             data: cumulativeArray,
+            exactData: dataArray,
             borderColor: assignedColor,
             backgroundColor: assignedColor + '70',
             fill: true,
@@ -261,7 +268,15 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
                             const labelText = context.dataset.label;
                             const percentage = context.raw.toFixed(2);
 
-                            return `${xValue} ${category}s (${labelText}: ${percentage}%)`;
+                            if (context.dataset.exactData[context.dataIndex] === 0) {
+
+                                return `${xValue} ${category}s (${labelText}: N/A)`;
+                            } else {
+
+                                return `${xValue} ${category}s (${labelText}: ${percentage}%)`;
+                            }
+
+
                         }
                     }
                 }
