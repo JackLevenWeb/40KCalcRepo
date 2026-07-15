@@ -143,6 +143,52 @@
               </button>
             </div>
           </div>
+
+          <div
+            id="import-search-container"
+            style="
+              position: relative;
+              margin-bottom: 20px;
+              width: 100%;
+              max-width: 600px;
+            "
+          >
+            <input
+              type="text"
+              id="unit-search-input"
+              placeholder="Search for a unit to import..."
+              style="
+                width: 100%;
+                padding: 10px;
+                border-radius: 5px;
+                border: 1px solid #38424d;
+                background-color: #0f1115;
+                color: #dae6ef;
+                box-sizing: border-box;
+              "
+            />
+
+            <ul
+              id="search-results-dropdown"
+              style="
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background-color: #1a1e24;
+                border: 1px solid #38424d;
+                border-top: none;
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                max-height: 250px;
+                overflow-y: auto;
+                z-index: 1000;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+              "
+            ></ul>
+          </div>
           <div id="attacker-roster"></div>
         </section>
 
@@ -413,6 +459,7 @@
         </div>
       </section>
     </main>
+    <script type="module" src="./js/fetchUnitStats.js"></script>
     <script type="module" src="./js/app.js"></script>
     <div id="tutorial-modal" class="tutorial-modal">
       <div class="modal-content">
