@@ -51,8 +51,10 @@ export function initializeWatchers() {
                 tutBody.innerHTML = `
                     <p>Welcome to the Munitorum Auspex, a probability calculator for Warhammer 40,000.</p>
                     <p style="margin-top: 10px;">This tool calculates exact probabilities for each phase of the game between attacking and defending units. To ensure pinpoint accuracy, this engine runs <strong>100,000 Monte Carlo simulations</strong> per unit, per modifier, per phase.</p>
-                    <p style="margin-top: 10px;">Look for the <strong>?</strong> icons throughout the app to learn how each specific section functions.</p>
+                    <p style="margin-top: 10px;">Look for the <strong>?</strong> icons throughout the app to learn how each specific section functions.</p><br>
+                    <p style="margin-top: 10px;">This app is a personal project created for learning and experimentation in 40K. It’s inspired by tools like Tactical Cogitator, but it’s not commercial. I built it as a portfolio piece to showcase my work on GitHub. <a href="https://github.com/JackLevenWeb" target="_blank" style="color: var(--theme-accent);">https://github.com/JackLevenWeb</a></p>
                     <div style="margin-top: 20px; font-size: 0.8rem; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                    Inspired by: <a href="https://tactical-cogitator.com/" target="_blank" style="color: var(--theme-accent);">https://tactical-cogitator.com/</a><br>
                         Created by: <a href="https://www.linkedin.com/in/jackleventhorpe/" target="_blank" style="color: var(--theme-accent);">https://www.linkedin.com/in/jackleventhorpe/</a>
                     </div>
                 `;
