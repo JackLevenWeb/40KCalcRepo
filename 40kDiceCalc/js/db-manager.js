@@ -109,7 +109,15 @@ export const ModLabels = {
     "lethal": "Lethal Hits",
     "extra_ap_1": "AP -1",
     "devastating": "Devastating Wounds",
-    "melta_range": "In melta range"
+    "melta_range": "In melta range",
+    "hit_minus_1": "Target: -1 to Hit",
+    "cover": "Target: Cover",
+    "wound_minus_1": "Target: -1 to wound",
+    "SgT_wound_minus_1": "Target: -1 to wound(S > T) ",
+    "damage_minus_1": "Target: -1 Damage",
+    "damage_half": "Target: Half Damage",
+    "FNP": "Target: Feel No Pain 5+",
+    "plus_1_save": "Target: +1 to Save"
 };
 
 export function clearDataBase() {

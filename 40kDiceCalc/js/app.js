@@ -37,6 +37,8 @@ let currentSimulationResults = null;
 
 initDataBase();
 
+
+//create weapon array from modules(html elements)
 function createWeaponsArray() {
     const modules = document.querySelectorAll('.attacker-module');
     const weaponsArray = [];
@@ -107,6 +109,7 @@ function createWeaponsArray() {
     return weaponsArray;
 }
 
+//create unit from html elements
 function createUnit() {
     const toughness = parseInt(document.getElementById("toughness").value, 10);
     const wounds = parseInt(document.getElementById("wounds").value, 10);
@@ -123,6 +126,7 @@ function createUnit() {
         cover: document.getElementById("def-cover") ? document.getElementById("def-cover").checked : false,
         halfDamage: reductionDrop === "half",
         minusOneDamage: reductionDrop === "minus1",
+        plusOneSave: document.getElementById("def-plus-one-save") ? document.getElementById("def-plus-one-save").checked : false
     };
 
     return new Unit(toughness, wounds, save, inVul, fnp, modelCount, modifiers);
@@ -149,6 +153,15 @@ const SIMULATION_SCENARIOS = {
     "Wound Mods": ["wound_plus_1", "reroll_wounds_1", "reroll_wounds_all", "lethal"],
     "Save/Ap": ["extra_ap_1"],
     "Damage Mods": ["devastating", "melta_range"]
+};
+
+const target_SIMULATION_SCENARIOS = {
+    "Hit Mods": ["hit_minus_1", "cover"],
+    "Wound Mods": ["wound_minus_1", "SgT_wound_minus_1"],
+    "Save/Ap": ["plus_1_save"],
+    "Damage Mods": ["damage_minus_1", "damage_half", "FNP"]
+
+
 };
 
 function applyModifierToWeapon(weapon, modKey) {
@@ -181,6 +194,41 @@ function checkSkipReason(weaponsArray, modKey) {
         if (modKey === "melta_range" && w.modifiers.melta === 0) return "not_applicable";
         if (modKey === "hit_plus_1" && parseInt(w.BsWs) === 2) return "ineffective";
     }
+    return false;
+}
+
+function applyModifiersToTarget(targetUnit, modKey) {
+
+    if (modKey === "hit_minus_1") targetUnit.modifiers.minusOneHit = true;
+    if (modKey === "cover") targetUnit.modifiers.cover = true;
+    if (modKey === "wound_minus_1") targetUnit.modifiers.minusOneWound = true;
+    if (modKey === "SgT_wound_minus_1") targetUnit.modifiers.minusOneWoundHighStr = true;
+    if (modKey === "damage_minus_1") targetUnit.modifiers.minusOneDamage = true;
+    if (modKey === "damage_half") targetUnit.modifiers.halfDamage = true;
+    if (modKey === "FNP") targetUnit.fnp = 5;
+    if (modKey === "plus_1_save") targetUnit.modifiers.plusOneSave = true;
+
+};
+
+function checkSkipReasonTarget(targetUnit, weaponsArray, modKey) {
+
+    if (modKey === "hit_minus_1" && targetUnit.modifiers.minusOneHit) return "applied";
+    if (modKey === "cover" && targetUnit.modifiers.cover) return "applied";
+    if (modKey === "wound_minus_1" && targetUnit.modifiers.minusOneWound) return "applied";
+    if (modKey === "SgT_wound_minus_1" && targetUnit.modifiers.minusOneWoundHighStr) return "applied";
+    if (modKey === "damage_minus_1" && targetUnit.modifiers.minusOneDamage) return "applied";
+    if (modKey === "damage_half" && targetUnit.modifiers.halfDamage) return "applied";
+    if (modKey === "FNP" && targetUnit.fnp > 0) return "applied";
+    if (modKey === "SgT_wound_minus_1" && targetUnit.toughness >= weaponsArray[0].strength) return "ineffective";
+    if (modKey === "damage_minus_1" && weaponsArray[0].damage === "1") return "ineffective";
+    if (modKey === "damage_half" && weaponsArray[0].damage === "1") return "ineffective";
+
+    //check for when damage_half and -1 damage result in the same - we keep the damage -1 rather
+    if (modKey === "damage_half" && weaponsArray[0].damage === "2") return "ineffective";
+
+    if (modKey === "plus_1_save" && targetUnit.modifiers.plusOneSave) return "applied";
+    if (modKey === "plus_1_save" && weaponsArray[0].Ap >= 0 && targetUnit.save <= 3) return "ineffective";
+
     return false;
 }
 
@@ -320,6 +368,7 @@ if (advAnalyticsBtn) {
 
                 baseWeapon.modifiers.melta = originalMelta;
 
+                //attacker sim loop
                 for (const [category, mods] of Object.entries(SIMULATION_SCENARIOS)) {
                     for (const modKey of mods) {
 
@@ -354,16 +403,55 @@ if (advAnalyticsBtn) {
                     }
                 }
 
+
+                //target unit sim loop
+                for (const [category, mods] of Object.entries(target_SIMULATION_SCENARIOS)) {
+                    for (const modKey of mods) {
+
+                        const skipReason = checkSkipReasonTarget(targetUnit, [baseWeapon], modKey);
+
+                        if (skipReason === "not_applicable") continue;
+
+                        //these arrays are now shared by attacking and target unit
+                        if (category === "Save/Ap") allowedSaveMods.push(modKey);
+                        if (category === "Damage Mods") {
+                            allowedDamageMods.push(modKey);
+                            allowedKilledMods.push(modKey);
+                        }
+
+                        if (skipReason) {
+                            //skipped mods is also shared
+                            skippedMods[modKey] = skipReason;
+                            continue;
+                        }
+
+                        let moddedTarget = JSON.parse(JSON.stringify(targetUnit));
+
+                        applyModifiersToTarget(moddedTarget, modKey);
+
+                        let results = await runWorkerSimulation(SIMULATION_ITERATIONS, [baseWeapon], moddedTarget);
+
+                        loadDataIntoSQL(unitName, modKey, "Hit", results.hitDistribution);
+                        loadDataIntoSQL(unitName, modKey, "Wound", results.woundDistribution);
+                        loadDataIntoSQL(unitName, modKey, "Save", results.saveDistribution);
+                        loadDataIntoSQL(unitName, modKey, "Damage", results.damageDistribution);
+                        loadDataIntoSQL(unitName, modKey, "ModelsKilled", results.killedDistribution);
+                        loadAveragesIntoSQL(unitName, modKey, results.averages);
+
+                    }
+                }
+
                 const sqlData = queryComparisonData(unitName);
                 const sqlAvgData = queryAveragesData(unitName);
                 const attackerUnitReport = unitAccordion.querySelector('.unit-reports-wrapper');
 
-                generateAdvancedReport(`${unitName}: Hit`, "Hit", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedHitMods, skippedMods, statsHTML, attackerUnitReport);
-                generateAdvancedReport(`${unitName}: Wound`, "Wound", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedWoundMods, skippedMods, statsHTML, attackerUnitReport);
-                generateAdvancedReport(`${unitName}: Save`, "Save", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedSaveMods, skippedMods, statsHTML, attackerUnitReport);
-                generateAdvancedReport(`${unitName}: Damage`, "Damage", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedDamageMods, skippedMods, statsHTML, attackerUnitReport);
-                generateAdvancedReport(`${unitName}: ModelsKilled`, "ModelsKilled", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedKilledMods, skippedMods, statsHTML, attackerUnitReport);
 
+                // create each report section
+                generateAdvancedReport(`${unitName}: Hit Averages`, "Hit", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedHitMods, skippedMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: Wound Averages <button class="tutorial-btn" data-tutorial="wound_avg">?</button>`, "Wound", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedWoundMods, skippedMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: Save Averages`, "Save", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedSaveMods, skippedMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: Damage Averages <button class="tutorial-btn" data-tutorial="damage_avg">?</button>`, "Damage", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedDamageMods, skippedMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: Models Killed Averages <button class="tutorial-btn" data-tutorial="damage_avg">?</button>`, "ModelsKilled", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedKilledMods, skippedMods, statsHTML, attackerUnitReport);
                 const sidebars = attackerUnitReport.querySelectorAll('.avg-stats-sidebar');
                 let maxHeight = 0;
                 sidebars.forEach(sidebar => {
@@ -428,8 +516,12 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
         processedRows.forEach(row => {
             let rowStyle = row.skipReason ? `opacity: 0.5;` : ``;
             let cells = [row.hits_success.toFixed(2)];
-            if (hasBonus) cells.push(row.hits_bonus.toFixed(2));
-            if (hasAuto) cells.push(row.hits_auto.toFixed(2));
+            if (hasBonus) {
+                cells.push(row.hits_bonus > 0 ? row.hits_bonus.toFixed(2) : '-');
+            }
+            if (hasAuto) {
+                cells.push(row.hits_auto > 0 ? row.hits_auto.toFixed(2) : '-');
+            }
 
             let rowHTML = `<tr style="${rowStyle}"><td style="${tdFirst}">${getRowNameHTML(row)}</td>`;
             cells.forEach((val, index) => {
@@ -530,6 +622,7 @@ function buildBaseStatsHTML(weaponsArray, targetUnit) {
     if (targetUnit.modifiers.cover) targetMods.push("Cover");
     if (targetUnit.modifiers.halfDamage) targetMods.push("1/2 Dmg");
     if (targetUnit.modifiers.minusOneDamage) targetMods.push("-1 Dmg");
+    if (targetUnit.modifiers.plusOneSave) targetMods.push("+1 Save");
     if (targetUnit.fnp && targetUnit.fnp > 1) targetMods.push(`FNP ${targetUnit.fnp}+`);
     let targetModsStr = targetMods.length > 0 ? targetMods.join(' | ') : "[No Mods]";
 
@@ -561,6 +654,7 @@ function loadTargetProfile(targetData) {
         document.getElementById("def-minus-wound").checked = mods.minusOneWound;
         document.getElementById("def-minus-wound-str").checked = mods.minusOneWoundHighStr;
         document.getElementById("def-cover").checked = mods.cover;
+        document.getElementById("def-plus-one-save").checked = mods.plusOneSave;
 
         if (mods.halfDamage) {
             document.getElementById("def-reduce-dam").value = "half";
@@ -668,14 +762,14 @@ function autoSave() {
 }
 
 
-// Centralized function to wipe the board completely
+// function to wipe the board completely
 function clearDashboard() {
     localStorage.removeItem("40kRoster");
 
     RosterContainer.innerHTML = '';
     addAttackerModule(RosterContainer);
 
-    // Reset Target Profile Stats
+    // reset Target Profile Stats
     document.getElementById("toughness").value = 4;
     document.getElementById("wounds").value = 2;
     document.getElementById("save").value = 3;
@@ -706,7 +800,7 @@ function clearDashboard() {
 // Listen for the custom event from the Theme Changer
 document.addEventListener("App:ClearDashboard", clearDashboard);
 
-// The manual Clear Dashboard Button
+// manual Clear Dashboard Button
 if (ClearBtn) {
     ClearBtn.addEventListener("click", () => {
         if (confirm("Are you sure you want to clear all units and reset the dashboard?")) {
