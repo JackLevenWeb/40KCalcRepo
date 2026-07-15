@@ -439,11 +439,14 @@ if (advAnalyticsBtn) {
                 const sqlAvgData = queryAveragesData(unitName);
                 const attackerUnitReport = unitAccordion.querySelector('.unit-reports-wrapper');
 
+                // Keep the Hit and Save lines the same
                 generateAdvancedReport(`${unitName}: Hit`, "Hit", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedHitMods, skippedMods, statsHTML, attackerUnitReport);
-                generateAdvancedReport(`${unitName}: Wound`, "Wound", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedWoundMods, skippedMods, statsHTML, attackerUnitReport);
+
+                // Update these three with the tutorial buttons
+                generateAdvancedReport(`${unitName}: Wound <button class="tutorial-btn" data-tutorial="wound_avg">?</button>`, "Wound", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedWoundMods, skippedMods, statsHTML, attackerUnitReport);
                 generateAdvancedReport(`${unitName}: Save`, "Save", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedSaveMods, skippedMods, statsHTML, attackerUnitReport);
-                generateAdvancedReport(`${unitName}: Damage`, "Damage", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedDamageMods, skippedMods, statsHTML, attackerUnitReport);
-                generateAdvancedReport(`${unitName}: ModelsKilled`, "ModelsKilled", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedKilledMods, skippedMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: Damage <button class="tutorial-btn" data-tutorial="damage_avg">?</button>`, "Damage", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedDamageMods, skippedMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: ModelsKilled <button class="tutorial-btn" data-tutorial="damage_avg">?</button>`, "ModelsKilled", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedKilledMods, skippedMods, statsHTML, attackerUnitReport);
 
                 const sidebars = attackerUnitReport.querySelectorAll('.avg-stats-sidebar');
                 let maxHeight = 0;
