@@ -3,6 +3,8 @@
 ## Overview
 This application is a web-based probability calculator for tabletop simulation mechanics. It processes complex cascading probabilities via a waterfall simulation model, executing 100,000 iterations to output structured statistical distributions of damage, hits, wounds, and saves.
 
+Access via: https://jacklevenweb.github.io/40KCalcRepo/40kDiceCalc/
+
 ## Features
 - Complex Profile Parsing: Handles layered modifiers and conditional triggers.
 - Multithreaded Processing: Utilizes Web Workers to run high-volume waterfall simulations without blocking the main browser thread.
