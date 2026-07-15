@@ -46,7 +46,7 @@ export function renderChart(damageDistribution, killedDistribution, totalRuns) {
             label: 'Models Killed (At Least)',
             data: cumulativeKilled,
             borderColor: theme.chartColors[1],
-            backgroundColor: theme.chartColors[1] + '22',
+            backgroundColor: theme.chartColors[1] + '70',
             fill: true,
             borderWidth: 2, tension: 0.1, pointRadius: 0, pointHoverRadius: 5, cubicInterpolationMode: 'monotone'
         },
@@ -54,11 +54,23 @@ export function renderChart(damageDistribution, killedDistribution, totalRuns) {
             label: 'Damage Dealt (At Least)',
             data: cumulativeDamage,
             borderColor: theme.chartColors[0],
-            backgroundColor: theme.chartColors[0] + '22',
+            backgroundColor: theme.chartColors[0] + '70',
             fill: true,
             borderWidth: 3, tension: 0.1, pointRadius: 0, pointHoverRadius: 5, cubicInterpolationMode: 'monotone'
         }
     ];
+
+    //sort by y axis sum to order chart drawing order
+    for (const item of datasets) {
+        item.areaSum = item.data.reduce((accum, value) => accum + value, 0);
+    }
+
+    datasets.sort((a, b) => {
+        return a.areaSum - b.areaSum;
+
+    });
+
+
 
     damageChartInstance = new Chart(ctx, {
         type: 'line',
@@ -83,10 +95,25 @@ export function renderChart(damageDistribution, killedDistribution, totalRuns) {
             plugins: {
                 legend: { display: true, labels: { color: '#fff' } },
                 tooltip: {
-                    backgroundColor: 'rgba(15, 17, 21, 0.95)', titleColor: theme.chartColors[0], bodyColor: '#DAE6EF',
-                    borderColor: theme.chartColors[2], borderWidth: 1, padding: 12,
+                    backgroundColor: 'rgba(15, 17, 21, 0.95)',
+                    titleColor: theme.chartColors[0],
+                    bodyColor: '#DAE6EF',
+                    borderWidth: 1,
+                    padding: 12,
+                    // replaced hard coded colout with function
+                    borderColor: function (context) {
+
+                        if (context.tooltip.dataPoints && context.tooltip.dataPoints.length > 0) {
+
+                            return context.tooltip.dataPoints[0].dataset.borderColor;
+                        }
+
+                        return theme.chartColors[2];
+                    },
                     callbacks: {
-                        label: function (context) { return context.dataset.label + ': ' + context.raw.toFixed(2) + '%'; }
+                        label: function (context) {
+                            return context.dataset.label + ': ' + context.raw.toFixed(2) + '%';
+                        }
                     }
                 }
             }
@@ -133,6 +160,8 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
             cumulativeArray[i] = runningTotal;
         }
 
+        const count = cumulativeArray.reduce((accum, value) => accum + value, 0);
+
         let displayLabel = ModLabels[modName] || modName;
         if (modName === "Base" && category !== "Save") displayLabel = "Base Profile";
 
@@ -142,16 +171,25 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
             label: displayLabel,
             data: cumulativeArray,
             borderColor: assignedColor,
-            backgroundColor: assignedColor + '22',
+            backgroundColor: assignedColor + '70',
             fill: true,
             borderWidth: 2,
             tension: 0.1,
             pointRadius: 0,
             pointHoverRadius: 5,
             cubicInterpolationMode: 'monotone',
-            borderDash: displayLabel.includes("Target:") ? [5, 5] : []
+            borderDash: displayLabel.includes("Target:") ? [5, 5] : [],
+            areaSum: count
         };
     });
+
+    datasets.sort((a, b) => {
+        return a.areaSum - b.areaSum;
+    });
+
+
+
+
 
     new Chart(ctx, {
         type: 'line',
@@ -176,10 +214,25 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
             plugins: {
                 legend: { display: true, labels: { color: '#fff' } },
                 tooltip: {
-                    backgroundColor: 'rgba(15, 17, 21, 0.95)', titleColor: theme.chartColors[0], bodyColor: '#DAE6EF',
-                    borderColor: theme.chartColors[2], borderWidth: 1, padding: 12,
+                    backgroundColor: 'rgba(15, 17, 21, 0.95)',
+                    titleColor: theme.chartColors[0],
+                    bodyColor: '#DAE6EF',
+                    borderWidth: 1,
+                    padding: 12,
+                    // replaced hard coded colout with function
+                    borderColor: function (context) {
+
+                        if (context.tooltip.dataPoints && context.tooltip.dataPoints.length > 0) {
+
+                            return context.tooltip.dataPoints[0].dataset.borderColor;
+                        }
+
+                        return theme.chartColors[2];
+                    },
                     callbacks: {
-                        label: function (context) { return context.dataset.label + ': ' + context.raw.toFixed(2) + '%'; }
+                        label: function (context) {
+                            return context.dataset.label + ': ' + context.raw.toFixed(2) + '%';
+                        }
                     }
                 }
             }

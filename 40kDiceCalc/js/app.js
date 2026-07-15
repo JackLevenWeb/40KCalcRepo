@@ -123,6 +123,7 @@ function createUnit() {
         cover: document.getElementById("def-cover") ? document.getElementById("def-cover").checked : false,
         halfDamage: reductionDrop === "half",
         minusOneDamage: reductionDrop === "minus1",
+        plusOneSave: document.getElementById("def-plus-one-save") ? document.getElementById("def-plus-one-save").checked : false
     };
 
     return new Unit(toughness, wounds, save, inVul, fnp, modelCount, modifiers);
@@ -610,6 +611,7 @@ function buildBaseStatsHTML(weaponsArray, targetUnit) {
     if (targetUnit.modifiers.cover) targetMods.push("Cover");
     if (targetUnit.modifiers.halfDamage) targetMods.push("1/2 Dmg");
     if (targetUnit.modifiers.minusOneDamage) targetMods.push("-1 Dmg");
+    if (targetUnit.modifiers.plusOneSave) targetMods.push("+1 Save");
     if (targetUnit.fnp && targetUnit.fnp > 1) targetMods.push(`FNP ${targetUnit.fnp}+`);
     let targetModsStr = targetMods.length > 0 ? targetMods.join(' | ') : "[No Mods]";
 
@@ -641,6 +643,7 @@ function loadTargetProfile(targetData) {
         document.getElementById("def-minus-wound").checked = mods.minusOneWound;
         document.getElementById("def-minus-wound-str").checked = mods.minusOneWoundHighStr;
         document.getElementById("def-cover").checked = mods.cover;
+        document.getElementById("def-plus-one-save").checked = mods.plusOneSave;
 
         if (mods.halfDamage) {
             document.getElementById("def-reduce-dam").value = "half";
