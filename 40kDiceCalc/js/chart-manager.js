@@ -261,7 +261,7 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
                             const labelText = context.dataset.label;
                             const percentage = context.raw.toFixed(2);
 
-                            return `${xValue} ${labelText}: ${percentage}%`;
+                            return `${xValue} ${category}s (${labelText}: ${percentage}%)`;
                         }
                     }
                 }

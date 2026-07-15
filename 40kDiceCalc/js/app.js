@@ -217,8 +217,12 @@ function checkSkipReasonTarget(targetUnit, weaponsArray, modKey) {
     if (modKey === "damage_half" && targetUnit.modifiers.halfDamage) return "applied";
     if (modKey === "FNP" && targetUnit.fnp > 0) return "applied";
     if (modKey === "SgT_wound_minus_1" && targetUnit.toughness >= weaponsArray[0].strength) return "ineffective";
+
     if (modKey === "damage_minus_1" && weaponsArray[0].damage === "1") return "ineffective";
     if (modKey === "damage_half" && weaponsArray[0].damage === "1") return "ineffective";
+
+    //check for when damage_half and -1 damage result in the same - we keep the damage -1 rather
+    if (modKey === "damage_half" && weaponsArray[0].damage === "2") return "ineffective";
 
     if (modKey === "plus_1_save" && targetUnit.modifiers.plusOneSave) return "applied";
     if (modKey === "plus_1_save" && weaponsArray[0].Ap >= 0 && targetUnit.save <= 3) return "ineffective";
@@ -439,10 +443,8 @@ if (advAnalyticsBtn) {
                 const sqlAvgData = queryAveragesData(unitName);
                 const attackerUnitReport = unitAccordion.querySelector('.unit-reports-wrapper');
 
-                // Keep the Hit and Save lines the same
-                generateAdvancedReport(`${unitName}: Hit`, "Hit", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedHitMods, skippedMods, statsHTML, attackerUnitReport);
 
-                // Update these three with the tutorial buttons
+                // create each report section
                 generateAdvancedReport(`${unitName}: Hit Averages`, "Hit", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedHitMods, skippedMods, statsHTML, attackerUnitReport);
                 generateAdvancedReport(`${unitName}: Wound Averages <button class="tutorial-btn" data-tutorial="wound_avg">?</button>`, "Wound", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedWoundMods, skippedMods, statsHTML, attackerUnitReport);
                 generateAdvancedReport(`${unitName}: Save Averages`, "Save", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedSaveMods, skippedMods, statsHTML, attackerUnitReport);
