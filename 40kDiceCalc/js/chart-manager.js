@@ -93,26 +93,41 @@ export function renderChart(damageDistribution, killedDistribution, totalRuns) {
                 }
             },
             plugins: {
-                legend: { display: true, labels: { color: '#fff' } },
+                legend: {
+                    display: true,
+                    labels: { color: '#fff' },
+                    // Change cursor to pointer (hand) on hover
+                    onHover: function (event, legendItem, legend) {
+                        event.native.target.style.cursor = 'pointer';
+                    },
+                    onLeave: function (event, legendItem, legend) {
+                        event.native.target.style.cursor = 'default';
+                    }
+                },
                 tooltip: {
                     backgroundColor: 'rgba(15, 17, 21, 0.95)',
                     titleColor: theme.chartColors[0],
                     bodyColor: '#DAE6EF',
                     borderWidth: 1,
                     padding: 12,
-                    // replaced hard coded colout with function
+                    displayColors: false,
                     borderColor: function (context) {
-
                         if (context.tooltip.dataPoints && context.tooltip.dataPoints.length > 0) {
-
                             return context.tooltip.dataPoints[0].dataset.borderColor;
                         }
-
                         return theme.chartColors[2];
                     },
                     callbacks: {
+
+                        title: function () { return null; },
+
+
                         label: function (context) {
-                            return context.dataset.label + ': ' + context.raw.toFixed(2) + '%';
+                            const xValue = context.label;
+                            const labelText = context.dataset.label;
+                            const percentage = context.raw.toFixed(2);
+
+                            return `${xValue} ${labelText}: ${percentage}%`;
                         }
                     }
                 }
@@ -212,26 +227,41 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
                 }
             },
             plugins: {
-                legend: { display: true, labels: { color: '#fff' } },
+                legend: {
+                    display: true,
+                    labels: { color: '#fff' },
+                    // Change cursor to pointer (hand) on hover
+                    onHover: function (event, legendItem, legend) {
+                        event.native.target.style.cursor = 'pointer';
+                    },
+                    onLeave: function (event, legendItem, legend) {
+                        event.native.target.style.cursor = 'default';
+                    }
+                },
                 tooltip: {
                     backgroundColor: 'rgba(15, 17, 21, 0.95)',
                     titleColor: theme.chartColors[0],
                     bodyColor: '#DAE6EF',
                     borderWidth: 1,
                     padding: 12,
-                    // replaced hard coded colout with function
+                    displayColors: false,
                     borderColor: function (context) {
-
                         if (context.tooltip.dataPoints && context.tooltip.dataPoints.length > 0) {
-
                             return context.tooltip.dataPoints[0].dataset.borderColor;
                         }
-
                         return theme.chartColors[2];
                     },
                     callbacks: {
+
+                        title: function () { return null; },
+
+
                         label: function (context) {
-                            return context.dataset.label + ': ' + context.raw.toFixed(2) + '%';
+                            const xValue = context.label;
+                            const labelText = context.dataset.label;
+                            const percentage = context.raw.toFixed(2);
+
+                            return `${xValue} ${labelText}: ${percentage}%`;
                         }
                     }
                 }
