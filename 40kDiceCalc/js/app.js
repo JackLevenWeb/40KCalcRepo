@@ -512,8 +512,12 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
         processedRows.forEach(row => {
             let rowStyle = row.skipReason ? `opacity: 0.5;` : ``;
             let cells = [row.hits_success.toFixed(2)];
-            if (hasBonus) cells.push(row.hits_bonus.toFixed(2));
-            if (hasAuto) cells.push(row.hits_auto.toFixed(2));
+            if (hasBonus) {
+                cells.push(row.hits_bonus > 0 ? row.hits_bonus.toFixed(2) : '-');
+            }
+            if (hasAuto) {
+                cells.push(row.hits_auto > 0 ? row.hits_auto.toFixed(2) : '-');
+            }
 
             let rowHTML = `<tr style="${rowStyle}"><td style="${tdFirst}">${getRowNameHTML(row)}</td>`;
             cells.forEach((val, index) => {
