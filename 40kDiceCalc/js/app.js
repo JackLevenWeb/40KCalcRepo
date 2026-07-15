@@ -609,7 +609,7 @@ function buildBaseStatsHTML(weaponsArray, targetUnit) {
         <div style="flex: 1; min-width: 200px; background: rgba(0,0,0,0.2); padding: 6px 12px; border-radius: 4px; border-left: 3px solid var(--theme-accent); display: flex; flex-direction: column; justify-content: center;">
             <div style="color: var(--theme-text-muted); font-size: 0.65rem; font-weight: bold; text-transform: uppercase;">Attacker: ${w.unitName}</div>
             <div style="font-size: 0.85rem; color: #fff; font-weight: bold; margin: 2px 0;">
-                ${w.unitCount * w.modelCount}M | ${w.attack}A | BS/WS ${w.BsWs}+ | S${w.strength} | AP${w.Ap}
+                ${w.unitCount * w.modelCount}M  |  ${w.attack}A  |  BS/WS ${w.BsWs}+  |  S${w.strength}  |  AP${w.Ap}  |  D ${w.damage}
             </div>
             <div style="color: var(--theme-accent); font-size: 0.7rem; font-weight: bold;">${modsStr}</div>
         </div>`;
@@ -630,7 +630,7 @@ function buildBaseStatsHTML(weaponsArray, targetUnit) {
     <div style="flex: 1; min-width: 180px; background: rgba(0,0,0,0.2); padding: 6px 12px; border-radius: 4px; border-left: 3px solid var(--theme-btn-standard); display: flex; flex-direction: column; justify-content: center;">
         <div style="color: var(--theme-text-muted); font-size: 0.65rem; font-weight: bold; text-transform: uppercase;">Target Profile</div>
         <div style="font-size: 0.85rem; color: #fff; font-weight: bold; margin: 2px 0;">
-            T${targetUnit.toughness} | W${targetUnit.wounds} | SV ${targetUnit.save}+ ${targetUnit.inVul ? '| ' + targetUnit.inVul + '++' : ''}
+            T${targetUnit.toughness}  |  W${targetUnit.wounds}  |  SV ${targetUnit.save}+ ${targetUnit.inVul ? ' |  ' + targetUnit.inVul + '++' : ''}
         </div>
         <div style="color: var(--theme-btn-standard); font-size: 0.7rem; font-weight: bold;">${targetModsStr}</div>
     </div>`;
