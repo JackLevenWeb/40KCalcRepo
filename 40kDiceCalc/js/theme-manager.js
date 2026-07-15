@@ -17,7 +17,10 @@ export const Themes = {
         chartColors: ["#9ac1df", "#C48235", "#9B2226", "#E2A958", "#7A8FA6"],
         btnStandardText: "FOR THE ALL FATHER! (Base Profile)",
         btnAdvancedText: "FOR RUSS! (Scenario Testing)",
-        divider: "#9B2226" // Space Wolves Reddish
+        divider: "#9B2226",
+        btnStandardText: "FOR THE ALL FATHER!",
+        btnAdvancedText: "FOR RUSS!",
+        divider: "#9B2226"
     },
     necrons: {
         textLight: "#8FE07F",
@@ -29,14 +32,16 @@ export const Themes = {
         btnStandardHover: "#8C9196",
         accent: "#E8E8E8",
         accentGlow: "rgba(232, 232, 232, 0.4)",
-        // Added a rich oxidized rust (#A04010) to break up the silver and green
         chartColors: ["#8FE07F", "#B0B5B9", "#A04010", "#E8E8E8", "#1F6A3A"],
         btnStandardText: "AWAKEN (Base Profile)",
         btnAdvancedText: "WE REMEMBER. WE ENDURE. (Scenario Testing)",
         chartColors: ["#8FE07F", "#B0B5B9", "#A04010", "#E8E8E8", "#1F6A3A"],
         btnStandardText: "AWAKEN (Base Profile)",
         btnAdvancedText: "WE REMEMBER. WE ENDURE. (Scenario Testing)",
-        divider: "#A04010" // Necron Rusty Color
+        divider: "#A04010",
+        btnStandardText: "AWAKEN",
+        btnAdvancedText: "WE REMEMBER. WE ENDURE.",
+        divider: "#A04010"
     },
     tyranids: {
         textLight: "#E6C9B0",
@@ -54,7 +59,10 @@ export const Themes = {
         chartColors: ["#E6C9B0", "#9B4A9E", "#8A1515", "#D182C0", "#660F0F"],
         btnStandardText: "SSSPlllSSSHT! (Base Profile)",
         btnAdvancedText: "RRAAAWWR! (Scenario Testing)",
-        divider: "#8A1515" // Tyranid Dark Red
+        divider: "#8A1515",
+        btnStandardText: "SSSPlllSSSHT!",
+        btnAdvancedText: "RRAAAWWR!",
+        divider: "#8A1515"
     },
     votann: {
         textLight: "#2AA6D6",
@@ -72,7 +80,10 @@ export const Themes = {
         chartColors: ["#2AA6D6", "#F58F29", "#8BA3C7", "#2F5AA0", "#FFFFFF"],
         btnStandardText: "DATA FIRST, BODIES SECOND (Base Profile)",
         btnAdvancedText: "EFFICIENCY ABOVE ALL (Scenario Testing)",
-        divider: "#F58F29" // Votann Bright Orange
+        divider: "#F58F29",
+        btnStandardText: "DATA FIRST, BODIES SECOND",
+        btnAdvancedText: "EFFICIENCY ABOVE ALL",
+        divider: "#F58F29"
     }
 };
 
@@ -88,7 +99,7 @@ export function applyTheme(themeKey) {
     const theme = Themes[currentThemeKey];
     const root = document.documentElement;
 
-    // Structural Backgrounds (Shared Dark Neutrals across all themes)
+    // Structural Backgrounds
     root.style.setProperty('--bg-color', "#0F1115");
     root.style.setProperty('--surface-color', "#1A1D24");
     root.style.setProperty('--surface-hover', "#242830");
@@ -109,7 +120,7 @@ export function applyTheme(themeKey) {
     root.style.setProperty('--theme-accent-glow', theme.accentGlow);
     root.style.setProperty('--theme-divider', theme.divider);
 
-    // Update Button Text dynamically
+    // update Button Text dynamically
     const calcBtn = document.getElementById("calculate-btn");
     if (calcBtn) calcBtn.textContent = theme.btnStandardText;
     const advBtn = document.getElementById("advanced-analytics-btn");
