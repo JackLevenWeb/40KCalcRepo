@@ -153,21 +153,53 @@
               max-width: 600px;
             "
           >
-            <input
-              type="text"
-              id="unit-search-input"
-              placeholder="Search for a unit to import..."
-              style="
-                width: 100%;
-                padding: 10px;
-                border-radius: 5px;
-                border: 1px solid #38424d;
-                background-color: #0f1115;
-                color: #dae6ef;
-                box-sizing: border-box;
-              "
-            />
-
+            <div
+              style="display: flex; gap: 10px; width: 100%; align-items: center"
+            >
+              <label
+                for="weapon-type-toggle"
+                style="
+                  color: #dae6ef;
+                  font-weight: bold;
+                  font-size: 0.9rem;
+                  white-space: nowrap;
+                "
+                >Weapon Type:</label
+              >
+              <select
+                id="weapon-type-toggle"
+                style="
+                  width: 120px;
+                  padding: 10px;
+                  border-radius: 5px;
+                  border: 1px solid #38424d;
+                  background-color: #0f1115;
+                  color: #dae6ef;
+                  font-weight: bold;
+                  cursor: pointer;
+                  outline: none;
+                  box-sizing: border-box;
+                "
+              >
+                <option value="ranged">Ranged</option>
+                <option value="melee">Melee</option>
+              </select>
+              <input
+                type="text"
+                id="unit-search-input"
+                placeholder="Search for a unit to import..."
+                style="
+                  flex-grow: 1;
+                  padding: 10px;
+                  border-radius: 5px;
+                  border: 1px solid #38424d;
+                  background-color: #0f1115;
+                  color: #dae6ef;
+                  box-sizing: border-box;
+                  outline: none;
+                "
+              />
+            </div>
             <ul
               id="search-results-dropdown"
               style="
