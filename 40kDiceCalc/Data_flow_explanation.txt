@@ -4,44 +4,47 @@ This document outlines the high-level Extract, Transform, Load (ETL) pipeline us
 
 ## 1. High-Level Pipeline Architecture
 
-[User Input (UI)]
+[User Input (UI) or API Search]
       |
       v
-[Event Manager]       <-- Intercepts inputs and broadcasts global events
+[Event Manager or Fetch Router]       * Intercepts inputs, fetches API data, and broadcasts global events
       |
       v
-[Extract State]       <-- Parses DOM for Weapon/Unit profiles
+[Extract State]                       * Parses DOM for Weapon/Unit profiles or translates API payloads
       |
       v
-[Web Worker]          <-- Background Thread: Runs 100,000 waterfall iterations per profile
+[Web Worker]                          * Background Thread: Runs 100,000 waterfall iterations per profile
       |
       v
-[Logic Engine]        <-- Executes pure JS math sequentially (Hits -> Wounds -> Saves -> Damage); Returns structured JSON distributions
+[Logic Engine]                        * Executes pure JS math sequentially (Hits > Wounds > Saves > Damage); Returns structured JSON distributions
       |
       v
-[SQL Database]        <-- In-Memory SQLite (sql.js). INSERTS raw distribution rows
+[SQL Database]                        * In-Memory SQLite (sql.js). INSERTS raw distribution rows
       |
       v
-[SQL Query]           <-- SELECT rows grouped by Category (Hit/Wound/Save) and Modifier
+[SQL Query]                           * SELECT rows grouped by Category (Hit/Wound/Save) and Modifier
       |
       v
-[Chart Rendering]     <-- Chart.js maps SQL rows to X/Y coordinates
+[Data Processing]                     * Sorts array averages for Leaderboard rendering
       |
       v
-[DOM Output]          <-- Rendered UI Report Cards
+[Chart Rendering]                     * Chart.js maps SQL rows to X/Y coordinates
+      |
+      v
+[DOM Output]                          * Rendered UI Report Cards and Leaderboards
 
 ## 2. Web Worker Execution Flow
 
 [Main Thread (app.js)]
       |
-      |-- postMessage({ weapons, target, iterations })
+      * postMessage({ weapons, target, iterations })
       v
 [webWorker.js]
       |
-      |-- Imports runSimulation()
-      |-- Executes waterfall loop (resolving hits, passing successes directly to wounds)
+      * Imports runSimulation()
+      * Executes waterfall loop (resolving hits, passing successes directly to wounds)
       |
-      |-- postMessage(results)
+      * postMessage(results)
       v
 [Main Thread (app.js)]
       |
@@ -52,15 +55,14 @@ This document outlines the high-level Extract, Transform, Load (ETL) pipeline us
 
 Application Logic
 |
-|-- Extract Output
-|   |-- JSON object: { "4": 1200, "5": 3000 }
+* Extract Output
+  * JSON object: { "4": 1200, "5": 3000 }
 |
-|-- Prepare Statement (db-manager.js)
-|   |-- "INSERT INTO simulation_runs (modifier_name, category, value, occurrence_count) VALUES (?, ?, ?, ?)"
+* Prepare Statement (db-manager.js)
+  * "INSERT INTO simulation_runs (modifier_name, category, value, occurrence_count) VALUES (?, ?, ?, ?)"
 |
-|-- Execute Query
-|   |-- stmt.run(["Lethal", "Hit", 4, 1200])
+* Execute Query
+  * stmt.run(["Lethal", "Hit", 4, 1200])
 |
-|-- SQLite Engine (WASM)
-    |
-    |-- Update Storage (RAM)
+* SQLite Engine (WASM)
+  * Update Storage (RAM)
