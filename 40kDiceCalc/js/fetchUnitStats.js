@@ -1,5 +1,8 @@
+import { buildRosterFromJSON } from './ui-manager.js';
+
+
 const BASE = "https://openhammer-api-production.up.railway.app";
-const edition = "10e"; // 10th Edition
+const edition = "11e"; // 10th Edition
 const globalUnitIndex = new Map();
 const unitNames = [];
 
@@ -20,8 +23,25 @@ searchInput.addEventListener('input', function (event) {
         return;
     }
 
+
+    //filter and sort unit names
     const filteredUnits = unitNames.filter((unitId) => {
         return unitId.toLowerCase().includes(currentText);
+    }).sort((a, b) => {
+        const textLower = currentText.toLowerCase();
+        const aLower = a.toLowerCase();
+        const bLower = b.toLowerCase();
+
+        const aStarts = aLower.startsWith(textLower);
+        const bStarts = bLower.startsWith(textLower);
+
+
+        if (aStarts && !bStarts) return -1;
+
+        if (!aStarts && bStarts) return 1;
+
+
+        return aLower.localeCompare(bLower);
     });
 
     const topResults = filteredUnits.slice(0, 50);
@@ -66,21 +86,36 @@ async function fetchUnitName() {
 
 
     try {
-        const response = await fetch(`${BASE}/v1/${edition}/units`);
-        console.log('Index Fetch Status:', response.status, response.statusText);
-        if (!response.ok) {
-            const text = await response.text();
-            throw new Error(`HTTP ${response.status}: ${text}`);
+        let offSet = 0;
+        let fetching = true;
+
+
+        while (fetching) {
+            const response = await fetch(`${BASE}/v1/${edition}/units?limit=500&offset=${offSet}`);
+            console.log('Index Fetch Status:', response.status, response.statusText);
+            if (!response.ok) {
+                const text = await response.text();
+                throw new Error(`HTTP ${response.status}: ${text}`);
+            }
+            const units = await response.json();
+
+            // console.log(units);
+
+            //acounting for api limit of 500
+            if (units.length === 0) {
+
+                fetching = false;
+            } else {
+
+
+                for (const unit of units) {
+                    globalUnitIndex.set(unit.name, unit.id);
+                    unitNames.push(unit.name);
+                }
+                offSet += 500;
+            }
         }
-        const units = await response.json();
-
-        // console.log(units);
-
-        for (const unit of units) {
-            globalUnitIndex.set(unit.name, unit.id);
-            unitNames.push(unit.name);
-        }
-
+        console.log(unitNames.length);
 
 
     } catch (err) {
@@ -93,7 +128,7 @@ async function fetchUnitDetails(unitName) {
 
     try {
         const id = globalUnitIndex.get(unitName);
-        console.log(id);
+        console.log(`Fetching details for ID: ${id}`);
 
         const response = await fetch(`${BASE}/v1/${edition}/units/${id}`);
 
@@ -101,16 +136,90 @@ async function fetchUnitDetails(unitName) {
             const text = await response.text();
             throw new Error(`HTTP ${response.status}: ${text}`);
         }
-        const units = await response.json();
+
+        const apiUnit = await response.json();
 
 
-        console.log(units);
+        console.log(apiUnit);
+        const weaponTypeToggle = document.getElementById('weapon-type-toggle');
+        const weaponMode = weaponTypeToggle.value;
+        const isRanged = weaponMode === 'ranged';
+
+        const apiWeaponsArray = apiUnit.weapons[weaponMode];
+
+        if (!apiWeaponsArray || apiWeaponsArray.length === 0) {
+            alert(`The ${apiUnit.name} does not have any ${weaponMode} weapons equipped.`);
+            return;
+        }
+
+        const formattedRoster = apiWeaponsArray.map(apiWeapon => formatWeaponData(apiWeapon, apiUnit, isRanged));
+
+        const rosterContainer = document.getElementById('attacker-roster');
+        buildRosterFromJSON(rosterContainer, formattedRoster, true);
+
+        console.log("imported and rendered:", formattedRoster);
+
+
     } catch (err) {
-
         console.error("Failed to fetch unit details", err);
     }
+}
 
 
 
 
+
+
+function formatWeaponData(apiWeapon, apiUnit, isRanged) {
+
+    //determine if we should use bs or ws
+    const activeBsWs = isRanged ? apiWeapon.BS : apiWeapon.WS;
+
+    const keywordStr = apiWeapon.Keywords ? apiWeapon.Keywords.toLowerCase() : "";
+
+    const extractNumber = (regex) => {
+        const match = keywordStr.match(regex);
+        return match ? parseInt(match[1], 10) : 0;
+    };
+
+
+    // map api payload to Weapon class format
+    return {
+        unitName: `${apiUnit.name} (${apiWeapon.name})`,
+        attack: apiWeapon.A || "1",
+        BsWs: activeBsWs ? activeBsWs.replace('+', '') : "NA",
+        strength: apiWeapon.S ? parseInt(apiWeapon.S, 10) : 0,
+        Ap: apiWeapon.AP ? parseInt(apiWeapon.AP, 10) : 0,
+        damage: apiWeapon.D || "1",
+        modelCount: apiUnit.composition ? apiUnit.composition.min_models : 5,
+        unitCount: 1,
+        isLeader: false,
+        attachTarget: null,
+        grantedKeyword: "none",
+
+
+        modifiers: {
+            lethal: keywordStr.includes("lethal hits"),
+            devastating: keywordStr.includes("devastating wounds"),
+            torrent: keywordStr.includes("torrent"),
+            twinLinked: keywordStr.includes("twin-linked"),
+            blast: keywordStr.includes("blast"),
+            cleave: keywordStr.includes("cleave"),
+            lance: keywordStr.includes("lance"),
+
+
+            sustained: extractNumber(/sustained hits (\d+)/),
+            melta: extractNumber(/melta (\d+)/),
+            rapidFire: extractNumber(/rapid fire (\d+)/),
+            anti: extractNumber(/anti-.*?(\d+)/),
+
+
+            hitMod: 0,
+            woundMod: 0,
+            rerollHits: "none",
+            rerollWounds: "none",
+            critHitThreshold: 6,
+            critWoundThreshold: 6
+        }
+    };
 }

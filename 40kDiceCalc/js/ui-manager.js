@@ -222,8 +222,12 @@ export function syncAppUI() {
     });
 }
 
-export function buildRosterFromJSON(containerElement, jsonData) {
-    containerElement.innerHTML = '';
+export function buildRosterFromJSON(containerElement, jsonData, clearRoster = false) {
+
+    if (!clearRoster) {
+        containerElement.innerHTML = '';
+    }
+
     jsonData.forEach(unitData => {
         addAttackerModule(containerElement);
         const newModule = containerElement.lastElementChild;
