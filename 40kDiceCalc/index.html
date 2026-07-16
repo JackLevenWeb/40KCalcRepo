@@ -19,7 +19,7 @@
         class="control-panel"
         style="
           background: var(--surface-color);
-          padding: 15px;
+          padding: 20px;
           border-radius: 8px;
           border: 1px solid var(--border-color);
           margin-bottom: 20px;
@@ -35,51 +35,40 @@
             font-size: 1.1rem;
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 8px;
+            display: flex;
+            align-items: center;
           "
         >
           Data Requisition & Dashboard Management
+          <button class="tutorial-btn" data-tutorial="dashboard_mgmt">?</button>
         </h3>
         <div
           style="
             display: flex;
             gap: 20px;
             flex-wrap: wrap;
-            align-items: center;
+            align-items: stretch;
             justify-content: space-between;
           "
         >
           <div
             id="import-search-container"
-            style="position: relative; flex-grow: 1; max-width: 750px"
+            style="
+              position: relative;
+              flex: 1 1 auto;
+              min-width: 300px;
+              max-width: 750px;
+            "
           >
             <div
-              style="display: flex; gap: 10px; width: 100%; align-items: center"
+              style="
+                display: flex;
+                gap: 10px;
+                width: 100%;
+                align-items: stretch;
+              "
             >
-              <label
-                for="weapon-type-toggle"
-                style="
-                  color: #dae6ef;
-                  font-weight: bold;
-                  font-size: 0.9rem;
-                  white-space: nowrap;
-                "
-                >Weapon Type:</label
-              >
-              <select
-                id="weapon-type-toggle"
-                style="
-                  width: 120px;
-                  padding: 10px;
-                  border-radius: 5px;
-                  border: 1px solid #38424d;
-                  background-color: #0f1115;
-                  color: #dae6ef;
-                  font-weight: bold;
-                  cursor: pointer;
-                  outline: none;
-                  box-sizing: border-box;
-                "
-              >
+              <select id="weapon-type-toggle" style="width: 120px">
                 <option value="ranged">Ranged</option>
                 <option value="melee">Melee</option>
               </select>
@@ -87,21 +76,12 @@
                 type="text"
                 id="unit-search-input"
                 placeholder="Search for a unit..."
-                style="
-                  flex-grow: 1;
-                  padding: 10px;
-                  border-radius: 5px;
-                  border: 1px solid #38424d;
-                  background-color: #0f1115;
-                  color: #dae6ef;
-                  box-sizing: border-box;
-                  outline: none;
-                "
+                style="flex-grow: 1; min-width: 150px"
               />
               <button
                 id="import-api-btn"
                 class="btn-primary"
-                style="padding: 10px 20px; height: 100%; cursor: pointer"
+                style="padding: 10px 20px; cursor: pointer; white-space: nowrap"
               >
                 Import Unit
               </button>
@@ -114,8 +94,8 @@
                 top: 100%;
                 left: 0;
                 right: 0;
-                background-color: #1a1e24;
-                border: 1px solid #38424d;
+                background-color: var(--surface-color);
+                border: 1px solid var(--border-color);
                 border-top: none;
                 list-style: none;
                 padding: 0;
@@ -127,21 +107,15 @@
               "
             ></ul>
           </div>
-          <div style="display: flex; gap: 10px; align-items: center">
-            <select
-              id="theme-dropdown"
-              style="
-                padding: 10px;
-                border-radius: 5px;
-                font-weight: bold;
-                text-transform: uppercase;
-                background-color: #0f1115;
-                color: #dae6ef;
-                border: 1px solid #38424d;
-                cursor: pointer;
-                height: 42px;
-              "
-            >
+          <div
+            style="
+              display: flex;
+              gap: 10px;
+              align-items: stretch;
+              flex-wrap: wrap;
+            "
+          >
+            <select id="theme-dropdown" style="min-width: 150px">
               <option value="placeholder" disabled selected hidden>
                 Theme
               </option>
@@ -155,15 +129,7 @@
               id="roster-name"
               value="Custom_Roster"
               placeholder="Name your roster..."
-              style="
-                width: 180px;
-                height: 42px;
-                padding: 5px 10px;
-                border-radius: 5px;
-                border: 1px solid #38424d;
-                background-color: #0f1115;
-                color: #dae6ef;
-              "
+              style="width: 180px"
             />
             <input
               type="file"
@@ -174,14 +140,14 @@
             <button
               id="import-roster-btn"
               class="btn-primary"
-              style="height: 42px; background-color: var(--theme-mid)"
+              style="background-color: var(--theme-mid); white-space: nowrap"
             >
               Import JSON
             </button>
             <button
               id="export-roster-btn"
               class="btn-primary"
-              style="height: 42px"
+              style="white-space: nowrap"
             >
               Export JSON
             </button>
@@ -189,10 +155,10 @@
               id="clear-dashboard-btn"
               class="btn-primary"
               style="
-                height: 42px;
                 background-color: var(--bg-color);
                 color: var(--danger-red);
                 border-color: var(--danger-red);
+                white-space: nowrap;
               "
             >
               ⚠️ Clear Dashboard
@@ -238,11 +204,27 @@
               border: 1px dashed var(--theme-accent);
             "
           >
-            <div style="display: flex; gap: 10px; align-items: center">
-              <label style="font-weight: bold; color: var(--theme-accent)"
+            <div
+              style="
+                display: flex;
+                gap: 10px;
+                align-items: stretch;
+                flex-wrap: wrap;
+              "
+            >
+              <label
+                style="
+                  font-weight: bold;
+                  color: var(--theme-accent);
+                  display: flex;
+                  align-items: center;
+                "
                 >Army Wide Rules:</label
               >
-              <select id="global-mod-dropdown" style="flex-grow: 1">
+              <select
+                id="global-mod-dropdown"
+                style="flex-grow: 1; min-width: 200px"
+              >
                 <option value="none">
                   -- Select Rule to Apply to ALL Units --
                 </option>
@@ -259,7 +241,11 @@
               <button
                 id="add-global-mod-btn"
                 class="btn-primary"
-                style="background-color: var(--theme-accent); color: #0f1115"
+                style="
+                  background-color: var(--theme-accent);
+                  color: #0f1115;
+                  white-space: nowrap;
+                "
               >
                 Apply to All
               </button>

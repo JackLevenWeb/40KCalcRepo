@@ -22,11 +22,9 @@ export function initializeWatchers() {
             const oldTheme = localStorage.getItem("40kTheme") || "space_wolves";
 
             if (confirm("Changing the theme will wipe your current roster and reset the dashboard. Proceed?")) {
-                // apply colors and update charts
                 applyTheme(newTheme);
                 document.dispatchEvent(new CustomEvent("App:ThemeChanged"));
 
-                // trigger the full board reset
                 document.dispatchEvent(new CustomEvent("App:ClearDashboard"));
             } else {
 
@@ -41,7 +39,6 @@ export function initializeWatchers() {
     const tutTitle = document.getElementById("tutorial-title");
     const tutBody = document.getElementById("tutorial-body");
 
-    // listen for clicks on ANY tutorial button
     document.addEventListener("click", (e) => {
         if (e.target.classList.contains("tutorial-btn")) {
             const tutType = e.target.getAttribute("data-tutorial");
@@ -57,6 +54,16 @@ export function initializeWatchers() {
                     Inspired by: <a href="https://tactical-cogitator.com/" target="_blank" style="color: var(--theme-accent);">https://tactical-cogitator.com/</a><br>
                         Created by: <a href="https://www.linkedin.com/in/jackleventhorpe/" target="_blank" style="color: var(--theme-accent);">https://www.linkedin.com/in/jackleventhorpe/</a>
                     </div>
+                `;
+            } else if (tutType === "dashboard_mgmt") {
+                tutTitle.textContent = "Data Requisition & Dashboard Management";
+                tutBody.innerHTML = `
+                    <p>This control panel manages your application state and data imports.</p>
+                    <ul style="margin-top: 10px; margin-left: 20px; padding-left: 10px;">
+                        <li style="margin-bottom: 8px;"><strong>API Search:</strong> Search the OpenHammer database for a unit, select Ranged or Melee, and import it directly to your roster.</li>
+                        <li style="margin-bottom: 8px;"><strong>Theme:</strong> Swap the visual theme of the application (Note: this will clear the current dashboard).</li>
+                        <li style="margin-bottom: 8px;"><strong>Import/Export JSON:</strong> Save your current Attacker Roster and Target Profile to your local computer, or load a previously saved roster.</li>
+                    </ul>
                 `;
             } else if (tutType === "attacker_roster") {
                 tutTitle.textContent = "Attacker Roster";
@@ -91,6 +98,7 @@ export function initializeWatchers() {
                 tutBody.innerHTML = `
                     <p>Clicking this button runs a deep comparative analysis.</p>
                     <p style="margin-top: 10px;">First, it runs 100,000 simulations for your Base Profile. Then, it runs <em>another</em> 100,000 simulations for <strong>every single modifier</strong> that is not already active on your base profile, showing you exactly how much value a specific buff (like +1 to Wound or Rerolls) will add to your output.</p>
+                    <p style="margin-top: 10px;">It will also generate a <strong>Base Output Leaderboard</strong> at the top of the section, ranking your deployed weapons by their average damage output and models killed.</p>
                 `;
             } else if (tutType === "base") {
                 tutTitle.textContent = "Base Profile Report";

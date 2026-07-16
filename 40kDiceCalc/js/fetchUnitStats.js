@@ -38,17 +38,17 @@ searchInput.addEventListener('input', function (event) {
     searchDropdown.innerHTML = '';
 
     if (topResults.length === 0) {
-        searchDropdown.innerHTML = '<li style="padding: 10px; color: #8C9BA8;">No units found...</li>';
+        searchDropdown.innerHTML = '<li style="padding: 10px; color: var(--theme-text-muted);">No units found...</li>';
     } else {
         topResults.forEach(function (unitName) {
             const listItem = document.createElement('li');
             listItem.textContent = unitName;
             listItem.style.padding = '10px';
-            listItem.style.borderBottom = '1px solid #38424D';
+            listItem.style.borderBottom = '1px solid var(--border-color)';
             listItem.style.cursor = 'pointer';
-            listItem.style.color = '#DAE6EF';
+            listItem.style.color = 'var(--theme-text-light)';
 
-            listItem.addEventListener('mouseenter', () => listItem.style.backgroundColor = '#2A313A');
+            listItem.addEventListener('mouseenter', () => listItem.style.backgroundColor = 'var(--surface-hover)');
             listItem.addEventListener('mouseleave', () => listItem.style.backgroundColor = 'transparent');
 
 

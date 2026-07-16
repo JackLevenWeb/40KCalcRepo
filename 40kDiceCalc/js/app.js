@@ -180,7 +180,7 @@ function applyModifierToWeapon(weapon, modKey) {
     if (modKey === "devastating") weapon.modifiers.devastating = true;
 }
 
-function checkSkipReason(weaponsArray, modKey) {
+function checkSkipReason(weaponsArray, targetUnit, modKey) {
     for (const w of weaponsArray) {
         if (modKey === "hit_plus_1" && w.modifiers.hitMod > 0) return "applied";
         if (modKey === "reroll_hits_1" && (w.modifiers.rerollHits === "ones" || w.modifiers.rerollHits === "all")) return "applied";
@@ -193,7 +193,24 @@ function checkSkipReason(weaponsArray, modKey) {
         if (modKey === "devastating" && w.modifiers.devastating === true) return "applied";
 
         if (modKey === "melta_range" && w.modifiers.melta === 0) return "not_applicable";
-        if (modKey === "hit_plus_1" && parseInt(w.BsWs) === 2) return "ineffective";
+
+        let effectiveBs = parseInt(w.BsWs) - w.modifiers.hitMod;
+        if (modKey === "hit_plus_1" && effectiveBs <= 2) return "ineffective";
+        if (modKey === "reroll_hits_all" && effectiveBs <= 2) return "ineffective";
+
+        let baseWoundTarget = 5;
+        if (w.strength >= targetUnit.toughness * 2) baseWoundTarget = 2;
+        else if (w.strength > targetUnit.toughness) baseWoundTarget = 3;
+        else if (w.strength === targetUnit.toughness) baseWoundTarget = 4;
+        else if (w.strength <= targetUnit.toughness / 2) baseWoundTarget = 6;
+
+        let effectiveWound = baseWoundTarget - w.modifiers.woundMod;
+        if (targetUnit.modifiers.minusOneWound) effectiveWound += 1;
+        if (targetUnit.modifiers.minusOneWoundHighStr && w.strength > targetUnit.toughness) effectiveWound += 1;
+        if (w.modifiers.lance) effectiveWound -= 1;
+
+        if (modKey === "wound_plus_1" && effectiveWound <= 2) return "ineffective";
+        if (modKey === "reroll_wounds_all" && effectiveWound <= 2) return "ineffective";
     }
     return false;
 }
@@ -221,11 +238,21 @@ function checkSkipReasonTarget(targetUnit, weaponsArray, modKey) {
     if (modKey === "damage_half" && targetUnit.modifiers.halfDamage) return "applied";
     if (modKey === "FNP" && targetUnit.fnp > 0) return "applied";
     if (modKey === "SgT_wound_minus_1" && targetUnit.toughness >= weaponsArray[0].strength) return "ineffective";
-    if (modKey === "damage_minus_1" && weaponsArray[0].damage === "1") return "ineffective";
-    if (modKey === "damage_half" && weaponsArray[0].damage === "1") return "ineffective";
 
-    //check for when damage_half and -1 damage result in the same - we keep the damage -1 rather
-    if (modKey === "damage_half" && weaponsArray[0].damage === "2") return "ineffective";
+    let rawDam = weaponsArray[0].damage;
+    let parsedDam = parseInt(rawDam, 10);
+    let isFlatDamage = !isNaN(parsedDam) && String(parsedDam) === String(rawDam).trim();
+
+    if (isFlatDamage) {
+        if (modKey === "damage_minus_1" && parsedDam <= 1) return "ineffective";
+        if (modKey === "damage_half" && parsedDam <= 1) return "ineffective";
+
+        //check for when damage_half and -1 damage result in the same - we keep the damage -1 rather
+        let halfDmg = Math.ceil(parsedDam / 2);
+        let minusOneDmg = Math.max(1, parsedDam - 1);
+
+        if (modKey === "damage_half" && halfDmg === minusOneDmg) return "ineffective";
+    }
 
     if (modKey === "plus_1_save" && targetUnit.modifiers.plusOneSave) return "applied";
     if (modKey === "plus_1_save" && weaponsArray[0].Ap >= 0 && targetUnit.save <= 3) return "ineffective";
@@ -382,7 +409,7 @@ if (advAnalyticsBtn) {
                 for (const [category, mods] of Object.entries(SIMULATION_SCENARIOS)) {
                     for (const modKey of mods) {
 
-                        const skipReason = checkSkipReason([baseWeapon], modKey);
+                        const skipReason = checkSkipReason([baseWeapon], targetUnit, modKey);
 
                         if (skipReason === "not_applicable") continue;
 

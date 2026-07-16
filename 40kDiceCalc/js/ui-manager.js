@@ -209,7 +209,7 @@ export function syncAppUI() {
             const targetModule = Array.from(modules).find(m => m.querySelector('.in-unit-name').value.trim() === targetName);
 
             if (targetModule) {
-                targetModule.querySelector('.attached-leaders-display').innerHTML += `🛡️ Led by: ${leaderName}`;
+                targetModule.querySelector('.attached-leaders-display').innerHTML += `Led by: ${leaderName}`;
                 targetModule.querySelector('.in-units').value = 1;
                 targetModule.querySelector('.in-units').disabled = true;
 
@@ -326,14 +326,13 @@ export function spawnReportCard(title, container, statsHTML, avgStatsHTML) {
 }
 
 
-//leader board for adv graph units
 export function spawnLeaderboard(container, statsArray) {
 
     statsArray.sort((a, b) => {
-        if (b.avgDamage !== a.avgDamage) {
-            return b.avgDamage - a.avgDamage;
+        if (b.avgKills !== a.avgKills) {
+            return b.avgKills - a.avgKills;
         }
-        return b.avgKills - a.avgKills;
+        return b.avgDamage - a.avgDamage;
     });
 
 
@@ -348,7 +347,7 @@ export function spawnLeaderboard(container, statsArray) {
 
     let tableHTML = `
         <h3 style="margin-top: 0; color: var(--theme-accent); border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
-            🏆 Base Output Leaderboard
+             Base Output Leaderboard
         </h3>
         <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
             <thead>
@@ -363,9 +362,8 @@ export function spawnLeaderboard(container, statsArray) {
 
     statsArray.forEach((stat, index) => {
         const medal = index === 0 ? "1st: " : index === 1 ? "2nd: " : index === 2 ? "3rd: " : "";
-        // add a class and dataset for the click listener
         tableHTML += `
-            <tr class="leaderboard-row" data-target="${stat.unitName}" style="cursor: pointer; transition: background 0.2s;">
+            <tr class="leaderboard-row" data-target="${stat.unitName}" style="cursor: pointer;">
                 <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--theme-accent); font-weight: bold;">
                     ${medal}${stat.unitName}
                 </td>
@@ -380,9 +378,6 @@ export function spawnLeaderboard(container, statsArray) {
 
     const rows = summaryCard.querySelectorAll('.leaderboard-row');
     rows.forEach(row => {
-        row.addEventListener('mouseenter', () => row.style.background = 'rgba(255,255,255,0.05)');
-        row.addEventListener('mouseleave', () => row.style.background = 'transparent');
-
         row.addEventListener('click', () => {
             const targetUnit = row.getAttribute('data-target');
             const targetAccordion = document.querySelector(`details[data-unit="${targetUnit}"]`);
