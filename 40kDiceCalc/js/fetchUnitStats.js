@@ -1,18 +1,13 @@
 import { buildRosterFromJSON } from './ui-manager.js';
 
-
 const BASE = "https://openhammer-api-production.up.railway.app";
-const edition = "11e"; // 10th Edition
+const edition = "10e";
 const globalUnitIndex = new Map();
 const unitNames = [];
 
-
-
-
-
-// component Lookup Logic
 const searchInput = document.getElementById('unit-search-input');
 const searchDropdown = document.getElementById('search-results-dropdown');
+const importApiBtn = document.getElementById('import-api-btn');
 
 searchInput.addEventListener('input', function (event) {
     const currentText = event.target.value.toLowerCase();
@@ -23,23 +18,18 @@ searchInput.addEventListener('input', function (event) {
         return;
     }
 
-
-    //filter and sort unit names
     const filteredUnits = unitNames.filter((unitId) => {
         return unitId.toLowerCase().includes(currentText);
     }).sort((a, b) => {
-        const textLower = currentText.toLowerCase();
+        const textLower = currentText;
         const aLower = a.toLowerCase();
         const bLower = b.toLowerCase();
 
         const aStarts = aLower.startsWith(textLower);
         const bStarts = bLower.startsWith(textLower);
 
-
         if (aStarts && !bStarts) return -1;
-
         if (!aStarts && bStarts) return 1;
-
 
         return aLower.localeCompare(bLower);
     });
@@ -53,7 +43,6 @@ searchInput.addEventListener('input', function (event) {
         topResults.forEach(function (unitName) {
             const listItem = document.createElement('li');
             listItem.textContent = unitName;
-
             listItem.style.padding = '10px';
             listItem.style.borderBottom = '1px solid #38424D';
             listItem.style.cursor = 'pointer';
@@ -62,85 +51,78 @@ searchInput.addEventListener('input', function (event) {
             listItem.addEventListener('mouseenter', () => listItem.style.backgroundColor = '#2A313A');
             listItem.addEventListener('mouseleave', () => listItem.style.backgroundColor = 'transparent');
 
+
             listItem.addEventListener('click', function () {
-                console.log("User selected ID for next fetch step:", unitName);
                 searchInput.value = unitName;
                 searchDropdown.style.display = 'none';
-
-                fetchUnitDetails(unitName);
-
             });
 
             searchDropdown.appendChild(listItem);
         });
     }
-
     searchDropdown.style.display = 'block';
 });
 
+importApiBtn.addEventListener('click', () => {
+    const unitName = searchInput.value.trim();
+    if (!unitName) {
+        alert("Please select a unit to import.");
+        return;
+    }
+    fetchUnitDetails(unitName);
+});
 
 
 
 //fetch unit names and ids
 async function fetchUnitName() {
-
-
     try {
         let offSet = 0;
         let fetching = true;
 
-
         while (fetching) {
             const response = await fetch(`${BASE}/v1/${edition}/units?limit=500&offset=${offSet}`);
-            console.log('Index Fetch Status:', response.status, response.statusText);
             if (!response.ok) {
                 const text = await response.text();
                 throw new Error(`HTTP ${response.status}: ${text}`);
             }
             const units = await response.json();
 
-            // console.log(units);
-
-            //acounting for api limit of 500
             if (units.length === 0) {
-
                 fetching = false;
             } else {
-
-
                 for (const unit of units) {
                     globalUnitIndex.set(unit.name, unit.id);
                     unitNames.push(unit.name);
                 }
+                //api limited to 500 per call
                 offSet += 500;
             }
         }
-        console.log(unitNames.length);
-
-
+        console.log(`Successfully loaded ${unitNames.length} units.`);
     } catch (err) {
         console.error("Failed to fetch unit names", err);
     }
 }
 fetchUnitName();
-
 async function fetchUnitDetails(unitName) {
-
     try {
         const id = globalUnitIndex.get(unitName);
-        console.log(`Fetching details for ID: ${id}`);
+        if (!id) {
+            alert(`Could not find the ID for ${unitName}. Please select it from the dropdown list.`);
+            return;
+        }
+
+        importApiBtn.textContent = "Importing...";
+        importApiBtn.disabled = true;
 
         const response = await fetch(`${BASE}/v1/${edition}/units/${id}`);
-
         if (!response.ok) {
             const text = await response.text();
             throw new Error(`HTTP ${response.status}: ${text}`);
         }
-
         const apiUnit = await response.json();
 
-
-        console.log(apiUnit);
         const weaponTypeToggle = document.getElementById('weapon-type-toggle');
         const weaponMode = weaponTypeToggle.value;
         const isRanged = weaponMode === 'ranged';
@@ -149,19 +131,25 @@ async function fetchUnitDetails(unitName) {
 
         if (!apiWeaponsArray || apiWeaponsArray.length === 0) {
             alert(`The ${apiUnit.name} does not have any ${weaponMode} weapons equipped.`);
+            importApiBtn.textContent = "Import Unit";
+            importApiBtn.disabled = false;
             return;
         }
 
         const formattedRoster = apiWeaponsArray.map(apiWeapon => formatWeaponData(apiWeapon, apiUnit, isRanged));
 
         const rosterContainer = document.getElementById('attacker-roster');
-        buildRosterFromJSON(rosterContainer, formattedRoster, true);
+        buildRosterFromJSON(rosterContainer, formattedRoster, false);
+        document.dispatchEvent(new CustomEvent("App:AutoSave"));
 
-        console.log("imported and rendered:", formattedRoster);
-
+        importApiBtn.textContent = "Import Unit";
+        importApiBtn.disabled = false;
+        searchInput.value = "";
 
     } catch (err) {
         console.error("Failed to fetch unit details", err);
+        importApiBtn.textContent = "Import Unit";
+        importApiBtn.disabled = false;
     }
 }
 

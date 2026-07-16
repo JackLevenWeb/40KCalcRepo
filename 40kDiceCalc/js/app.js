@@ -3,7 +3,7 @@
 import { Unit } from './classes/Unit.js';
 import { Weapon } from './classes/Weapon.js';
 import { runSimulation } from './logic.js';
-import { addAttackerModule, syncAppUI, buildRosterFromJSON, spawnReportCard, addBadgeToModule } from './ui-manager.js';
+import { addAttackerModule, syncAppUI, buildRosterFromJSON, spawnReportCard, addBadgeToModule, spawnLeaderboard } from './ui-manager.js';
 import { initDataBase, loadDataIntoSQL, queryComparisonData, clearDataBase, ModLabels, loadAveragesIntoSQL, queryAveragesData } from './db-manager.js';
 import { renderChart, renderAdvancedChart } from './chart-manager.js';
 import { initializeWatchers } from './event-manager.js';
@@ -304,6 +304,8 @@ if (advAnalyticsBtn) {
         const baseWeapons = createWeaponsArray();
         const targetUnit = createUnit();
 
+        let leaderboardStats = [];
+
         try {
             let isFirstUnit = true;
 
@@ -323,6 +325,7 @@ if (advAnalyticsBtn) {
                 }
 
                 const unitAccordion = document.createElement("details");
+                unitAccordion.dataset.unit = unitName;
 
 
                 unitAccordion.style.marginBottom = "20px";
@@ -359,6 +362,12 @@ if (advAnalyticsBtn) {
                 baseWeapon.modifiers.melta = 0;
 
                 let baseResults = await runWorkerSimulation(SIMULATION_ITERATIONS, singleWeaponRoster, targetUnit);
+
+                leaderboardStats.push({
+                    unitName: unitName,
+                    avgDamage: baseResults.averages.damage,
+                    avgKills: baseResults.averages.killed
+                });
 
                 loadDataIntoSQL(unitName, "Base", "Hit", baseResults.hitDistribution);
                 loadDataIntoSQL(unitName, "Base", "Wound", baseResults.woundDistribution);
@@ -462,6 +471,10 @@ if (advAnalyticsBtn) {
                     sidebar.style.minHeight = maxHeight + 'px';
                 });
             }
+
+            //leaderboard to ui-manager
+            const mainContainer = document.getElementById("advanced-reports-container");
+            spawnLeaderboard(mainContainer, leaderboardStats);
         } catch (error) {
             console.error("Pipeline Failed:", error);
             alert("Pipeline Failed.");

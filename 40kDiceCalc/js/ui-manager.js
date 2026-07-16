@@ -222,9 +222,9 @@ export function syncAppUI() {
     });
 }
 
-export function buildRosterFromJSON(containerElement, jsonData, clearRoster = false) {
+export function buildRosterFromJSON(containerElement, jsonData, clearRoster = true) {
 
-    if (!clearRoster) {
+    if (clearRoster) {
         containerElement.innerHTML = '';
     }
 
@@ -323,4 +323,83 @@ export function spawnReportCard(title, container, statsHTML, avgStatsHTML) {
     `;
     container.insertAdjacentHTML('beforeend', cardHTML);
     return container.lastElementChild;
+}
+
+
+//leader board for adv graph units
+export function spawnLeaderboard(container, statsArray) {
+
+    statsArray.sort((a, b) => {
+        if (b.avgDamage !== a.avgDamage) {
+            return b.avgDamage - a.avgDamage;
+        }
+        return b.avgKills - a.avgKills;
+    });
+
+
+    const summaryCard = document.createElement('div');
+    summaryCard.style.background = "var(--surface-color)";
+    summaryCard.style.padding = "20px";
+    summaryCard.style.borderRadius = "8px";
+    summaryCard.style.border = "1px solid var(--theme-accent)";
+    summaryCard.style.marginBottom = "30px";
+    summaryCard.style.boxShadow = "0 4px 15px rgba(0,0,0,0.5)";
+
+
+    let tableHTML = `
+        <h3 style="margin-top: 0; color: var(--theme-accent); border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            🏆 Base Output Leaderboard
+        </h3>
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+            <thead>
+                <tr>
+                    <th style="padding: 10px; color: var(--theme-text-muted); border-bottom: 1px solid var(--border-color);">Weapon Profile</th>
+                    <th style="padding: 10px; color: var(--theme-text-muted); border-bottom: 1px solid var(--border-color);">Avg Damage</th>
+                    <th style="padding: 10px; color: var(--theme-text-muted); border-bottom: 1px solid var(--border-color);">Avg Kills</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    statsArray.forEach((stat, index) => {
+        const medal = index === 0 ? "1st: " : index === 1 ? "2nd: " : index === 2 ? "3rd: " : "";
+        // add a class and dataset for the click listener
+        tableHTML += `
+            <tr class="leaderboard-row" data-target="${stat.unitName}" style="cursor: pointer; transition: background 0.2s;">
+                <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--theme-accent); font-weight: bold;">
+                    ${medal}${stat.unitName}
+                </td>
+                <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--theme-text-light);">${stat.avgDamage.toFixed(2)}</td>
+                <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--theme-text-light);">${stat.avgKills.toFixed(2)}</td>
+            </tr>
+        `;
+    });
+    tableHTML += `</tbody></table>`;
+    summaryCard.innerHTML = tableHTML;
+
+
+    const rows = summaryCard.querySelectorAll('.leaderboard-row');
+    rows.forEach(row => {
+        row.addEventListener('mouseenter', () => row.style.background = 'rgba(255,255,255,0.05)');
+        row.addEventListener('mouseleave', () => row.style.background = 'transparent');
+
+        row.addEventListener('click', () => {
+            const targetUnit = row.getAttribute('data-target');
+            const targetAccordion = document.querySelector(`details[data-unit="${targetUnit}"]`);
+
+            if (targetAccordion) {
+
+                document.querySelectorAll('#advanced-reports-container details').forEach(d => d.open = false);
+
+
+                targetAccordion.open = true;
+
+
+                targetAccordion.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
+
+
+    container.insertAdjacentElement('afterbegin', summaryCard);
 }
