@@ -26,4 +26,4 @@ This project uses a decoupled, event-driven, frontend-only architecture:
 * webWorker.js: Background thread handler for intensive loops.
 * fetchUnitStats.js: Handles OpenHammer API requests, search debouncing, and payload translation mapping.
 
-For a detailed breakdown of how data moves through this application, please see Data_flow_explanation.txt.
+For a detailed breakdown of how data moves through this application, please see [Data_flow_explanation.txt](https://github.com/JackLevenWeb/40KCalcRepo/blob/main/40kDiceCalc/Data_flow_explanation.txt).
