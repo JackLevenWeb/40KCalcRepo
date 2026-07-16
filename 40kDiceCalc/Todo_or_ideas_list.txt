@@ -1,0 +1,9 @@
+Project Task List
+
+* Implement a Target Keyword Tagging System to automate the Anti modifier logic.
+* Containerize the entire application using Docker for standardized deployment.
+* Build a filter button for the advanced graphs to selectively display possible target modifiers.
+* Develop a summary section to display the likelihood of achieving specific simulation thresholds.
+* Build a multiple target system that includes the same import and export features as the attacking roster.
+* Develop an algorithmic system to calculate and recommend the most optimal attacking unit for each target unit based on average damage or models killed.
+* Build a separate user interface and simulation module to process movement and charging mechanics.
