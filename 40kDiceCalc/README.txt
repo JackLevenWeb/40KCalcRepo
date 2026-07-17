@@ -27,3 +27,10 @@ This project uses a decoupled, event-driven, frontend-only architecture:
 * fetchUnitStats.js: Handles OpenHammer API requests, search debouncing, and payload translation mapping.
 
 For a detailed breakdown of how data moves through this application, please see Data_flow_explanation.txt.
+
+
+
+// Portfolio Note: 
+// I utilized paginated fetch loops and local state caching for this API integration.
+// While interacting with a small dataset here, this methodology demonstrates the 
+// scalable data engineering concepts required for handling enterprise-level architecture.

@@ -106,6 +106,7 @@ export const ModLabels = {
     "wound_plus_1": "+1 to Wound",
     "reroll_wounds_1": "Reroll 1s (Wound)",
     "reroll_wounds_all": "Reroll All Wounds",
+    "fish_crits": "Fish for Crits",
     "lethal": "Lethal Hits",
     "extra_ap_1": "AP -1",
     "devastating": "Devastating Wounds",

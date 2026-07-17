@@ -142,7 +142,8 @@ export function runHurtSystem(weapon, unit, startingHealth) {
             rerollRule: weapon.modifiers.rerollHits,
             critThreshold: weapon.modifiers.critHitThreshold,
             sustained: weapon.modifiers.sustained,
-            isLethalOrDev: weapon.modifiers.lethal
+            isLethalOrDev: weapon.modifiers.lethal,
+            fishForCrits: weapon.modifiers.fishForCrits
         });
 
         autoWounds = hitData.autos;
@@ -177,7 +178,8 @@ export function runHurtSystem(weapon, unit, startingHealth) {
         rerollRule: (weapon.modifiers.twinLinked || weapon.modifiers.rerollWounds === "all") ? "all" : weapon.modifiers.rerollWounds,
         critThreshold: activeCritWound,
         sustained: 0,
-        isLethalOrDev: weapon.modifiers.devastating
+        isLethalOrDev: weapon.modifiers.devastating,
+        fishForCrits: weapon.modifiers.fishForCrits
     });
 
     const normalWounds = woundData.successes + autoWounds;

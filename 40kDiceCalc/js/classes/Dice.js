@@ -9,15 +9,34 @@ export class Dice {
     }
 
     // The Master Evaluation Function
-    static rollPool({ poolSize, target, modifier, rerollRule, critThreshold, sustained, isLethalOrDev }) {
+    static rollPool({ poolSize, target, modifier, rerollRule, critThreshold, sustained, isLethalOrDev, fishForCrits }) {
         let initialRolls = this.rollRaw(poolSize);
         let finalRolls = [];
 
         // 1. Process Rerolls (Happens BEFORE modifiers in 40k)
         for (const r of initialRolls) {
-            if (rerollRule === "all" && r < target && r !== 6) {
-                finalRolls.push(this.rollRaw(1)[0]);
-            } else if (rerollRule === "ones" && r === 1) {
+            let shouldReroll = false;
+
+            if (rerollRule === "all") {
+                if (fishForCrits) {
+                    // greedy Reroll everything that is not a critical success
+                    if (r < critThreshold) {
+                        shouldReroll = true;
+                    }
+                } else {
+                    // normal reroll misses (unmodified roll < target)
+                    if (r < target && r !== 6) {
+                        shouldReroll = true;
+                    }
+                }
+            } else if (rerollRule === "ones") {
+
+                if (r === 1) {
+                    shouldReroll = true;
+                }
+            }
+
+            if (shouldReroll) {
                 finalRolls.push(this.rollRaw(1)[0]);
             } else {
                 finalRolls.push(r);
@@ -27,34 +46,34 @@ export class Dice {
         // 2. Process Outcomes
         let successes = 0;
         let fails = 0;
-        let autos = 0; // Lethal Hits or Devastating Wounds
-        let bonus = 0; // Sustained Hits
+        let autos = 0;
+        let bonus = 0;
 
-        // 40k Rule: Final modifiers can never be more than +1 or -1
+
         const cappedMod = Math.max(-1, Math.min(1, modifier));
 
         for (const r of finalRolls) {
-            // Unmodified 1 always fails
+
             if (r === 1) {
                 fails++;
                 continue;
             }
 
-            // Critical Success Check (Unmodified)
+
             if (r >= critThreshold) {
                 if (isLethalOrDev) {
-                    autos++; // Bypasses the next phase!
+                    autos++;
                 } else {
                     successes++;
                 }
 
                 if (sustained > 0) {
-                    bonus += sustained; // Generate extra dice
+                    bonus += sustained;
                 }
                 continue;
             }
 
-            // Normal Success Check (Modified)
+
             if (r + cappedMod >= target) {
                 successes++;
             } else {

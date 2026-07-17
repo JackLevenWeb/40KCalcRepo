@@ -31,8 +31,9 @@ export class Weapon {
             melta: modifiers.melta || 0,
             rapidFire: modifiers.rapidFire || 0,
             anti: modifiers.anti || 0,
-            critHitThreshold: modifiers.critHitThreshold || 6, // Default Crit on 6
-            critWoundThreshold: modifiers.critWoundThreshold || 6
+            critHitThreshold: modifiers.critHitThreshold || 6,
+            critWoundThreshold: modifiers.critWoundThreshold || 6,
+            fishForCrits: modifiers.fishForCrits || false
         };
     }
 }
