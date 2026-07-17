@@ -370,3 +370,137 @@ details summary:hover {
     background-color: rgba(255, 255, 255, 0.1) !important;
     color: var(--theme-accent) !important;
 }
+
+/* --- NEW FACTION THEMES --- */
+
+body[data-theme="ultramarines"] {
+  --theme-text-light: #9bbced;
+  --theme-text-muted: #6481a5;
+  --theme-input-bg: #bcd4f2;
+  --theme-mid: #1f509a;
+  --theme-mid-hover: #163d78;
+  --theme-btn-standard: #b32525;
+  --theme-btn-standard-hover: #8e1c1c;
+  --theme-accent: #dfb065;
+  --theme-accent-glow: rgba(223, 176, 101, 0.4);
+}
+
+body[data-theme="blood_angels"] {
+  --theme-text-light: #e8a2a4;
+  --theme-text-muted: #ba6d6f;
+  --theme-input-bg: #f2c9c9;
+  --theme-mid: #9a1115;
+  --theme-mid-hover: #730c0f;
+  --theme-btn-standard: #2b2b2b;
+  --theme-btn-standard-hover: #171717;
+  --theme-accent: #e5b32e;
+  --theme-accent-glow: rgba(229, 179, 46, 0.4);
+}
+
+body[data-theme="dark_angels"] {
+  --theme-text-light: #9edbae;
+  --theme-text-muted: #6e9f7d;
+  --theme-input-bg: #c9ebd2;
+  --theme-mid: #134e26;
+  --theme-mid-hover: #0d381b;
+  --theme-btn-standard: #9a1115;
+  --theme-btn-standard-hover: #730c0f;
+  --theme-accent: #e4d4b1;
+  --theme-accent-glow: rgba(228, 212, 177, 0.4);
+}
+
+body[data-theme="orks"] {
+  --theme-text-light: #f5d033;
+  --theme-text-muted: #a38a22;
+  --theme-input-bg: #f5e6a4;
+  --theme-mid: #d6aa11;
+  --theme-mid-hover: #a3810d;
+  --theme-btn-standard: #1a1a1a;
+  --theme-btn-standard-hover: #000000;
+  --theme-accent: #3b7835;
+  --theme-accent-glow: rgba(59, 120, 53, 0.4);
+}
+
+body[data-theme="tau_empire"] {
+  --theme-text-light: #ffffff;
+  --theme-text-muted: #f8f9fa;
+  --theme-input-bg: #ffffff;
+  --theme-mid: #fcfcfc;
+  --theme-mid-hover: #f1f1f1;
+  --theme-btn-standard: #bc6b10;
+  --theme-btn-standard-hover: #8f520c;
+  --theme-accent: #158b99;
+  --theme-accent-glow: rgba(21, 139, 153, 0.4);
+}
+
+body[data-theme="aeldari"] {
+  --theme-text-light: #e4d4b1;
+  --theme-text-muted: #93b5c6;
+  --theme-input-bg: #f0e6d3;
+  --theme-mid: #2e8b57;
+  --theme-mid-hover: #246e45;
+  --theme-btn-standard: #c23636;
+  --theme-btn-standard-hover: #992b2b;
+  --theme-accent: #e6c338;
+  --theme-accent-glow: rgba(230, 195, 56, 0.4);
+}
+
+body[data-theme="chaos_undivided"] {
+  --theme-text-light: #dfb065;
+  --theme-text-muted: #a6834b;
+  --theme-input-bg: #e6d5b8;
+  --theme-mid: #2b2b2b;
+  --theme-mid-hover: #1a1a1a;
+  --theme-btn-standard: #9a1115;
+  --theme-btn-standard-hover: #730c0f;
+  --theme-accent: #d99c2b;
+  --theme-accent-glow: rgba(217, 156, 43, 0.4);
+}
+
+body[data-theme="drukhari"] {
+  --theme-text-light: #8edadd;
+  --theme-text-muted: #5a999c;
+  --theme-input-bg: #bfe8e9;
+  --theme-mid: #054a4f;
+  --theme-mid-hover: #033236;
+  --theme-btn-standard: #252a2b;
+  --theme-btn-standard-hover: #151819;
+  --theme-accent: #b0387e;
+  --theme-accent-glow: rgba(176, 56, 126, 0.4);
+}
+
+body[data-theme="thousand_sons"] {
+  --theme-text-light: #9be1f2;
+  --theme-text-muted: #66a1b0;
+  --theme-input-bg: #cbf0f8;
+  --theme-mid: #006887;
+  --theme-mid-hover: #004d65;
+  --theme-btn-standard: #dfb065;
+  --theme-btn-standard-hover: #b89153;
+  --theme-accent: #f4c522;
+  --theme-accent-glow: rgba(244, 197, 34, 0.4);
+}
+
+body[data-theme="death_guard"] {
+  --theme-text-light: #c1c9aa;
+  --theme-text-muted: #888f76;
+  --theme-input-bg: #dce0cf;
+  --theme-mid: #5a6446;
+  --theme-mid-hover: #414932;
+  --theme-btn-standard: #6b453a;
+  --theme-btn-standard-hover: #4d3129;
+  --theme-accent: #b45722;
+  --theme-accent-glow: rgba(180, 87, 34, 0.4);
+}
+
+body[data-theme="adeptus_custodes"] {
+  --theme-text-light: #f2e2bd;
+  --theme-text-muted: #ad9e7a;
+  --theme-input-bg: #f7eed6;
+  --theme-mid: #c49646;
+  --theme-mid-hover: #9c7532;
+  --theme-btn-standard: #9a1115;
+  --theme-btn-standard-hover: #730c0f;
+  --theme-accent: #f4ca55;
+  --theme-accent-glow: rgba(244, 202, 85, 0.4);
+}

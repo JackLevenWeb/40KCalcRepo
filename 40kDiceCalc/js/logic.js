@@ -84,8 +84,6 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
     const killedDistribution = {};
     for (const killed of allModelsKilled) {
         killedDistribution[killed] = (killedDistribution[killed] || 0) + 1;
-
-
     }
 
     return {
@@ -125,11 +123,14 @@ export function runHurtSystem(weapon, unit, startingHealth) {
     let autoWounds = 0;
     let successfulHits = 0;
     let hitData = { successes: 0, bonus: 0 };
+
     // Hit Phase
     if (weapon.modifiers.torrent || weapon.BsWs === "NA") {
         successfulHits = totalAttacks;
     } else {
-        const finalHitMod = weapon.modifiers.hitMod + (unit.modifiers.minusOneHit ? -1 : 0);
+        let rawHitMod = weapon.modifiers.hitMod + (unit.modifiers.minusOneHit ? -1 : 0);
+        const finalHitMod = Math.max(-1, Math.min(1, rawHitMod));
+
         let activeBsWs = parseInt(weapon.BsWs, 10);
         if (unit.modifiers.cover && activeBsWs !== "NA") {
             activeBsWs += 1;
@@ -142,7 +143,8 @@ export function runHurtSystem(weapon, unit, startingHealth) {
             rerollRule: weapon.modifiers.rerollHits,
             critThreshold: weapon.modifiers.critHitThreshold,
             sustained: weapon.modifiers.sustained,
-            isLethalOrDev: weapon.modifiers.lethal
+            isLethalOrDev: weapon.modifiers.lethal,
+            fishForCrits: weapon.modifiers.fishForCrits
         });
 
         autoWounds = hitData.autos;
@@ -165,8 +167,10 @@ export function runHurtSystem(weapon, unit, startingHealth) {
 
     let targetWoundMod = unit.modifiers.minusOneWound ? -1 : 0;
     if (unit.modifiers.minusOneWoundHighStr && weapon.strength > unit.toughness) targetWoundMod -= 1;
-    let finalWoundMod = weapon.modifiers.woundMod + targetWoundMod;
-    if (weapon.modifiers.lance) finalWoundMod += 1;
+    let rawWoundMod = weapon.modifiers.woundMod + targetWoundMod;
+    if (weapon.modifiers.lance) rawWoundMod += 1;
+
+    const finalWoundMod = Math.max(-1, Math.min(1, rawWoundMod));
 
     const activeCritWound = weapon.modifiers.anti > 0 ? weapon.modifiers.anti : weapon.modifiers.critWoundThreshold;
 
@@ -177,7 +181,8 @@ export function runHurtSystem(weapon, unit, startingHealth) {
         rerollRule: (weapon.modifiers.twinLinked || weapon.modifiers.rerollWounds === "all") ? "all" : weapon.modifiers.rerollWounds,
         critThreshold: activeCritWound,
         sustained: 0,
-        isLethalOrDev: weapon.modifiers.devastating
+        isLethalOrDev: weapon.modifiers.devastating,
+        fishForCrits: weapon.modifiers.fishForCrits
     });
 
     const normalWounds = woundData.successes + autoWounds;
@@ -233,8 +238,6 @@ export function runHurtSystem(weapon, unit, startingHealth) {
             normalWounds: normalWounds
         }, saves: {
             failedSavesCount: failedSavesCount
-
-
         },
         damage: {
             totalDamage: damageDone.totalDamage,

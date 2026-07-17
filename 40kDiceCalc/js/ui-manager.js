@@ -19,7 +19,8 @@ export const ModifierDictionary = {
     "reroll_hits_1": { name: "Reroll 1s (Hit)", hasInput: false },
     "reroll_hits_all": { name: "Reroll All (Hit)", hasInput: false },
     "reroll_wounds_1": { name: "Reroll 1s (Wound)", hasInput: false },
-    "reroll_wounds_all": { name: "Reroll All (Wound)", hasInput: false }
+    "reroll_wounds_all": { name: "Reroll All (Wound)", hasInput: false },
+    "fish_crits": { name: "Fish for Crits", hasInput: false }
 };
 
 export function addAttackerModule(containerElement) {
@@ -106,6 +107,7 @@ export function addAttackerModule(containerElement) {
                     <option value="reroll_hits_all">Reroll All Hits</option>
                     <option value="reroll_wounds_1">Reroll 1s to Wound</option>
                     <option value="reroll_wounds_all">Reroll All Wounds</option>
+                    <option value="fish_crits">Fish for Crits (Greedy)</option>
                 </optgroup>
             </select>
             <button class="btn-primary add-mod-btn">Add Rule</button>
@@ -282,6 +284,7 @@ export function buildRosterFromJSON(containerElement, jsonData, clearRoster = tr
             if (mods.rerollHits === "ones") addBadgeToModule(newModule, "reroll_hits_1", false);
             if (mods.rerollWounds === "all") addBadgeToModule(newModule, "reroll_wounds_all", false);
             if (mods.rerollWounds === "ones") addBadgeToModule(newModule, "reroll_wounds_1", false);
+            if (mods.fishForCrits) addBadgeToModule(newModule, "fish_crits", false);
 
             if (mods.sustained > 0) {
                 addBadgeToModule(newModule, "sustained", false);
@@ -353,8 +356,8 @@ export function spawnLeaderboard(container, statsArray) {
             <thead>
                 <tr>
                     <th style="padding: 10px; color: var(--theme-text-muted); border-bottom: 1px solid var(--border-color);">Weapon Profile</th>
-                    <th style="padding: 10px; color: var(--theme-text-muted); border-bottom: 1px solid var(--border-color);">Avg Damage</th>
                     <th style="padding: 10px; color: var(--theme-text-muted); border-bottom: 1px solid var(--border-color);">Avg Kills</th>
+                    <th style="padding: 10px; color: var(--theme-text-muted); border-bottom: 1px solid var(--border-color);">Avg Damage</th>
                 </tr>
             </thead>
             <tbody>
@@ -367,8 +370,8 @@ export function spawnLeaderboard(container, statsArray) {
                 <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--theme-accent); font-weight: bold;">
                     ${medal}${stat.unitName}
                 </td>
-                <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--theme-text-light);">${stat.avgDamage.toFixed(2)}</td>
                 <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--theme-text-light);">${stat.avgKills.toFixed(2)}</td>
+                <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--theme-text-light);">${stat.avgDamage.toFixed(2)}</td>
             </tr>
         `;
     });

@@ -96,7 +96,8 @@ function createWeaponsArray() {
             sustained: getModVal("sustained"),
             melta: getModVal("melta"),
             anti: getModVal("anti"),
-            rapidFire: getModVal("rapidfire")
+            rapidFire: getModVal("rapidfire"),
+            fishForCrits: hasMod("fish_crits")
         };
 
         const newWeapon = new Weapon(unitName, attack, bsws, strength, ap, damage, modelCount, unitCount, modifiers);
@@ -150,7 +151,7 @@ function runWorkerSimulation(iterations, weaponsArray, targetUnit) {
 }
 
 const SIMULATION_SCENARIOS = {
-    "Hit Mods": ["hit_plus_1", "reroll_hits_1", "reroll_hits_all", "sustained_hits"],
+    "Hit Mods": ["hit_plus_1", "reroll_hits_1", "reroll_hits_all", "sustained_hits", "fish_crits"],
     "Wound Mods": ["wound_plus_1", "reroll_wounds_1", "reroll_wounds_all", "lethal"],
     "Save/Ap": ["extra_ap_1"],
     "Damage Mods": ["devastating", "melta_range"]
@@ -178,6 +179,7 @@ function applyModifierToWeapon(weapon, modKey) {
 
     if (modKey === "extra_ap_1") weapon.Ap -= 1;
     if (modKey === "devastating") weapon.modifiers.devastating = true;
+    if (modKey === "fish_crits") weapon.modifiers.fishForCrits = true;
 }
 
 function checkSkipReason(weaponsArray, targetUnit, modKey) {
@@ -191,6 +193,7 @@ function checkSkipReason(weaponsArray, targetUnit, modKey) {
         if (modKey === "reroll_wounds_all" && w.modifiers.rerollWounds === "all") return "applied";
         if (modKey === "lethal" && w.modifiers.lethal === true) return "applied";
         if (modKey === "devastating" && w.modifiers.devastating === true) return "applied";
+        if (modKey === "fish_crits" && w.modifiers.fishForCrits === true) return "applied";
 
         if (modKey === "melta_range" && w.modifiers.melta === 0) return "not_applicable";
 
@@ -796,9 +799,9 @@ function autoSave() {
             globalRule: globalDrop ? globalDrop.value : "none"
         };
         localStorage.setItem("40kRoster", JSON.stringify(rosterState, null, 2));
-        console.log("💾 Auto-saved successfully!");
+        console.log("Auto-saved successfully!");
     } catch (error) {
-        console.error("🚨 Failed to auto-save:", error);
+        console.error("Failed to auto-save:", error);
     }
 }
 

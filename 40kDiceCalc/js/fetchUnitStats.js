@@ -1,13 +1,22 @@
 import { buildRosterFromJSON } from './ui-manager.js';
 
 const BASE = "https://openhammer-api-production.up.railway.app";
-const edition = "10e";
+const edition = "11e";
 const globalUnitIndex = new Map();
 const unitNames = [];
 
 const searchInput = document.getElementById('unit-search-input');
 const searchDropdown = document.getElementById('search-results-dropdown');
 const importApiBtn = document.getElementById('import-api-btn');
+
+
+/**
+ * Architecture Note:
+ * This module implements paginated API fetching and local client-side caching. 
+ * While the current target dataset is relatively small, this methodology simulates 
+ * enterprise-grade data engineering patterns. It demonstrates how to safely interact 
+ * with massive databases without overloading the main thread or hitting API rate limits.
+ */
 
 searchInput.addEventListener('input', function (event) {
     const currentText = event.target.value.toLowerCase();
@@ -122,6 +131,8 @@ async function fetchUnitDetails(unitName) {
             throw new Error(`HTTP ${response.status}: ${text}`);
         }
         const apiUnit = await response.json();
+
+        console.log(apiUnit);
 
         const weaponTypeToggle = document.getElementById('weapon-type-toggle');
         const weaponMode = weaponTypeToggle.value;
