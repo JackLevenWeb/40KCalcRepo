@@ -43,7 +43,7 @@ export const Themes = {
         accentGlow: "rgba(138, 21, 21, 0.4)",
         chartColors: ["#E6C9B0", "#9B4A9E", "#8A1515", "#D182C0", "#660F0F"],
         btnStandardText: "DEVOUR",
-        btnAdvancedText: "CONSUME THE BIOMASS",
+        btnAdvancedText: "CONSUME",
         divider: "#8A1515"
     },
     votann: {
