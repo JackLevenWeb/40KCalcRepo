@@ -329,7 +329,7 @@ export function spawnReportCard(title, container, statsHTML, avgStatsHTML) {
 }
 
 
-export function spawnLeaderboard(container, statsArray) {
+export function spawnLeaderboard(container, statsArray, isSingleTarget = false) {
 
     statsArray.sort((a, b) => {
         if (b.avgKills !== a.avgKills) {
@@ -347,6 +347,7 @@ export function spawnLeaderboard(container, statsArray) {
     summaryCard.style.marginBottom = "30px";
     summaryCard.style.boxShadow = "0 4px 15px rgba(0,0,0,0.5)";
 
+    const killHeader = isSingleTarget ? "Probability to Kill" : "Expected Models Killed";
 
     let tableHTML = `
         <h3 style="margin-top: 0; color: var(--theme-accent); border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
@@ -356,7 +357,7 @@ export function spawnLeaderboard(container, statsArray) {
             <thead>
                 <tr>
                     <th style="padding: 10px; color: var(--theme-text-muted); border-bottom: 1px solid var(--border-color);">Weapon Profile</th>
-                    <th style="padding: 10px; color: var(--theme-text-muted); border-bottom: 1px solid var(--border-color);">Avg Kills</th>
+                    <th style="padding: 10px; color: var(--theme-text-muted); border-bottom: 1px solid var(--border-color);">${killHeader}</th>
                     <th style="padding: 10px; color: var(--theme-text-muted); border-bottom: 1px solid var(--border-color);">Avg Damage</th>
                 </tr>
             </thead>
@@ -365,12 +366,13 @@ export function spawnLeaderboard(container, statsArray) {
 
     statsArray.forEach((stat, index) => {
         const medal = index === 0 ? "1st: " : index === 1 ? "2nd: " : index === 2 ? "3rd: " : "";
+        const killDisplay = isSingleTarget ? (stat.avgKills * 100).toFixed(1) + "%" : stat.avgKills.toFixed(2);
         tableHTML += `
             <tr class="leaderboard-row" data-target="${stat.unitName}" style="cursor: pointer;">
                 <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--theme-accent); font-weight: bold;">
                     ${medal}${stat.unitName}
                 </td>
-                <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--theme-text-light);">${stat.avgKills.toFixed(2)}</td>
+                <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--theme-text-light);">${killDisplay}</td>
                 <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--theme-text-light);">${stat.avgDamage.toFixed(2)}</td>
             </tr>
         `;

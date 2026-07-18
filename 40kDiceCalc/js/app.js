@@ -23,7 +23,7 @@ document.addEventListener("App:ImportRoster", (e) => handleImport(e.detail.file)
 document.addEventListener("App:ThemeChanged", () => {
     const stdResults = document.getElementById("results-wrapper");
     if (stdResults && stdResults.style.display !== "none" && currentSimulationResults) {
-        renderChart(currentSimulationResults.damageDistribution, currentSimulationResults.killedDistribution, currentSimulationResults.SimulatedRuns);
+        renderChart(currentSimulationResults.damageDistribution, currentSimulationResults.killedDistribution, currentSimulationResults.SimulatedRuns, currentIsSingleTarget);
     }
 });
 
@@ -35,9 +35,9 @@ const advAnalyticsBtn = document.getElementById("advanced-analytics-btn");
 const ClearBtn = document.getElementById("clear-dashboard-btn");
 
 let currentSimulationResults = null;
+let currentIsSingleTarget = false;
 
 initDataBase();
-
 
 //create weapon array from modules(html elements)
 function createWeaponsArray() {
@@ -162,8 +162,6 @@ const target_SIMULATION_SCENARIOS = {
     "Wound Mods": ["wound_minus_1", "SgT_wound_minus_1"],
     "Save/Ap": ["plus_1_save"],
     "Damage Mods": ["damage_minus_1", "damage_half", "FNP"]
-
-
 };
 
 function applyModifierToWeapon(weapon, modKey) {
@@ -285,6 +283,10 @@ if (CalcBtn) {
         worker.addEventListener('message', (event) => {
             const results = event.data;
             currentSimulationResults = results;
+            currentIsSingleTarget = targetUnit.modelCount === 1;
+
+            const killLabel = currentIsSingleTarget ? "Probability to Kill" : "Expected Models Killed";
+            const killValue = currentIsSingleTarget ? (results.averages.killed * 100).toFixed(1) + "%" : results.averages.killed.toFixed(2);
 
             document.getElementById("results-wrapper").style.display = "grid";
             document.getElementById("stats-html").innerHTML = `
@@ -294,8 +296,8 @@ if (CalcBtn) {
                 <div class="stat-sub">Highest Spike: ${results.extremes.highestDamage}</div>
             </div>
             <div class="stat-card">
-                <h5>Average Models Killed</h5>
-                <div class="stat-value">${results.averages.killed.toFixed(2)}</div>
+                <h5>${killLabel}</h5>
+                <div class="stat-value">${killValue}</div>
                 <div class="stat-sub">Max Killed: ${results.extremes.highestKills}</div>
             </div>
             <div class="stat-card" style="border-left-color: var(--theme-btn-standard);">
@@ -305,7 +307,7 @@ if (CalcBtn) {
             </div>
         `;
 
-            renderChart(results.damageDistribution, results.killedDistribution, results.SimulatedRuns);
+            renderChart(results.damageDistribution, results.killedDistribution, results.SimulatedRuns, currentIsSingleTarget);
 
             CalcBtn.textContent = getCurrentTheme().btnStandardText;
             CalcBtn.disabled = false;
@@ -333,6 +335,7 @@ if (advAnalyticsBtn) {
 
         const baseWeapons = createWeaponsArray();
         const targetUnit = createUnit();
+        const isSingleTarget = targetUnit.modelCount === 1;
 
         let leaderboardStats = [];
 
@@ -487,11 +490,11 @@ if (advAnalyticsBtn) {
 
 
                 // create each report section
-                generateAdvancedReport(`${unitName}: Hit Averages`, "Hit", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedHitMods, skippedMods, statsHTML, attackerUnitReport);
-                generateAdvancedReport(`${unitName}: Wound Averages <button class="tutorial-btn" data-tutorial="wound_avg">?</button>`, "Wound", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedWoundMods, skippedMods, statsHTML, attackerUnitReport);
-                generateAdvancedReport(`${unitName}: Save Averages`, "Save", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedSaveMods, skippedMods, statsHTML, attackerUnitReport);
-                generateAdvancedReport(`${unitName}: Damage Averages <button class="tutorial-btn" data-tutorial="damage_avg">?</button>`, "Damage", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedDamageMods, skippedMods, statsHTML, attackerUnitReport);
-                generateAdvancedReport(`${unitName}: Models Killed Averages <button class="tutorial-btn" data-tutorial="damage_avg">?</button>`, "ModelsKilled", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedKilledMods, skippedMods, statsHTML, attackerUnitReport);
+                generateAdvancedReport(`${unitName}: Hit Averages`, "Hit", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedHitMods, skippedMods, statsHTML, attackerUnitReport, isSingleTarget);
+                generateAdvancedReport(`${unitName}: Wound Averages <button class="tutorial-btn" data-tutorial="wound_avg">?</button>`, "Wound", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedWoundMods, skippedMods, statsHTML, attackerUnitReport, isSingleTarget);
+                generateAdvancedReport(`${unitName}: Save Averages`, "Save", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedSaveMods, skippedMods, statsHTML, attackerUnitReport, isSingleTarget);
+                generateAdvancedReport(`${unitName}: Damage Averages <button class="tutorial-btn" data-tutorial="damage_avg">?</button>`, "Damage", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedDamageMods, skippedMods, statsHTML, attackerUnitReport, isSingleTarget);
+                generateAdvancedReport(`${unitName}: Models Killed Averages <button class="tutorial-btn" data-tutorial="damage_avg">?</button>`, "ModelsKilled", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedKilledMods, skippedMods, statsHTML, attackerUnitReport, isSingleTarget);
                 const sidebars = attackerUnitReport.querySelectorAll('.avg-stats-sidebar');
                 let maxHeight = 0;
                 sidebars.forEach(sidebar => {
@@ -504,7 +507,7 @@ if (advAnalyticsBtn) {
 
             //leaderboard to ui-manager
             const mainContainer = document.getElementById("advanced-reports-container");
-            spawnLeaderboard(mainContainer, leaderboardStats);
+            spawnLeaderboard(mainContainer, leaderboardStats, isSingleTarget);
         } catch (error) {
             console.error("Pipeline Failed:", error);
             alert("Pipeline Failed.");
@@ -515,7 +518,7 @@ if (advAnalyticsBtn) {
     });
 }
 
-function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns, allowedMods, skippedMods, statsHTML, targetContainer) {
+function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns, allowedMods, skippedMods, statsHTML, targetContainer, isSingleTarget = false) {
 
     const baseRow = sqlAvgData.find(r => r.modifier_name === "Base");
     const processedRows = allowedMods.map(modName => {
@@ -612,17 +615,19 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
         });
     }
     else if (category === "ModelsKilled") {
-        avgStatsHTML += `<tr><th style="${th}">Rule</th><th style="${th}">Avg Killed</th><th style="${th}">Overkill</th><th style="${th}">Efficiency</th></tr>`;
+        const killHeader = isSingleTarget ? "Probability to Kill" : "Expected Models Killed";
+        avgStatsHTML += `<tr><th style="${th}">Rule</th><th style="${th}">${killHeader}</th><th style="${th}">Overkill</th><th style="${th}">Efficiency</th></tr>`;
         processedRows.forEach(row => {
             let rowStyle = row.skipReason ? `opacity: 0.5;` : ``;
-            avgStatsHTML += `<tr style="${rowStyle}"><td style="${tdFirst}">${getRowNameHTML(row)}</td><td style="${td}">${row.avg_killed.toFixed(3)}</td><td style="${td}">${row.avg_wasted.toFixed(2)}</td><td style="${tdLast}">${row.efficiency}%</td></tr>`;
+            const killValue = isSingleTarget ? (row.avg_killed * 100).toFixed(1) + "%" : row.avg_killed.toFixed(3);
+            avgStatsHTML += `<tr style="${rowStyle}"><td style="${tdFirst}">${getRowNameHTML(row)}</td><td style="${td}">${killValue}</td><td style="${td}">${row.avg_wasted.toFixed(2)}</td><td style="${tdLast}">${row.efficiency}%</td></tr>`;
         });
     }
     avgStatsHTML += `</table>`;
 
     const card = spawnReportCard(title, targetContainer, statsHTML, avgStatsHTML);
     const chartMods = allowedMods.filter(m => !skippedMods[m]);
-    renderAdvancedChart(card.querySelector('.adv-chart'), category, sqlData, totalRuns, chartMods);
+    renderAdvancedChart(card.querySelector('.adv-chart'), category, sqlData, totalRuns, chartMods, isSingleTarget);
 }
 
 function buildBaseStatsHTML(weaponsArray, targetUnit) {
