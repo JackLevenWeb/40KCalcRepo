@@ -5,7 +5,7 @@ import { getCurrentTheme } from './theme-manager.js';
 
 let damageChartInstance = null;
 
-export function renderChart(damageDistribution, killedDistribution, totalRuns) {
+export function renderChart(damageDistribution, killedDistribution, totalRuns, isSingleTarget = false) {
     const ctx = document.getElementById('damageChart').getContext('2d');
     const theme = getCurrentTheme();
 
@@ -41,9 +41,11 @@ export function renderChart(damageDistribution, killedDistribution, totalRuns) {
         cumulativeKilled[i] = runningKillTotal;
     }
 
+    const killLabel = isSingleTarget ? 'Probability to Kill' : 'Expected Models Killed (At Least)';
+
     const datasets = [
         {
-            label: 'Models Killed (At Least)',
+            label: killLabel,
             data: cumulativeKilled,
             exactData: exactKilledData,
             borderColor: theme.chartColors[1],
@@ -82,7 +84,7 @@ export function renderChart(damageDistribution, killedDistribution, totalRuns) {
             interaction: { mode: 'nearest', intersect: false },
             scales: {
                 x: {
-                    title: { display: true, text: 'Total Amount (Damage or Models)', color: '#8C9BA8', font: { weight: 'bold' } },
+                    title: { display: true, text: isSingleTarget ? 'Total Amount (Damage or Kills)' : 'Total Amount (Damage or Models)', color: '#8C9BA8', font: { weight: 'bold' } },
                     ticks: { color: theme.chartColors[0] },
                     grid: { color: '#38424D' }
                 },
@@ -142,7 +144,7 @@ export function renderChart(damageDistribution, killedDistribution, totalRuns) {
     });
 }
 
-export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns, allowedMods) {
+export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns, allowedMods, isSingleTarget = false) {
     const ctx = canvasElement.getContext('2d');
     const theme = getCurrentTheme();
     const categoryRows = sqlRows.filter(r => r[2] === category && allowedMods.includes(r[0]));
@@ -154,7 +156,7 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
 
     if (maxVal === 0) {
         maxVal = 1;
-        let warningText = category === "ModelsKilled" ? "(ZERO MODELS KILLED)" : "(ZERO IMPACT)";
+        let warningText = category === "ModelsKilled" ? (isSingleTarget ? "(ZERO PROBABILITY)" : "(ZERO MODELS KILLED)") : "(ZERO IMPACT)";
         const card = canvasElement.closest('.report-card');
         if (card) {
             const titleElement = card.querySelector('h4');
@@ -226,7 +228,7 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
                     grid: { color: '#38424D' }
                 },
                 y: {
-                    title: { display: true, text: `At Least - (%) Chance of ${category}`, color: '#8C9BA8', font: { weight: 'bold' } },
+                    title: { display: true, text: category === "ModelsKilled" && isSingleTarget ? `Probability to Kill (%)` : `At Least - (%) Chance of ${category}`, color: '#8C9BA8', font: { weight: 'bold' } },
                     ticks: { color: theme.chartColors[0] },
                     grid: { color: '#38424D' },
                     beginAtZero: true,
