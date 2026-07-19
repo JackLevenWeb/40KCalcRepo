@@ -15,18 +15,21 @@ export class Dice {
 
         const isFishingActive = fishForCrits && (isLethalOrDev || sustained > 0) && (rerollRule === "all" || rerollRule === "ones");
 
-        // process Rerolls, BEFORE modifiers
+        // calculate the capped modifier FIRST so it can be used to evaluate misses
+        const cappedMod = Math.max(-1, Math.min(1, modifier));
+
+        // process Rerolls
         for (const r of initialRolls) {
             let shouldReroll = false;
 
             if (isFishingActive) {
-                // greedy Reroll everything that is not a critical success
+                // greedy Reroll everything that is not a natural critical success
                 if (r < critThreshold) {
                     shouldReroll = true;
                 }
             } else if (rerollRule === "all") {
-                // normal reroll misses (unmodified roll < target)
-                if (r < target && r !== 6) {
+                // reroll natural 1s OR any roll that misses AFTER the modifier is applied
+                if (r === 1 || (r < critThreshold && r + cappedMod < target)) {
                     shouldReroll = true;
                 }
             } else if (rerollRule === "ones") {
@@ -48,14 +51,14 @@ export class Dice {
         let autos = 0;
         let bonus = 0;
 
-        const cappedMod = Math.max(-1, Math.min(1, modifier));
-
         for (const r of finalRolls) {
+            // check for natural 1s (Automatic Failure)
             if (r === 1) {
                 fails++;
                 continue;
             }
 
+            // check for natural criticals (Ignores modifiers)
             if (r >= critThreshold) {
                 if (isLethalOrDev) {
                     autos++;
@@ -69,6 +72,7 @@ export class Dice {
                 continue;
             }
 
+            // check for normal successes (Applies modifiers)
             if (r + cappedMod >= target) {
                 successes++;
             } else {
