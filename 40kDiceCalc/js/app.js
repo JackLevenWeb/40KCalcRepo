@@ -555,14 +555,19 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
         const hasBonus = processedRows.some(r => r.hits_bonus > 0);
         const hasAuto = processedRows.some(r => r.hits_auto > 0);
 
-        let headers = `<th style="${th}">Rule</th><th style="${th}">Avg Hits</th>`;
-        if (hasBonus) headers += `<th style="${th}">Sustained</th>`;
-        if (hasAuto) headers += `<th style="${th}">Lethal (Auto)</th>`;
+
+        let headers = `<th style="${th}">Rule</th><th style="${th}">Avg Total Hits</th>`;
+        if (hasBonus) headers += `<th style="${th}">Inc. Sustained</th>`;
+        if (hasAuto) headers += `<th style="${th}">Inc. Lethal</th>`;
         avgStatsHTML += `<tr>${headers}</tr>`;
 
         processedRows.forEach(row => {
             let rowStyle = row.skipReason ? `opacity: 0.5;` : ``;
-            let cells = [row.hits_success.toFixed(2)];
+
+            // summing all buckets for the true total
+            let totalHits = row.hits_success + row.hits_bonus + row.hits_auto;
+            let cells = [totalHits.toFixed(2)];
+
             if (hasBonus) {
                 cells.push(row.hits_bonus > 0 ? row.hits_bonus.toFixed(2) : '-');
             }
@@ -579,18 +584,26 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
     }
     else if (category === "Wound") {
         const hasDev = processedRows.some(r => r.wounds_dev > 0);
+        const hasAuto = processedRows.some(r => r.hits_auto > 0); // Lethals act as auto-wounds
+
 
         let headers = `<th style="${th}">Rule</th><th style="${th}">Avg Total Wounds</th>`;
-        if (hasDev) headers += `<th style="${th}">Devastating</th>`;
+        if (hasDev) headers += `<th style="${th}">Inc. Devastating</th>`;
+        if (hasAuto) headers += `<th style="${th}">Inc. Lethal</th>`;
         avgStatsHTML += `<tr>${headers}</tr>`;
 
         processedRows.forEach(row => {
             let rowStyle = row.skipReason ? `opacity: 0.5;` : ``;
+
+            // summing normal wounds, devastating wounds, and auto-wounding lethals
             let totalWounds = row.wounds_success + row.wounds_dev + row.hits_auto;
             let cells = [totalWounds.toFixed(2)];
 
             if (hasDev) {
                 cells.push(row.wounds_dev > 0 ? row.wounds_dev.toFixed(2) : '-');
+            }
+            if (hasAuto) {
+                cells.push(row.hits_auto > 0 ? row.hits_auto.toFixed(2) : '-');
             }
 
             let rowHTML = `<tr style="${rowStyle}"><td style="${tdFirst}">${getRowNameHTML(row)}</td>`;
