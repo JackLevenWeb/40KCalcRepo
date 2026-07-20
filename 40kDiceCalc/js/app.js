@@ -742,9 +742,9 @@ function handleImport(file) {
             const jsonData = JSON.parse(rawText);
 
             if (Array.isArray(jsonData)) {
-                buildRosterFromJSON(RosterContainer, jsonData);
+                buildRosterFromJSON(RosterContainer, jsonData, false);
             } else {
-                buildRosterFromJSON(RosterContainer, jsonData.roster);
+                buildRosterFromJSON(RosterContainer, jsonData.roster, false);
 
                 if (jsonData.target) {
                     loadTargetProfile(jsonData.target);

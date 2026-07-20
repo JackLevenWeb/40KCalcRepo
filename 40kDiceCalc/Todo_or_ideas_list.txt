@@ -1,5 +1,6 @@
 Project Task List
 
+big features:
 * Implement a Target Keyword Tagging System to automate the Anti modifier logic.
 * Containerize the entire application using Docker for standardized deployment.
 * Build a filter button for the advanced graphs to selectively display possible target modifiers.
@@ -7,4 +8,20 @@ Project Task List
 * Build a multiple target system that includes the same import and export features as the attacking roster.
 * Develop an algorithmic system to calculate and recommend the most optimal attacking unit for each target unit based on average damage or models killed.
 * Build a separate user interface and simulation module to process movement and charging mechanics.
+
+smaller features:
 * Create a system that allows yellowScribe string for importing
+* system to import units of similar points and type eg infantry with point cost ><= X with T x or W x from other factions into target unit block >> this might need a sort of 'toggle' mode button to switch between target unit system manual and this new system, this new system will also need a drop down to select which faction >> can probably create a api call mapping list once at app start up between units between all factions to for this.
+* local system to store avg results of last 20 sim runs and give feedback on which modifiers were most impactful >>
+* similar to above might be cool to have another section for 'all varied scenarios' where you can take attacking units and run through lots of sims using a list of mods to check which combination of          mods is the best against target unit >> could have another drop down section with a leaderboard type list again to show this. this will need its own button and an input list of which modifiers to 'consider' when doing the sims. and also an input for the sinlge attacking unit or unitGroup?
+* a system to be able to group attacking units into 1 units for the sake of adv graph and leaderboards. >> might run into an issue with adv graphs when 1 part of the grouped unit has mods that the other doesn't >> can maybe just make it so that it affect leader boards. >> might need a new page for this UI. >> might be nice to have a drag and drop system for this
+
+
+
+
+fixes / improvements:
+* change import json so it doesn't clear the list
+* probability to kill when shooting at something much weaker can go above 100%
+* system to API import units in target unit block
+* need to add in reroll damage roll as well - logic for when to do this
+* shrink UI horizontally down a bit - rosters etc can be more narrow than graphs etc
