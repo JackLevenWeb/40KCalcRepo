@@ -24,7 +24,7 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
         let currentTargetHealth = unit.wounds;
         let runTotalDamage = 0, runModelsKilled = 0, runWastedDamage = 0;
 
-        // Track totals for THIS specific run
+        // track totals for THIS specific run
         let runTotalHits = 0, runTotalWounds = 0, runTotalSaves = 0;
 
         for (const weapon of weaponsArray) {

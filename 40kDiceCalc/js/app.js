@@ -666,6 +666,7 @@ function buildBaseStatsHTML(weaponsArray, targetUnit) {
         if (w.modifiers.hitMod < 0) activeMods.push(`${w.modifiers.hitMod} Hit`);
         if (w.modifiers.woundMod > 0) activeMods.push(`+${w.modifiers.woundMod} Wound`);
         if (w.modifiers.woundMod < 0) activeMods.push(`${w.modifiers.woundMod} Wound`);
+        if (w.modifiers.rerollDamage) activeMods.push(`RR Damage`);
         let modsStr = activeMods.length > 0 ? `[${activeMods.join(', ')}]` : `[No Mods]`;
 
         html += `

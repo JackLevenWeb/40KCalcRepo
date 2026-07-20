@@ -24,9 +24,11 @@ fixes / improvements:
 * probability to kill when shooting at something much weaker can go above 100%//
 * system to API import units in target unit block//
 * need to add in reroll damage roll as well - logic for when to do this//
-* shrink UI horizontally down a bit - rosters etc can be more narrow than graphs etc
+* shrink UI horizontally down a bit - rosters etc can be more narrow than graphs etc//
 * target unit should also have a name
 * exporting should JSON should also include target unit
+* fish for crits coming up in adv graphs when lethal or sus or dev no in attacker profile
+
 
 
 for importing units(eg Rugged Resilience no system to import abilities yet), need to be able to map things like stealth and -1 to hit etc as well
