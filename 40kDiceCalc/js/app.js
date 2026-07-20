@@ -40,6 +40,7 @@ let currentIsSingleTarget = false;
 initDataBase();
 
 //create weapon array from modules(html elements)
+
 function createWeaponsArray() {
     const modules = document.querySelectorAll('.attacker-module');
     const weaponsArray = [];
@@ -97,7 +98,8 @@ function createWeaponsArray() {
             melta: getModVal("melta"),
             anti: getModVal("anti"),
             rapidFire: getModVal("rapidfire"),
-            fishForCrits: hasMod("fish_crits")
+            fishForCrits: hasMod("fish_crits"),
+            rerollDamage: hasMod("reroll_damage")
         };
 
         const newWeapon = new Weapon(unitName, attack, bsws, strength, ap, damage, modelCount, unitCount, modifiers);
@@ -154,7 +156,7 @@ const SIMULATION_SCENARIOS = {
     "Hit Mods": ["hit_plus_1", "reroll_hits_1", "reroll_hits_all", "sustained_hits", "fish_crits"],
     "Wound Mods": ["wound_plus_1", "reroll_wounds_1", "reroll_wounds_all", "lethal"],
     "Save/Ap": ["extra_ap_1"],
-    "Damage Mods": ["devastating", "melta_range"]
+    "Damage Mods": ["devastating", "melta_range", "reroll_damage"]
 };
 
 const target_SIMULATION_SCENARIOS = {
@@ -178,6 +180,7 @@ function applyModifierToWeapon(weapon, modKey) {
     if (modKey === "extra_ap_1") weapon.Ap -= 1;
     if (modKey === "devastating") weapon.modifiers.devastating = true;
     if (modKey === "fish_crits") weapon.modifiers.fishForCrits = true;
+    if (modKey === "reroll_damage") weapon.modifiers.rerollDamage = true;
 }
 
 function checkSkipReason(weaponsArray, targetUnit, modKey) {
@@ -192,12 +195,21 @@ function checkSkipReason(weaponsArray, targetUnit, modKey) {
         if (modKey === "lethal" && w.modifiers.lethal === true) return "applied";
         if (modKey === "devastating" && w.modifiers.devastating === true) return "applied";
         if (modKey === "fish_crits" && w.modifiers.fishForCrits === true) return "applied";
+        if (modKey === "reroll_damage" && w.modifiers.rerollDamage === true) return "applied";
 
         if (modKey === "melta_range" && w.modifiers.melta === 0) return "not_applicable";
 
+        //variable damage vs flat
+        let rawDam = w.damage;
+        let parsedDam = parseInt(rawDam, 10);
+        let isFlatDamage = !isNaN(parsedDam) && String(parsedDam) === String(rawDam).trim();
+        if (modKey === "reroll_damage" && isFlatDamage) return "ineffective";
+
+        //hit roll unaffected
         let effectiveBs = parseInt(w.BsWs) - w.modifiers.hitMod;
         if (modKey === "hit_plus_1" && effectiveBs <= 2) return "ineffective";
         if (modKey === "reroll_hits_all" && effectiveBs <= 2) return "ineffective";
+
 
         let baseWoundTarget = 5;
         if (w.strength >= targetUnit.toughness * 2) baseWoundTarget = 2;

@@ -78,13 +78,14 @@
                 placeholder="Search for a unit..."
                 style="flex-grow: 1; min-width: 150px"
               />
-              <button
-                id="import-api-btn"
-                class="btn-primary"
-                style="padding: 10px 20px; cursor: pointer; white-space: nowrap"
-              >
-                Import Unit
-              </button>
+              <div style="display: flex; gap: 10px">
+                <button id="import-attacker-btn" class="btn-primary">
+                  Import Attacker
+                </button>
+                <button id="import-target-btn" class="btn-primary">
+                  Import Target
+                </button>
+              </div>
             </div>
             <ul
               id="search-results-dropdown"

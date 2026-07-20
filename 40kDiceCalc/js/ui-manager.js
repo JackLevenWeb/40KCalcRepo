@@ -20,7 +20,8 @@ export const ModifierDictionary = {
     "reroll_hits_all": { name: "Reroll All (Hit)", hasInput: false },
     "reroll_wounds_1": { name: "Reroll 1s (Wound)", hasInput: false },
     "reroll_wounds_all": { name: "Reroll All (Wound)", hasInput: false },
-    "fish_crits": { name: "Fish for Crits", hasInput: false }
+    "fish_crits": { name: "Fish for Crits", hasInput: false },
+    "reroll_damage": { name: "Reroll Damage (1-2)", hasInput: false }
 };
 
 export function addAttackerModule(containerElement) {
@@ -108,6 +109,7 @@ export function addAttackerModule(containerElement) {
                     <option value="reroll_wounds_1">Reroll 1s to Wound</option>
                     <option value="reroll_wounds_all">Reroll All Wounds</option>
                     <option value="fish_crits">Fish for Crits (Greedy)</option>
+                    <option value="reroll_damage">Reroll Damage (1s & 2s)</option>
                 </optgroup>
             </select>
             <button class="btn-primary add-mod-btn">Add Rule</button>
@@ -285,6 +287,7 @@ export function buildRosterFromJSON(containerElement, jsonData, clearRoster = tr
             if (mods.rerollWounds === "all") addBadgeToModule(newModule, "reroll_wounds_all", false);
             if (mods.rerollWounds === "ones") addBadgeToModule(newModule, "reroll_wounds_1", false);
             if (mods.fishForCrits) addBadgeToModule(newModule, "fish_crits", false);
+            if (mods.rerollDamage) addBadgeToModule(newModule, "reroll_damage", false);
 
             if (mods.sustained > 0) {
                 addBadgeToModule(newModule, "sustained", false);

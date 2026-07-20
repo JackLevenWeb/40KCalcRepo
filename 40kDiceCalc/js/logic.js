@@ -268,7 +268,7 @@ function calculateWoundTarget(strength, toughness) {
 }
 
 // variable damage like "D3", "D6+2", "2D6"
-function resolveDamage(damageString) {
+function resolveDamage(damageString, shouldReroll = false) {
     let str = String(damageString).toUpperCase().replace(/\s/g, '');
     if (/^\d+$/.test(str)) return parseInt(str, 10);
     let total = 0;
@@ -278,7 +278,11 @@ function resolveDamage(damageString) {
         let numDice = match[1] === "" ? 1 : parseInt(match[1], 10);
         let sides = parseInt(match[2], 10);
         for (let i = 0; i < numDice; i++) {
-            total += Math.floor(Math.random() * sides) + 1;
+            let roll = Math.floor(Math.random() * sides) + 1;
+            if (shouldReroll && (roll === 1 || roll === 2)) {
+                roll = Math.floor(Math.random() * sides) + 1;
+            }
+            total += roll;
         }
     }
     let flatModsStr = str.replace(/(\d*)D(\d+)/g, '');
@@ -297,7 +301,7 @@ function modelsKill(damageEvents, weapon, unit, startingHealth) {
     let totalActualDamageTaken = 0;
 
     for (let i = 0; i < damageEvents; i++) {
-        let baseDmg = resolveDamage(weapon.damage);
+        let baseDmg = resolveDamage(weapon.damage, weapon.modifiers.rerollDamage);
         let dmgInstance = baseDmg + (weapon.modifiers.melta || 0);
 
         if (unit.modifiers.halfDamage) dmgInstance = Math.ceil(dmgInstance / 2);

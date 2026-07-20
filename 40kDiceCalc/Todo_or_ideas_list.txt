@@ -20,8 +20,138 @@ smaller features:
 
 
 fixes / improvements:
-* change import json so it doesn't clear the list
-* probability to kill when shooting at something much weaker can go above 100%
-* system to API import units in target unit block
-* need to add in reroll damage roll as well - logic for when to do this
+* change import json so it doesn't clear the list//
+* probability to kill when shooting at something much weaker can go above 100%//
+* system to API import units in target unit block//
+* need to add in reroll damage roll as well - logic for when to do this//
 * shrink UI horizontally down a bit - rosters etc can be more narrow than graphs etc
+* target unit should also have a name
+* exporting should JSON should also include target unit
+
+
+for importing units(eg Rugged Resilience no system to import abilities yet), need to be able to map things like stealth and -1 to hit etc as well
+
+{
+    "name": "Wolf Guard Terminators",
+    "id": "ca30-caf3-d7a8-1d32",
+    "type": "unit",
+    "faction": "Space Wolves",
+    "faction_type": "Imperium",
+    "points": {
+        "base": 150,
+        "variants": [
+            {
+                "models": 6,
+                "points": 300
+            }
+        ]
+    },
+    "composition": {
+        "min_models": 1,
+        "max_models": 1
+    },
+    "stats": {
+        "M": "6\"",
+        "T": "5",
+        "SV": "2+",
+        "W": "4",
+        "LD": "6+",
+        "OC": "1"
+    },
+    "invuln_save": "4+",
+    "transport": null,
+    "weapons": {
+        "ranged": [
+            {
+                "name": "Storm Bolter",
+                "Range": "24\"",
+                "A": "2",
+                "BS": "2+",
+                "WS": null,
+                "S": "4",
+                "AP": "0",
+                "D": "1",
+                "Keywords": "Rapid Fire 2"
+            },
+            {
+                "name": "Assault Cannon",
+                "Range": "24\"",
+                "A": "6",
+                "BS": "2+",
+                "WS": null,
+                "S": "6",
+                "AP": "0",
+                "D": "1",
+                "Keywords": "Devastating Wounds"
+            }
+        ],
+        "melee": [
+            {
+                "name": "Twin lightning claws",
+                "Range": "Melee",
+                "A": "6",
+                "BS": null,
+                "WS": "3+",
+                "S": "5",
+                "AP": "-2",
+                "D": "1",
+                "Keywords": "Twin-linked"
+            },
+            {
+                "name": "Relic Great Axe",
+                "Range": "Melee",
+                "A": "3",
+                "BS": null,
+                "WS": "3+",
+                "S": "7",
+                "AP": "-2",
+                "D": "3",
+                "Keywords": "Devastating Wounds"
+            },
+            {
+                "name": "Master-crafted Power Weapon",
+                "Range": "Melee",
+                "A": "4",
+                "BS": null,
+                "WS": "3+",
+                "S": "5",
+                "AP": "-2",
+                "D": "2",
+                "Keywords": "-"
+            },
+            {
+                "name": "Power fist",
+                "Range": "Melee",
+                "A": "3",
+                "BS": null,
+                "WS": "3+",
+                "S": "8",
+                "AP": "-2",
+                "D": "2",
+                "Keywords": "-"
+            }
+        ]
+    },
+    "abilities": [
+        {
+            "name": "Rugged Resilience",
+            "description": "Each time an attack targets this unit, if the Strength characteristic of that attack is greater than the Toughness characteristic of this unit, subtract 1 from the Wound roll."
+        }
+    ],
+    "special_rules": [
+        "Oath of Moment",
+        "Deep Strike",
+        "Twin-linked",
+        "Devastating Wounds",
+        "Rapid Fire"
+    ],
+    "keywords": [
+        "Faction: Adeptus Astartes",
+        "Faction: Space Wolves",
+        "Infantry",
+        "Imperium",
+        "Terminator",
+        "Wolf Guard Terminators",
+        "Wolf Guard"
+    ]
+}
