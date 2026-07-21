@@ -12,9 +12,10 @@ big features:
 smaller features:
 * Create a system that allows yellowScribe string for importing
 * system to import units of similar points and type eg infantry with point cost ><= X with T x or W x from other factions into target unit block >> this might need a sort of 'toggle' mode button to switch between target unit system manual and this new system, this new system will also need a drop down to select which faction >> can probably create a api call mapping list once at app start up between units between all factions to for this.
+* a system to be able to group attacking units into 1 units for the sake of adv graph and leaderboards. >> might run into an issue with adv graphs when 1 part of the grouped unit has mods that the other doesn't >> can maybe just make it so that it affect leader boards. >> might need a new page for this UI. >> might be nice to have a drag and drop system for this
+
 * local system to store avg results of last 20 sim runs and give feedback on which modifiers were most impactful >>
 * similar to above might be cool to have another section for 'all varied scenarios' where you can take attacking units and run through lots of sims using a list of mods to check which combination of          mods is the best against target unit >> could have another drop down section with a leaderboard type list again to show this. this will need its own button and an input list of which modifiers to 'consider' when doing the sims. and also an input for the sinlge attacking unit or unitGroup?
-* a system to be able to group attacking units into 1 units for the sake of adv graph and leaderboards. >> might run into an issue with adv graphs when 1 part of the grouped unit has mods that the other doesn't >> can maybe just make it so that it affect leader boards. >> might need a new page for this UI. >> might be nice to have a drag and drop system for this
 
 
 
@@ -28,6 +29,9 @@ fixes / improvements:
 * target unit should also have a name
 * exporting should JSON should also include target unit
 * fish for crits coming up in adv graphs when lethal or sus or dev no in attacker profile
+* UI can be 20% wider
+* attacking unit ability to reroll 1 die in a phase
+* indirect fire
 
 
 
@@ -157,3 +161,54 @@ for importing units(eg Rugged Resilience no system to import abilities yet), nee
         "Wolf Guard"
     ]
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+sorry I have a 1 more guidelines/context guides.
+
+11. This project is supposed to be for companies to go and look at when im applying to jobs. This project is on my github and hosted on my github pages. The code practises we use must be at a very high level where ever possible. This include things like using memory efficient code. Making the code base organised and readable to other devs. Where possible, using advanced coding tricks to achieve these goals.
+
+
+
+I want to make a pretty big change to the main UI.
+
+I want to create a 'carousel' type main UI so the user can 'flip' between different functionalities.
+
+Right now we have a system that is static and if I wanted to add to it I would need to figure out a whole new UI. I think it could be a good idea to have the UI 'transform' to show a separate use case for the simulations.
+This is the first big task here. and of course we will need to figure out how to accommodate this change with all of the dynamic UI js code(autoSaving, importing units, etc) we have and also the custom theme chaning.
+
+for this first use case all we'll really need to do is change to a single button, and probably a few other things to change in the UI but you can help me figure this out later.
+
+For the next use case for the UI I want a system that will an attacking roster and a target unit. and it will output 1 adv type graph per unit as normal but this UI will also include a 'modifier to consider' selection where the user can add modifiers they interested in testing against one another. I want 3 'input lists' for possible modifiers, 1 for weapon rules, 1 for flat modifiers and 1 for reroll modifiers. We will need to think of something to account for some sort of input from the user when a user wants to test multiple modifiers together(eg if a user want to test 'this unit has +1 to wound and +1 to hit, is it then better to have reroll hits all or reroll wounds all?)
+
+
+The testing and output for this UI will be a leader board with stats per attacking unit. These stats will show how the modifiers from the list of modifier to consider best affect total damage done and total models killed.
+
+The way this test will work is that each modifier from the list of modifiers to consider will run 1 at a time through all phases (hit,wound,save,dmg,modelsKilled) then we calculate which modifier added to each unit would have the biggest effect of damage done and modelsKilled and rank the modifier per unit from best worst.
+
+Note, that attacking units will still have the ability to have active modifiers applied to them before starting all of the 'modifier compare' sims. We will have to account for this.
+
+The point of this report is that sometimes it difficult to know if its always better to have 1 modifier over another for a given attacking unit against a target unit and this report will show which is infact better based on avg damage done and avg models killed. eg "should this unit have sustained or lethal? and should it have +1 to hit or reroll 1s to hit?)
+
+There are a bunch of thing we may need to tweek to get this to work properly with the already existing code, we can create new .js if needed but obviously reusing code and writing the new code in the most logical spot(which .js fie) is a big plus, provided we don't end up with massive .js scripts that are difficult to decode.
+
+the big challenge here on top of this is that I want a 'best combination' per attacking unit. Where we work out which combination of modifiers in the modifier test lists gives the absolute best results. IE making lots of sims for combinatorics(obvisouly we won't have to account for 'position') <<<this here is the ultimate goal.
+
+
+Right now from you I want your understanding of what I want to accomplish here. Then a list of the big changes we'll need to address and then break that list down into smaller tasks we can tackle together.
+
+I am open to suggestions on how to implement this code wise(and I will need help with this ether way) and also UI wise.
