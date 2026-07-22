@@ -259,3 +259,25 @@ export function initializeWatchers() {
         });
     }
 }
+
+//combi engine >>>>
+const combiUI = document.getElementById("combinatorial-ui");
+if (combiUI) {
+    combiUI.addEventListener("change", (e) => {
+        if (!e.target.classList.contains("combinatorial-checkbox")) return;
+
+        const handleExclusion = (val1, val2) => {
+            if (e.target.value === val1) {
+                const other = combiUI.querySelector(`input[value="${val2}"]`);
+                if (other) other.disabled = e.target.checked;
+            } else if (e.target.value === val2) {
+                const other = combiUI.querySelector(`input[value="${val1}"]`);
+                if (other) other.disabled = e.target.checked;
+            }
+        };
+
+        handleExclusion("hit_plus_1", "heavy");
+        handleExclusion("reroll_hits_all", "reroll_hits_1");
+        handleExclusion("reroll_wounds_all", "reroll_wounds_1");
+    });
+}

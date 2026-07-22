@@ -120,6 +120,9 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
 
 export function runHurtSystem(weapon, unit, startingHealth) {
     const totalAttacks = calculateAttacks(weapon, unit);
+
+    console.log(`Weapons array ${weapon}`);
+    console.log(`Target units array ${unit}`);
     let autoWounds = 0;
     let successfulHits = 0;
     let hitData = { successes: 0, bonus: 0 };

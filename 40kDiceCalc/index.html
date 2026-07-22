@@ -653,20 +653,37 @@
               padding: 15px;
               border-radius: 6px;
               margin-bottom: 25px;
-              text-align: center;
             "
           >
-            <p
+            <div
               style="
-                color: var(--theme-text-light);
-                font-weight: bold;
-                margin: 0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 15px;
               "
             >
-              Engine Status: Synchronized. The combinatorial logic will
-              automatically pull your deployed Attacker Roster and Target
-              Profile from the Standard Analytics view.
-            </p>
+              <p
+                style="
+                  color: var(--theme-text-light);
+                  font-weight: bold;
+                  margin: 0;
+                "
+              >
+                Active Combi Roster (Max 4 Units)
+              </p>
+              <button
+                id="sync-combi-roster-btn"
+                class="btn-primary"
+                style="padding: 6px 12px; font-size: 0.85rem"
+              >
+                ⟳ Sync from Standard
+              </button>
+            </div>
+            <div
+              id="combi-mirror-container"
+              style="display: flex; flex-direction: column; gap: 10px"
+            ></div>
           </div>
 
           <div
@@ -695,7 +712,7 @@
                 Weapon Rules
               </h4>
               <div
-                style="display: flex; flex-direction: column; gap: 8px"
+                style="display: flex; flex-direction: column; gap: 12px"
                 id="pool-weapon-rules"
               >
                 <label
@@ -705,15 +722,18 @@
                     gap: 10px;
                     cursor: pointer;
                     color: var(--theme-text-light);
-                    text-transform: none;
+                    font-size: 0.9rem;
                   "
                 >
-                  <input
-                    type="checkbox"
-                    value="lethal"
-                    class="combinatorial-checkbox"
-                    style="width: 16px"
-                  />Lethal Hits
+                  <label class="toggle-switch"
+                    ><input
+                      type="checkbox"
+                      value="lethal"
+                      class="combinatorial-checkbox" /><span
+                      class="toggle-slider"
+                    ></span
+                  ></label>
+                  Lethal Hits
                 </label>
                 <label
                   style="
@@ -722,15 +742,18 @@
                     gap: 10px;
                     cursor: pointer;
                     color: var(--theme-text-light);
-                    text-transform: none;
+                    font-size: 0.9rem;
                   "
                 >
-                  <input
-                    type="checkbox"
-                    value="devastating"
-                    class="combinatorial-checkbox"
-                    style="width: 16px"
-                  />Devastating Wounds
+                  <label class="toggle-switch"
+                    ><input
+                      type="checkbox"
+                      value="devastating"
+                      class="combinatorial-checkbox" /><span
+                      class="toggle-slider"
+                    ></span
+                  ></label>
+                  Devastating Wounds
                 </label>
                 <label
                   style="
@@ -739,32 +762,18 @@
                     gap: 10px;
                     cursor: pointer;
                     color: var(--theme-text-light);
-                    text-transform: none;
+                    font-size: 0.9rem;
                   "
                 >
-                  <input
-                    type="checkbox"
-                    value="sustained_hits"
-                    class="combinatorial-checkbox"
-                    style="width: 16px"
-                  />Sustained Hits 1
-                </label>
-                <label
-                  style="
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    cursor: pointer;
-                    color: var(--theme-text-light);
-                    text-transform: none;
-                  "
-                >
-                  <input
-                    type="checkbox"
-                    value="lance"
-                    class="combinatorial-checkbox"
-                    style="width: 16px"
-                  />Lance
+                  <label class="toggle-switch"
+                    ><input
+                      type="checkbox"
+                      value="sustained_hits"
+                      class="combinatorial-checkbox" /><span
+                      class="toggle-slider"
+                    ></span
+                  ></label>
+                  Sustained Hits 1
                 </label>
               </div>
             </div>
@@ -787,7 +796,7 @@
                 Flat Modifiers
               </h4>
               <div
-                style="display: flex; flex-direction: column; gap: 8px"
+                style="display: flex; flex-direction: column; gap: 12px"
                 id="pool-flat-mods"
               >
                 <label
@@ -797,15 +806,18 @@
                     gap: 10px;
                     cursor: pointer;
                     color: var(--theme-text-light);
-                    text-transform: none;
+                    font-size: 0.9rem;
                   "
                 >
-                  <input
-                    type="checkbox"
-                    value="hit_plus_1"
-                    class="combinatorial-checkbox"
-                    style="width: 16px"
-                  />+1 to Hit
+                  <label class="toggle-switch"
+                    ><input
+                      type="checkbox"
+                      value="hit_plus_1"
+                      class="combinatorial-checkbox combi-hit-mod" /><span
+                      class="toggle-slider"
+                    ></span
+                  ></label>
+                  +1 to Hit
                 </label>
                 <label
                   style="
@@ -814,15 +826,18 @@
                     gap: 10px;
                     cursor: pointer;
                     color: var(--theme-text-light);
-                    text-transform: none;
+                    font-size: 0.9rem;
                   "
                 >
-                  <input
-                    type="checkbox"
-                    value="wound_plus_1"
-                    class="combinatorial-checkbox"
-                    style="width: 16px"
-                  />+1 to Wound
+                  <label class="toggle-switch"
+                    ><input
+                      type="checkbox"
+                      value="heavy"
+                      class="combinatorial-checkbox combi-hit-mod" /><span
+                      class="toggle-slider"
+                    ></span
+                  ></label>
+                  Heavy (+1 to Hit)
                 </label>
                 <label
                   style="
@@ -831,15 +846,38 @@
                     gap: 10px;
                     cursor: pointer;
                     color: var(--theme-text-light);
-                    text-transform: none;
+                    font-size: 0.9rem;
                   "
                 >
-                  <input
-                    type="checkbox"
-                    value="extra_ap_1"
-                    class="combinatorial-checkbox"
-                    style="width: 16px"
-                  />Improve AP by 1
+                  <label class="toggle-switch"
+                    ><input
+                      type="checkbox"
+                      value="wound_plus_1"
+                      class="combinatorial-checkbox" /><span
+                      class="toggle-slider"
+                    ></span
+                  ></label>
+                  +1 to Wound / Lance
+                </label>
+                <label
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    cursor: pointer;
+                    color: var(--theme-text-light);
+                    font-size: 0.9rem;
+                  "
+                >
+                  <label class="toggle-switch"
+                    ><input
+                      type="checkbox"
+                      value="extra_ap_1"
+                      class="combinatorial-checkbox" /><span
+                      class="toggle-slider"
+                    ></span
+                  ></label>
+                  Improve AP by 1
                 </label>
               </div>
             </div>
@@ -862,7 +900,7 @@
                 Rerolls
               </h4>
               <div
-                style="display: flex; flex-direction: column; gap: 8px"
+                style="display: flex; flex-direction: column; gap: 12px"
                 id="pool-rerolls"
               >
                 <label
@@ -872,15 +910,18 @@
                     gap: 10px;
                     cursor: pointer;
                     color: var(--theme-text-light);
-                    text-transform: none;
+                    font-size: 0.9rem;
                   "
                 >
-                  <input
-                    type="checkbox"
-                    value="reroll_hits_1"
-                    class="combinatorial-checkbox"
-                    style="width: 16px"
-                  />Reroll 1s (Hit)
+                  <label class="toggle-switch"
+                    ><input
+                      type="checkbox"
+                      value="reroll_hits_1"
+                      class="combinatorial-checkbox combi-reroll-hit" /><span
+                      class="toggle-slider"
+                    ></span
+                  ></label>
+                  Reroll 1s (Hit)
                 </label>
                 <label
                   style="
@@ -889,15 +930,18 @@
                     gap: 10px;
                     cursor: pointer;
                     color: var(--theme-text-light);
-                    text-transform: none;
+                    font-size: 0.9rem;
                   "
                 >
-                  <input
-                    type="checkbox"
-                    value="reroll_hits_all"
-                    class="combinatorial-checkbox"
-                    style="width: 16px"
-                  />Reroll All (Hit)
+                  <label class="toggle-switch"
+                    ><input
+                      type="checkbox"
+                      value="reroll_hits_all"
+                      class="combinatorial-checkbox combi-reroll-hit" /><span
+                      class="toggle-slider"
+                    ></span
+                  ></label>
+                  Reroll All (Hit)
                 </label>
                 <label
                   style="
@@ -906,15 +950,18 @@
                     gap: 10px;
                     cursor: pointer;
                     color: var(--theme-text-light);
-                    text-transform: none;
+                    font-size: 0.9rem;
                   "
                 >
-                  <input
-                    type="checkbox"
-                    value="reroll_wounds_1"
-                    class="combinatorial-checkbox"
-                    style="width: 16px"
-                  />Reroll 1s (Wound)
+                  <label class="toggle-switch"
+                    ><input
+                      type="checkbox"
+                      value="reroll_wounds_1"
+                      class="combinatorial-checkbox combi-reroll-wound" /><span
+                      class="toggle-slider"
+                    ></span
+                  ></label>
+                  Reroll 1s (Wound)
                 </label>
                 <label
                   style="
@@ -923,15 +970,18 @@
                     gap: 10px;
                     cursor: pointer;
                     color: var(--theme-text-light);
-                    text-transform: none;
+                    font-size: 0.9rem;
                   "
                 >
-                  <input
-                    type="checkbox"
-                    value="reroll_wounds_all"
-                    class="combinatorial-checkbox"
-                    style="width: 16px"
-                  />Reroll All (Wound)
+                  <label class="toggle-switch"
+                    ><input
+                      type="checkbox"
+                      value="reroll_wounds_all"
+                      class="combinatorial-checkbox combi-reroll-wound" /><span
+                      class="toggle-slider"
+                    ></span
+                  ></label>
+                  Reroll All (Wound)
                 </label>
                 <label
                   style="
@@ -940,15 +990,18 @@
                     gap: 10px;
                     cursor: pointer;
                     color: var(--theme-text-light);
-                    text-transform: none;
+                    font-size: 0.9rem;
                   "
                 >
-                  <input
-                    type="checkbox"
-                    value="fish_crits"
-                    class="combinatorial-checkbox"
-                    style="width: 16px"
-                  />Fish for Crits
+                  <label class="toggle-switch"
+                    ><input
+                      type="checkbox"
+                      value="fish_crits"
+                      class="combinatorial-checkbox" /><span
+                      class="toggle-slider"
+                    ></span
+                  ></label>
+                  Fish for Crits
                 </label>
                 <label
                   style="
@@ -957,15 +1010,18 @@
                     gap: 10px;
                     cursor: pointer;
                     color: var(--theme-text-light);
-                    text-transform: none;
+                    font-size: 0.9rem;
                   "
                 >
-                  <input
-                    type="checkbox"
-                    value="reroll_damage"
-                    class="combinatorial-checkbox"
-                    style="width: 16px"
-                  />Reroll Damage
+                  <label class="toggle-switch"
+                    ><input
+                      type="checkbox"
+                      value="reroll_damage"
+                      class="combinatorial-checkbox" /><span
+                      class="toggle-slider"
+                    ></span
+                  ></label>
+                  Reroll Damage
                 </label>
               </div>
             </div>

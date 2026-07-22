@@ -94,7 +94,16 @@ export function addAttackerModule(containerElement) {
               </div>
             </div>
 
-            <h4>Core Profile</h4>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid var(--theme-mid); padding-bottom: 5px;">
+    <h4 style="margin: 0; border: none; padding: 0;">Core Profile</h4>
+    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--theme-accent); font-size: 0.8rem; font-weight: bold; text-transform: uppercase;">
+        Add to Combi Roster
+        <label class="toggle-switch" style="width: 30px; height: 16px;">
+            <input type="checkbox" class="in-combi-roster" />
+            <span class="toggle-slider"></span>
+        </label>
+    </label>
+</div>
             <div class="core-stats-row" style="grid-template-columns: repeat(2, 1fr); max-width: 300px;">
               <div class="input-field"><label>Units</label><input type="number" class="in-units" value="1" min="1" /></div>
               <div class="input-field"><label>Models</label><input type="number" class="in-models" value="5" min="1" /></div>
@@ -438,4 +447,35 @@ export function spawnLeaderboard(container, statsArray, isSingleTarget = false) 
 
 
     container.insertAdjacentElement('afterbegin', summaryCard);
+}
+
+
+//combi engine >>>
+export function renderCombiMirror(weaponsArray, targetUnit) {
+    const container = document.getElementById("combi-mirror-container");
+    if (!container) return;
+
+    let html = `
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 150px; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 4px; border-left: 3px solid var(--theme-btn-standard);">
+            <div style="color: var(--theme-text-muted); font-size: 0.6rem; font-weight: bold; text-transform: uppercase;">Target</div>
+            <div style="font-size: 0.8rem; color: #fff; font-weight: bold;">
+                T${targetUnit.toughness} | W${targetUnit.wounds} | SV${targetUnit.save}+
+            </div>
+        </div>
+    `;
+
+    weaponsArray.slice(0, 4).forEach(w => {
+        html += `
+        <div style="flex: 1; min-width: 150px; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 4px; border-left: 3px solid var(--theme-accent);">
+            <div style="color: var(--theme-text-muted); font-size: 0.6rem; font-weight: bold; text-transform: uppercase;">${w.unitName}</div>
+            <div style="font-size: 0.8rem; color: #fff; font-weight: bold;">
+                ${w.attack}A | S${w.strength} | AP${w.Ap} | D${w.damage}
+            </div>
+        </div>
+        `;
+    });
+
+    html += `</div>`;
+    container.innerHTML = html;
 }

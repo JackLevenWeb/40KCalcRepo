@@ -3,11 +3,12 @@
 import { Unit } from './classes/Unit.js';
 import { Weapon } from './classes/Weapon.js';
 import { runSimulation } from './logic.js';
-import { addAttackerModule, syncAppUI, buildRosterFromJSON, spawnReportCard, addBadgeToModule, spawnLeaderboard } from './ui-manager.js';
+import { addAttackerModule, syncAppUI, buildRosterFromJSON, spawnReportCard, addBadgeToModule, spawnLeaderboard, renderCombiMirror } from './ui-manager.js';
 import { initDataBase, loadDataIntoSQL, queryComparisonData, clearDataBase, ModLabels, loadAveragesIntoSQL, queryAveragesData } from './db-manager.js';
 import { renderChart, renderAdvancedChart } from './chart-manager.js';
 import { initializeWatchers } from './event-manager.js';
 import { applyTheme, getCurrentTheme } from './theme-manager.js';
+
 import './fetchUnitStats.js'
 const SIMULATION_ITERATIONS = 100000;
 
@@ -870,5 +871,37 @@ if (ClearBtn) {
         if (confirm("Are you sure you want to clear all units and reset the dashboard?")) {
             clearDashboard();
         }
+    });
+}
+
+
+///combi engine
+const SyncCombiBtn = document.getElementById("sync-combi-roster-btn");
+
+if (SyncCombiBtn) {
+    SyncCombiBtn.addEventListener("click", () => {
+        const allWeapons = createWeaponsArray();
+        const targetUnit = createUnit();
+
+        const combiWeapons = [];
+        const modules = document.querySelectorAll('.attacker-module');
+
+        modules.forEach((mod, index) => {
+            const toggle = mod.querySelector('.in-combi-roster');
+            if (toggle && toggle.checked && allWeapons[index]) {
+                combiWeapons.push(allWeapons[index]);
+            }
+        });
+
+        if (combiWeapons.length === 0) {
+            alert("No units selected. Toggle 'Add to Combi Roster' on standard units first.");
+            return;
+        }
+
+        if (combiWeapons.length > 4) {
+            alert("Maximum of 4 units allowed in the Combi Roster. Only the first 4 will be synced.");
+        }
+
+        renderCombiMirror(combiWeapons, targetUnit);
     });
 }
