@@ -1,5 +1,4 @@
 // handles all dom manipulation, html generation, and visual updates.
-
 export const ModifierDictionary = {
     "lethal": { name: "Lethal Hits", hasInput: false },
     "devastating": { name: "Devastating Wounds", hasInput: false },
@@ -24,13 +23,41 @@ export const ModifierDictionary = {
     "reroll_damage": { name: "Reroll Damage (1-2)", hasInput: false }
 };
 
+export function switchDashboardView(activeTabId, activeViewId) {
+    const tabs = ["tab-standard", "tab-combinatorial", "tab-dataloom"];
+    tabs.forEach(tabId => {
+        const el = document.getElementById(tabId);
+        if (el) {
+            el.style.backgroundColor = "var(--surface-color)";
+            el.style.color = "var(--theme-text-light)";
+        }
+    });
+
+    const activeTab = document.getElementById(activeTabId);
+    if (activeTab) {
+        activeTab.style.backgroundColor = "var(--theme-accent)";
+        activeTab.style.color = "#0F1115";
+    }
+
+    const views = ["view-standard", "view-combinatorial"];
+    views.forEach(viewId => {
+        const el = document.getElementById(viewId);
+        if (el) el.style.display = "none";
+    });
+
+    const activeView = document.getElementById(activeViewId);
+    if (activeView) {
+        activeView.style.display = "block";
+    }
+}
+
 export function addAttackerModule(containerElement) {
     const moduleHTML = `
       <div class="attacker-module" style="background: var(--surface-color); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px;">
             
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                 <div class="input-field" style="flex-grow: 1; margin-right: 15px;">
-                    <input type="text" class="in-unit-name" value="Attacker Unit" style="font-weight: bold; font-size: 1.2rem; color: var(--theme-text-light); border: none; border-bottom: 1px solid var(--border-color); border-radius: 0; padding: 5px 0; background: transparent; box-shadow: none;" />
+                   <input type="text" class="in-unit-name" value="Attacker Unit" style="font-weight: bold; font-size: 1.2rem; color: var(--theme-accent); border: none; border-bottom: 1px solid var(--border-color); border-radius: 0; padding: 5px 0; background: transparent; box-shadow: none;" />
                     <div class="attached-leaders-display" style="color: var(--theme-text-light); font-size: 0.85rem; font-weight: bold; margin-top: 5px;"></div>
                 </div>
                 <button class="remove-btn" style="background: var(--theme-text-light); color: var(--bg-color); border: none; border-radius: 4px; padding: 5px 10px; font-weight: bold;">X</button>

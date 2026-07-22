@@ -1,12 +1,10 @@
 :root {
-  /* Core Panels - Always Charcoal */
   --bg-color: #0F1115; 
   --surface-color: #1A1D24; 
   --surface-hover: #242830;
   --border-color: #38424D;
   --danger-red: #E63946;
 
-  /* Dynamically Assigned by theme-manager.js */
   --theme-text-light: #9ac1df; 
   --theme-text-muted: #8C9BA8;
   --theme-input-bg: #c5ddef; 
@@ -29,11 +27,12 @@ body {
   color: var(--theme-text-light);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   line-height: 1.6;
-  padding: 20px 40px; 
+  padding: 20px 20px; 
 }
 
 .calculator-container {
-  max-width: 100%;
+  width: 80%;
+  max-width: 1800px;
   margin: 0 auto;
 }
 
@@ -370,8 +369,6 @@ details summary:hover {
     background-color: rgba(255, 255, 255, 0.1) !important;
     color: var(--theme-accent) !important;
 }
-
-/* --- NEW FACTION THEMES --- */
 
 body[data-theme="ultramarines"] {
   --theme-text-light: #9bbced;

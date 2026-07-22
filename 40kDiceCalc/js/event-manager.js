@@ -1,6 +1,5 @@
 // central nervous system. manages dom event listeners and broadcasts custom events.
-
-import { syncAppUI, addBadgeToModule, addAttackerModule } from './ui-manager.js';
+import { syncAppUI, addBadgeToModule, addAttackerModule, switchDashboardView } from './ui-manager.js';
 import { applyTheme } from './theme-manager.js';
 
 export function initializeWatchers() {
@@ -12,6 +11,27 @@ export function initializeWatchers() {
     const ImportBtn = document.getElementById("import-roster-btn");
     const ImportInput = document.getElementById("import-file-input");
     const ThemeSelect = document.getElementById("theme-dropdown");
+
+    const TabStandard = document.getElementById("tab-standard");
+    const TabCombinatorial = document.getElementById("tab-combinatorial");
+    const TabDataLoom = document.getElementById("tab-dataloom");
+
+    if (TabStandard) {
+        TabStandard.addEventListener("click", () => {
+            switchDashboardView("tab-standard", "view-standard");
+        });
+    }
+
+    if (TabCombinatorial) {
+        TabCombinatorial.addEventListener("click", () => {
+            switchDashboardView("tab-combinatorial", "view-combinatorial");
+        });
+    }
+
+    if (TabDataLoom) {
+        TabDataLoom.addEventListener("click", () => {
+        });
+    }
 
     const triggerSave = () => document.dispatchEvent(new CustomEvent("App:AutoSave"));
 

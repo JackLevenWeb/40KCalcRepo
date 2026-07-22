@@ -15,7 +15,55 @@
         <button class="tutorial-btn" data-tutorial="main_site">?</button>
       </h1>
 
-      <div style="max-width: 1200px; margin: 0 auto">
+      <div
+        style="
+          display: flex;
+          justify-content: center;
+          gap: 10px;
+          margin-bottom: 25px;
+          border-bottom: 2px solid var(--border-color);
+          padding-bottom: 15px;
+        "
+      >
+        <button
+          id="tab-standard"
+          class="btn-primary"
+          style="
+            background-color: var(--theme-accent);
+            color: #0f1115;
+            font-size: 1.1rem;
+            padding: 12px 24px;
+          "
+        >
+          Standard Analytics
+        </button>
+        <button
+          id="tab-combinatorial"
+          class="btn-primary"
+          style="
+            background-color: var(--surface-color);
+            color: var(--theme-text-light);
+            font-size: 1.1rem;
+            padding: 12px 24px;
+          "
+        >
+          Combinatorial Engine
+        </button>
+        <button
+          id="tab-dataloom"
+          class="btn-primary"
+          style="
+            background-color: var(--surface-color);
+            color: var(--theme-text-light);
+            font-size: 1.1rem;
+            padding: 12px 24px;
+          "
+        >
+          Data-Loom
+        </button>
+      </div>
+
+      <div id="view-standard" style="display: block">
         <div
           class="control-panel"
           style="
@@ -499,88 +547,457 @@
             </button>
           </div>
         </div>
-      </div>
 
-      <section class="panel results-panel-wrapper" id="results-wrapper">
-        <h2
-          style="
-            grid-column: 1 / -1;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-          "
-        >
-          Base Profile Report
-          <button class="tutorial-btn" data-tutorial="base">?</button>
-        </h2>
-        <div class="stat-cards-grid" id="stats-html"></div>
-
-        <div style="display: flex; flex-direction: column; width: 100%">
-          <div
+        <section class="panel results-panel-wrapper" id="results-wrapper">
+          <h2
             style="
-              display: flex;
-              justify-content: flex-end;
-              align-items: center;
-              margin-bottom: 10px;
-            "
-          ></div>
-          <div
-            style="
-              position: relative;
-              height: 100%;
-              min-height: 350px;
-              width: 100%;
+              grid-column: 1 / -1;
+              border-bottom: 1px solid var(--border-color);
+              padding-bottom: 10px;
+              margin-bottom: 15px;
             "
           >
-            <canvas id="damageChart"></canvas>
-          </div>
-        </div>
-      </section>
+            Base Profile Report
+            <button class="tutorial-btn" data-tutorial="base">?</button>
+          </h2>
+          <div class="stat-cards-grid" id="stats-html"></div>
 
-      <section
-        class="panel"
-        id="advanced-analytics-wrapper"
-        style="display: none; margin-top: 20px"
-      >
+          <div style="display: flex; flex-direction: column; width: 100%">
+            <div
+              style="
+                display: flex;
+                justify-content: flex-end;
+                align-items: center;
+                margin-bottom: 10px;
+              "
+            ></div>
+            <div
+              style="
+                position: relative;
+                height: 100%;
+                min-height: 350px;
+                width: 100%;
+              "
+            >
+              <canvas id="damageChart"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <section
+          class="panel"
+          id="advanced-analytics-wrapper"
+          style="display: none; margin-top: 20px"
+        >
+          <h2
+            style="
+              border-bottom: 1px solid var(--border-color);
+              padding-bottom: 10px;
+              margin-bottom: 20px;
+            "
+          >
+            Modifier Delta Reports
+            <button class="tutorial-btn" data-tutorial="scenario">?</button>
+          </h2>
+          <div id="advanced-reports-container"></div>
+
+          <div
+            style="
+              text-align: center;
+              margin-top: 30px;
+              padding-top: 15px;
+              border-top: 1px dashed var(--border-color);
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              gap: 10px;
+            "
+          >
+            <a
+              href="#"
+              id="raw-data-link"
+              style="
+                color: var(--theme-accent);
+                font-style: italic;
+                text-decoration: none;
+                font-weight: bold;
+              "
+            >
+              [Access Data-Loom: View 100,000+ raw simulation roll outputs]
+            </a>
+            <button class="tutorial-btn" data-tutorial="data_loom">?</button>
+          </div>
+        </section>
+      </div>
+
+      <div id="view-combinatorial" style="display: none">
         <h2
           style="
+            text-align: center;
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 10px;
             margin-bottom: 20px;
           "
         >
-          Modifier Delta Reports
-          <button class="tutorial-btn" data-tutorial="scenario">?</button>
+          Combinatorial Modifier Analysis
+          <button class="tutorial-btn" data-tutorial="combinatorial_engine">
+            ?
+          </button>
         </h2>
-        <div id="advanced-reports-container"></div>
 
-        <div
-          style="
-            text-align: center;
-            margin-top: 30px;
-            padding-top: 15px;
-            border-top: 1px dashed var(--border-color);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-          "
-        >
-          <a
-            href="#"
-            id="raw-data-link"
+        <div id="combinatorial-ui" style="padding: 20px">
+          <div
             style="
-              color: var(--theme-accent);
-              font-style: italic;
-              text-decoration: none;
-              font-weight: bold;
+              background: rgba(0, 0, 0, 0.2);
+              border: 1px dashed var(--theme-accent);
+              padding: 15px;
+              border-radius: 6px;
+              margin-bottom: 25px;
+              text-align: center;
             "
           >
-            [Access Data-Loom: View 100,000+ raw simulation roll outputs]
-          </a>
-          <button class="tutorial-btn" data-tutorial="data_loom">?</button>
+            <p
+              style="
+                color: var(--theme-text-light);
+                font-weight: bold;
+                margin: 0;
+              "
+            >
+              Engine Status: Synchronized. The combinatorial logic will
+              automatically pull your deployed Attacker Roster and Target
+              Profile from the Standard Analytics view.
+            </p>
+          </div>
+
+          <div
+            style="
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 20px;
+              margin-bottom: 30px;
+            "
+          >
+            <div
+              style="
+                background: var(--surface-hover);
+                padding: 15px;
+                border-radius: 6px;
+                border: 1px solid var(--border-color);
+              "
+            >
+              <h4
+                style="
+                  margin-top: 0;
+                  border-bottom: 1px solid var(--theme-mid);
+                  padding-bottom: 5px;
+                "
+              >
+                Weapon Rules
+              </h4>
+              <div
+                style="display: flex; flex-direction: column; gap: 8px"
+                id="pool-weapon-rules"
+              >
+                <label
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    cursor: pointer;
+                    color: var(--theme-text-light);
+                    text-transform: none;
+                  "
+                >
+                  <input
+                    type="checkbox"
+                    value="lethal"
+                    class="combinatorial-checkbox"
+                    style="width: 16px"
+                  />Lethal Hits
+                </label>
+                <label
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    cursor: pointer;
+                    color: var(--theme-text-light);
+                    text-transform: none;
+                  "
+                >
+                  <input
+                    type="checkbox"
+                    value="devastating"
+                    class="combinatorial-checkbox"
+                    style="width: 16px"
+                  />Devastating Wounds
+                </label>
+                <label
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    cursor: pointer;
+                    color: var(--theme-text-light);
+                    text-transform: none;
+                  "
+                >
+                  <input
+                    type="checkbox"
+                    value="sustained_hits"
+                    class="combinatorial-checkbox"
+                    style="width: 16px"
+                  />Sustained Hits 1
+                </label>
+                <label
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    cursor: pointer;
+                    color: var(--theme-text-light);
+                    text-transform: none;
+                  "
+                >
+                  <input
+                    type="checkbox"
+                    value="lance"
+                    class="combinatorial-checkbox"
+                    style="width: 16px"
+                  />Lance
+                </label>
+              </div>
+            </div>
+
+            <div
+              style="
+                background: var(--surface-hover);
+                padding: 15px;
+                border-radius: 6px;
+                border: 1px solid var(--border-color);
+              "
+            >
+              <h4
+                style="
+                  margin-top: 0;
+                  border-bottom: 1px solid var(--theme-mid);
+                  padding-bottom: 5px;
+                "
+              >
+                Flat Modifiers
+              </h4>
+              <div
+                style="display: flex; flex-direction: column; gap: 8px"
+                id="pool-flat-mods"
+              >
+                <label
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    cursor: pointer;
+                    color: var(--theme-text-light);
+                    text-transform: none;
+                  "
+                >
+                  <input
+                    type="checkbox"
+                    value="hit_plus_1"
+                    class="combinatorial-checkbox"
+                    style="width: 16px"
+                  />+1 to Hit
+                </label>
+                <label
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    cursor: pointer;
+                    color: var(--theme-text-light);
+                    text-transform: none;
+                  "
+                >
+                  <input
+                    type="checkbox"
+                    value="wound_plus_1"
+                    class="combinatorial-checkbox"
+                    style="width: 16px"
+                  />+1 to Wound
+                </label>
+                <label
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    cursor: pointer;
+                    color: var(--theme-text-light);
+                    text-transform: none;
+                  "
+                >
+                  <input
+                    type="checkbox"
+                    value="extra_ap_1"
+                    class="combinatorial-checkbox"
+                    style="width: 16px"
+                  />Improve AP by 1
+                </label>
+              </div>
+            </div>
+
+            <div
+              style="
+                background: var(--surface-hover);
+                padding: 15px;
+                border-radius: 6px;
+                border: 1px solid var(--border-color);
+              "
+            >
+              <h4
+                style="
+                  margin-top: 0;
+                  border-bottom: 1px solid var(--theme-mid);
+                  padding-bottom: 5px;
+                "
+              >
+                Rerolls
+              </h4>
+              <div
+                style="display: flex; flex-direction: column; gap: 8px"
+                id="pool-rerolls"
+              >
+                <label
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    cursor: pointer;
+                    color: var(--theme-text-light);
+                    text-transform: none;
+                  "
+                >
+                  <input
+                    type="checkbox"
+                    value="reroll_hits_1"
+                    class="combinatorial-checkbox"
+                    style="width: 16px"
+                  />Reroll 1s (Hit)
+                </label>
+                <label
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    cursor: pointer;
+                    color: var(--theme-text-light);
+                    text-transform: none;
+                  "
+                >
+                  <input
+                    type="checkbox"
+                    value="reroll_hits_all"
+                    class="combinatorial-checkbox"
+                    style="width: 16px"
+                  />Reroll All (Hit)
+                </label>
+                <label
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    cursor: pointer;
+                    color: var(--theme-text-light);
+                    text-transform: none;
+                  "
+                >
+                  <input
+                    type="checkbox"
+                    value="reroll_wounds_1"
+                    class="combinatorial-checkbox"
+                    style="width: 16px"
+                  />Reroll 1s (Wound)
+                </label>
+                <label
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    cursor: pointer;
+                    color: var(--theme-text-light);
+                    text-transform: none;
+                  "
+                >
+                  <input
+                    type="checkbox"
+                    value="reroll_wounds_all"
+                    class="combinatorial-checkbox"
+                    style="width: 16px"
+                  />Reroll All (Wound)
+                </label>
+                <label
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    cursor: pointer;
+                    color: var(--theme-text-light);
+                    text-transform: none;
+                  "
+                >
+                  <input
+                    type="checkbox"
+                    value="fish_crits"
+                    class="combinatorial-checkbox"
+                    style="width: 16px"
+                  />Fish for Crits
+                </label>
+                <label
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    cursor: pointer;
+                    color: var(--theme-text-light);
+                    text-transform: none;
+                  "
+                >
+                  <input
+                    type="checkbox"
+                    value="reroll_damage"
+                    class="combinatorial-checkbox"
+                    style="width: 16px"
+                  />Reroll Damage
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div style="text-align: center; margin-bottom: 30px">
+            <button
+              id="run-combinatorial-btn"
+              style="
+                width: 100%;
+                max-width: 400px;
+                background-color: var(--theme-btn-standard);
+                color: #fff;
+                border: 2px solid #000;
+                border-radius: 6px;
+                padding: 18px 20px;
+                font-size: 1.2rem;
+                font-weight: 800;
+                text-transform: uppercase;
+                letter-spacing: 2px;
+                cursor: pointer;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+                transition: all 0.2s;
+              "
+            >
+              Run Permutations
+            </button>
+          </div>
+
+          <div id="combinatorial-results-container"></div>
         </div>
-      </section>
+      </div>
     </main>
     <script type="module" src="./js/fetchUnitStats.js"></script>
     <script type="module" src="./js/app.js"></script>
