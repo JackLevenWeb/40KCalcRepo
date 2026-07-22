@@ -15,445 +15,489 @@
         <button class="tutorial-btn" data-tutorial="main_site">?</button>
       </h1>
 
-      <div
-        class="control-panel"
-        style="
-          background: var(--surface-color);
-          padding: 20px;
-          border-radius: 8px;
-          border: 1px solid var(--border-color);
-          margin-bottom: 20px;
-          display: flex;
-          flex-direction: column;
-          gap: 15px;
-        "
-      >
-        <h3
-          style="
-            margin: 0;
-            color: var(--theme-text-light);
-            font-size: 1.1rem;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 8px;
-            display: flex;
-            align-items: center;
-          "
-        >
-          Data Requisition & Dashboard Management
-          <button class="tutorial-btn" data-tutorial="dashboard_mgmt">?</button>
-        </h3>
+      <div style="max-width: 1200px; margin: 0 auto">
         <div
+          class="control-panel"
           style="
+            background: var(--surface-color);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
             display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            align-items: stretch;
-            justify-content: space-between;
+            flex-direction: column;
+            gap: 15px;
           "
         >
-          <div
-            id="import-search-container"
+          <h3
             style="
-              position: relative;
-              flex: 1 1 auto;
-              min-width: 300px;
-              max-width: 750px;
-            "
-          >
-            <div
-              style="
-                display: flex;
-                gap: 10px;
-                width: 100%;
-                align-items: stretch;
-              "
-            >
-              <select id="weapon-type-toggle" style="width: 120px">
-                <option value="ranged">Ranged</option>
-                <option value="melee">Melee</option>
-              </select>
-              <input
-                type="text"
-                id="unit-search-input"
-                placeholder="Search for a unit..."
-                style="flex-grow: 1; min-width: 150px"
-              />
-              <button
-                id="import-api-btn"
-                class="btn-primary"
-                style="padding: 10px 20px; cursor: pointer; white-space: nowrap"
-              >
-                Import Unit
-              </button>
-            </div>
-            <ul
-              id="search-results-dropdown"
-              style="
-                display: none;
-                position: absolute;
-                top: 100%;
-                left: 0;
-                right: 0;
-                background-color: var(--surface-color);
-                border: 1px solid var(--border-color);
-                border-top: none;
-                list-style: none;
-                padding: 0;
-                margin: 0;
-                max-height: 250px;
-                overflow-y: auto;
-                z-index: 1000;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-              "
-            ></ul>
-          </div>
-          <div
-            style="
+              margin: 0;
+              color: var(--theme-text-light);
+              font-size: 1.1rem;
+              border-bottom: 1px solid var(--border-color);
+              padding-bottom: 8px;
               display: flex;
-              gap: 10px;
-              align-items: stretch;
-              flex-wrap: wrap;
+              align-items: center;
             "
           >
-            <select id="theme-dropdown" style="min-width: 150px">
-              <option value="placeholder" disabled selected hidden>
-                Theme
-              </option>
-              <option value="space_wolves">Space Wolves</option>
-              <option value="ultramarines">Ultramarines</option>
-              <option value="blood_angels">Blood Angels</option>
-              <option value="dark_angels">Dark Angels</option>
-              <option value="adeptus_custodes">Adeptus Custodes</option>
-              <option value="tyranids">Tyranids</option>
-              <option value="necrons">Necrons</option>
-              <option value="votann">Leagues of Votann</option>
-              <option value="orks">Orks</option>
-              <option value="tau_empire">T'au Empire</option>
-              <option value="aeldari">Aeldari</option>
-              <option value="drukhari">Drukhari</option>
-              <option value="chaos_undivided">Chaos Undivided</option>
-              <option value="thousand_sons">Thousand Sons</option>
-              <option value="death_guard">Death Guard</option>
-            </select>
-            <input
-              type="text"
-              id="roster-name"
-              value="Custom_Roster"
-              placeholder="Name your roster..."
-              style="width: 180px"
-            />
-            <input
-              type="file"
-              id="import-file-input"
-              accept=".json"
-              style="display: none"
-            />
-            <button
-              id="import-roster-btn"
-              class="btn-primary"
-              style="background-color: var(--theme-mid); white-space: nowrap"
-            >
-              Import JSON
+            Data Requisition & Dashboard Management
+            <button class="tutorial-btn" data-tutorial="dashboard_mgmt">
+              ?
             </button>
-            <button
-              id="export-roster-btn"
-              class="btn-primary"
-              style="white-space: nowrap"
-            >
-              Export JSON
-            </button>
-            <button
-              id="clear-dashboard-btn"
-              class="btn-primary"
-              style="
-                background-color: var(--bg-color);
-                color: var(--danger-red);
-                border-color: var(--danger-red);
-                white-space: nowrap;
-              "
-            >
-              ⚠️ Clear Dashboard
-            </button>
-          </div>
-        </div>
-      </div>
+          </h3>
 
-      <div class="stats-grid">
-        <section class="panel attacker-panel">
           <div
             style="
               display: flex;
               justify-content: space-between;
-              align-items: center;
-              margin-bottom: 15px;
+              align-items: flex-start;
               flex-wrap: wrap;
-              gap: 10px;
-            "
-          >
-            <h2>
-              Attacker Roster
-              <button class="tutorial-btn" data-tutorial="attacker_roster">
-                ?
-              </button>
-            </h2>
-            <button
-              id="add-attacker-btn"
-              class="btn-primary"
-              style="height: 42px"
-            >
-              + Deploy Unit
-            </button>
-          </div>
-
-          <div
-            class="global-rules-panel"
-            style="
-              background: rgba(0, 0, 0, 0.2);
-              padding: 15px;
-              border-radius: 6px;
-              margin-bottom: 15px;
-              border: 1px dashed var(--theme-accent);
+              gap: 20px;
             "
           >
             <div
               style="
                 display: flex;
-                gap: 10px;
-                align-items: stretch;
-                flex-wrap: wrap;
+                flex-direction: column;
+                gap: 15px;
+                flex-grow: 1;
+                max-width: 750px;
               "
             >
-              <label
+              <div
+                id="import-search-container"
+                style="position: relative; width: 100%"
+              >
+                <div
+                  style="
+                    display: flex;
+                    gap: 10px;
+                    width: 100%;
+                    align-items: stretch;
+                  "
+                >
+                  <select id="weapon-type-toggle" style="width: 120px">
+                    <option value="ranged">Ranged</option>
+                    <option value="melee">Melee</option>
+                  </select>
+                  <input
+                    type="text"
+                    id="unit-search-input"
+                    placeholder="Search for a unit..."
+                    style="flex-grow: 1; min-width: 150px"
+                  />
+                  <div style="display: flex; gap: 10px">
+                    <button
+                      type="button"
+                      id="import-attacker-btn"
+                      class="btn-primary"
+                    >
+                      Import Attacker
+                    </button>
+                    <button
+                      type="button"
+                      id="import-target-btn"
+                      class="btn-primary"
+                    >
+                      Import Target
+                    </button>
+                  </div>
+                </div>
+                <ul
+                  id="search-results-dropdown"
+                  style="
+                    display: none;
+                    position: absolute;
+                    top: 100%;
+                    left: 0;
+                    right: 0;
+                    background-color: var(--surface-color);
+                    border: 1px solid var(--border-color);
+                    border-top: none;
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                    max-height: 250px;
+                    overflow-y: auto;
+                    z-index: 1000;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+                  "
+                ></ul>
+              </div>
+
+              <div
                 style="
-                  font-weight: bold;
-                  color: var(--theme-accent);
                   display: flex;
-                  align-items: center;
+                  gap: 10px;
+                  align-items: stretch;
+                  flex-wrap: wrap;
                 "
-                >Army Wide Rules:</label
               >
-              <select
-                id="global-mod-dropdown"
-                style="flex-grow: 1; min-width: 200px"
-              >
-                <option value="none">
-                  -- Select Rule to Apply to ALL Units --
+                <input
+                  type="text"
+                  id="roster-name"
+                  value="Custom_Roster"
+                  placeholder="Name your roster..."
+                  style="width: 180px"
+                />
+                <input
+                  type="file"
+                  id="import-file-input"
+                  accept=".json"
+                  style="display: none"
+                />
+                <button
+                  id="import-roster-btn"
+                  class="btn-primary"
+                  style="
+                    background-color: var(--theme-mid);
+                    white-space: nowrap;
+                  "
+                >
+                  Import JSON
+                </button>
+                <button
+                  id="export-roster-btn"
+                  class="btn-primary"
+                  style="white-space: nowrap"
+                >
+                  Export JSON
+                </button>
+              </div>
+            </div>
+
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-end;
+                min-width: 200px;
+              "
+            >
+              <select id="theme-dropdown" style="min-width: 150px; width: 100%">
+                <option value="placeholder" disabled selected hidden>
+                  Theme
                 </option>
-                <option value="lethal">Lethal Hits</option>
-                <option value="devastating">Devastating Wounds</option>
-                <option value="sustained">Sustained Hits</option>
-                <option value="hit_plus_1">+1 to Hit</option>
-                <option value="wound_plus_1">+1 to Wound</option>
-                <option value="reroll_hits_1">Reroll 1s to Hit</option>
-                <option value="reroll_hits_all">Reroll All (Hit)</option>
-                <option value="reroll_wounds_1">Reroll 1s to Wound</option>
-                <option value="reroll_wounds_all">Reroll All (Wound)</option>
-                <option value="fish_crits">Fish for crits(greedy)</option>
+                <option value="space_wolves">Space Wolves</option>
+                <option value="ultramarines">Ultramarines</option>
+                <option value="blood_angels">Blood Angels</option>
+                <option value="dark_angels">Dark Angels</option>
+                <option value="adeptus_custodes">Adeptus Custodes</option>
+                <option value="tyranids">Tyranids</option>
+                <option value="necrons">Necrons</option>
+                <option value="votann">Leagues of Votann</option>
+                <option value="orks">Orks</option>
+                <option value="tau_empire">T'au Empire</option>
+                <option value="aeldari">Aeldari</option>
+                <option value="drukhari">Drukhari</option>
+                <option value="chaos_undivided">Chaos Undivided</option>
+                <option value="thousand_sons">Thousand Sons</option>
+                <option value="death_guard">Death Guard</option>
               </select>
               <button
-                id="add-global-mod-btn"
+                id="clear-dashboard-btn"
                 class="btn-primary"
                 style="
-                  background-color: var(--theme-accent);
-                  color: #0f1115;
+                  background-color: var(--bg-color);
+                  color: var(--danger-red);
+                  border-color: var(--danger-red);
                   white-space: nowrap;
+                  width: 100%;
                 "
               >
-                Apply to All
+                ⚠️ Clear Dashboard
               </button>
             </div>
           </div>
-          <div id="attacker-roster"></div>
-        </section>
-
-        <section class="panel target-panel">
-          <h2>
-            Target Profile
-            <button class="tutorial-btn" data-tutorial="target_profile">
-              ?
-            </button>
-          </h2>
-
-          <h4>Defensive Stats</h4>
-          <div class="core-stats-row">
-            <div class="input-field">
-              <label>Toughness (T)</label>
-              <input type="number" id="toughness" value="10" min="1" />
-            </div>
-            <div class="input-field">
-              <label>Wounds (W)</label>
-              <input type="number" id="wounds" value="12" min="1" />
-            </div>
-            <div class="input-field">
-              <label>Save (SV)</label>
-              <input type="number" id="save" value="4" min="2" max="7" />
-            </div>
-            <div class="input-field">
-              <label>Invulnerable</label>
-              <input
-                type="number"
-                id="inVul"
-                min="2"
-                max="6"
-                placeholder="None"
-              />
-            </div>
-          </div>
-
-          <h4>Defensive Modifiers</h4>
-          <div style="display: flex; flex-direction: column; gap: 8px">
-            <label
-              style="
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                cursor: pointer;
-                color: var(--theme-text-light);
-                text-transform: none;
-              "
-            >
-              <input type="checkbox" id="def-minus-hit" style="width: 16px" />-1
-              to Hit
-            </label>
-            <label
-              style="
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                cursor: pointer;
-                color: var(--theme-text-light);
-                text-transform: none;
-              "
-            >
-              <input
-                type="checkbox"
-                id="def-minus-wound"
-                style="width: 16px"
-              />-1 to Wound
-            </label>
-            <label
-              style="
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                cursor: pointer;
-                color: var(--theme-text-light);
-                text-transform: none;
-              "
-            >
-              <input
-                type="checkbox"
-                id="def-minus-wound-str"
-                style="width: 16px"
-              />-1 Wound (if S > T)
-            </label>
-            <label
-              style="
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                cursor: pointer;
-                color: var(--theme-text-light);
-                text-transform: none;
-              "
-            >
-              <input
-                type="checkbox"
-                id="def-cover"
-                style="width: 16px"
-              />Benefit of Cover
-            </label>
-            <label
-              style="
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                cursor: pointer;
-                color: var(--theme-text-light);
-                text-transform: none;
-              "
-            >
-              <input
-                type="checkbox"
-                id="def-plus-one-save"
-                style="width: 16px"
-              />+1 to Save
-            </label>
-          </div>
-
-          <h4>Damage Mitigation</h4>
-          <div class="core-stats-row">
-            <div class="input-field">
-              <label>Reduce Damage</label>
-              <select id="def-reduce-dam">
-                <option value="none">None</option>
-                <option value="half">Half Damage</option>
-                <option value="minus1">-1 Damage</option>
-              </select>
-            </div>
-            <div class="input-field">
-              <label>Feel No Pain</label>
-              <select id="def-fnp">
-                <option value="0">None</option>
-                <option value="6">6+</option>
-                <option value="5">5+</option>
-                <option value="4">4+</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="input-field" style="margin-top: 15px">
-            <label>Models in Target Unit</label>
-            <input type="number" id="target-models" value="10" min="1" />
-          </div>
-        </section>
-      </div>
-
-      <div style="display: flex; gap: 15px; margin-bottom: 20px; width: 100%">
-        <div style="flex: 1; display: flex; flex-direction: column; gap: 10px">
-          <div
-            style="
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              gap: 8px;
-            "
-          >
-            <span
-              style="
-                color: var(--theme-text-muted);
-                font-size: 0.85rem;
-                font-weight: bold;
-                text-transform: uppercase;
-              "
-              >Base Profile Simulation</span
-            >
-            <button class="tutorial-btn" data-tutorial="base_sim">?</button>
-          </div>
-          <button id="calculate-btn">FOR THE EMPEROR!</button>
         </div>
 
-        <div style="flex: 1; display: flex; flex-direction: column; gap: 10px">
-          <div
-            style="
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              gap: 8px;
-            "
-          >
-            <span
+        <div class="stats-grid">
+          <section class="panel attacker-panel">
+            <div
               style="
-                color: var(--theme-text-muted);
-                font-size: 0.85rem;
-                font-weight: bold;
-                text-transform: uppercase;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 15px;
+                flex-wrap: wrap;
+                gap: 10px;
               "
-              >Modifier Delta Analysis</span
             >
-            <button class="tutorial-btn" data-tutorial="adv_sim">?</button>
+              <h2>
+                Attacker Roster
+                <button class="tutorial-btn" data-tutorial="attacker_roster">
+                  ?
+                </button>
+              </h2>
+              <button
+                id="add-attacker-btn"
+                class="btn-primary"
+                style="height: 42px"
+              >
+                + Deploy Unit
+              </button>
+            </div>
+
+            <div
+              class="global-rules-panel"
+              style="
+                background: rgba(0, 0, 0, 0.2);
+                padding: 15px;
+                border-radius: 6px;
+                margin-bottom: 15px;
+                border: 1px dashed var(--theme-accent);
+              "
+            >
+              <div
+                style="
+                  display: flex;
+                  gap: 10px;
+                  align-items: stretch;
+                  flex-wrap: wrap;
+                "
+              >
+                <label
+                  style="
+                    font-weight: bold;
+                    color: var(--theme-accent);
+                    display: flex;
+                    align-items: center;
+                  "
+                  >Army Wide Rules:</label
+                >
+                <select
+                  id="global-mod-dropdown"
+                  style="flex-grow: 1; min-width: 200px"
+                >
+                  <option value="none">
+                    -- Select Rule to Apply to ALL Units --
+                  </option>
+                  <option value="lethal">Lethal Hits</option>
+                  <option value="devastating">Devastating Wounds</option>
+                  <option value="sustained">Sustained Hits</option>
+                  <option value="hit_plus_1">+1 to Hit</option>
+                  <option value="wound_plus_1">+1 to Wound</option>
+                  <option value="reroll_hits_1">Reroll 1s to Hit</option>
+                  <option value="reroll_hits_all">Reroll All (Hit)</option>
+                  <option value="reroll_wounds_1">Reroll 1s to Wound</option>
+                  <option value="reroll_wounds_all">Reroll All (Wound)</option>
+                  <option value="fish_crits">Fish for crits(greedy)</option>
+                </select>
+                <button
+                  id="add-global-mod-btn"
+                  class="btn-primary"
+                  style="
+                    background-color: var(--theme-accent);
+                    color: #0f1115;
+                    white-space: nowrap;
+                  "
+                >
+                  Apply to All
+                </button>
+              </div>
+            </div>
+            <div id="attacker-roster"></div>
+          </section>
+
+          <section class="panel target-panel">
+            <h2>
+              Target Profile
+              <button class="tutorial-btn" data-tutorial="target_profile">
+                ?
+              </button>
+            </h2>
+
+            <h4>Defensive Stats</h4>
+            <div class="core-stats-row">
+              <div class="input-field">
+                <label>Toughness (T)</label>
+                <input type="number" id="toughness" value="10" min="1" />
+              </div>
+              <div class="input-field">
+                <label>Wounds (W)</label>
+                <input type="number" id="wounds" value="12" min="1" />
+              </div>
+              <div class="input-field">
+                <label>Save (SV)</label>
+                <input type="number" id="save" value="4" min="2" max="7" />
+              </div>
+              <div class="input-field">
+                <label>Invulnerable</label>
+                <input
+                  type="number"
+                  id="inVul"
+                  min="2"
+                  max="6"
+                  placeholder="None"
+                />
+              </div>
+            </div>
+
+            <h4>Defensive Modifiers</h4>
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <label
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 10px;
+                  cursor: pointer;
+                  color: var(--theme-text-light);
+                  text-transform: none;
+                "
+              >
+                <input
+                  type="checkbox"
+                  id="def-minus-hit"
+                  style="width: 16px"
+                />-1 to Hit
+              </label>
+              <label
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 10px;
+                  cursor: pointer;
+                  color: var(--theme-text-light);
+                  text-transform: none;
+                "
+              >
+                <input
+                  type="checkbox"
+                  id="def-minus-wound"
+                  style="width: 16px"
+                />-1 to Wound
+              </label>
+              <label
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 10px;
+                  cursor: pointer;
+                  color: var(--theme-text-light);
+                  text-transform: none;
+                "
+              >
+                <input
+                  type="checkbox"
+                  id="def-minus-wound-str"
+                  style="width: 16px"
+                />-1 Wound (if S > T)
+              </label>
+              <label
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 10px;
+                  cursor: pointer;
+                  color: var(--theme-text-light);
+                  text-transform: none;
+                "
+              >
+                <input
+                  type="checkbox"
+                  id="def-cover"
+                  style="width: 16px"
+                />Benefit of Cover
+              </label>
+              <label
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 10px;
+                  cursor: pointer;
+                  color: var(--theme-text-light);
+                  text-transform: none;
+                "
+              >
+                <input
+                  type="checkbox"
+                  id="def-plus-one-save"
+                  style="width: 16px"
+                />+1 to Save
+              </label>
+            </div>
+
+            <h4>Damage Mitigation</h4>
+            <div class="core-stats-row">
+              <div class="input-field">
+                <label>Reduce Damage</label>
+                <select id="def-reduce-dam">
+                  <option value="none">None</option>
+                  <option value="half">Half Damage</option>
+                  <option value="minus1">-1 Damage</option>
+                </select>
+              </div>
+              <div class="input-field">
+                <label>Feel No Pain</label>
+                <select id="def-fnp">
+                  <option value="0">None</option>
+                  <option value="6">6+</option>
+                  <option value="5">5+</option>
+                  <option value="4">4+</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="input-field" style="margin-top: 15px">
+              <label>Models in Target Unit</label>
+              <input type="number" id="target-models" value="10" min="1" />
+            </div>
+          </section>
+        </div>
+
+        <div style="display: flex; gap: 15px; margin-bottom: 20px; width: 100%">
+          <div
+            style="flex: 1; display: flex; flex-direction: column; gap: 10px"
+          >
+            <div
+              style="
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 8px;
+              "
+            >
+              <span
+                style="
+                  color: var(--theme-text-muted);
+                  font-size: 0.85rem;
+                  font-weight: bold;
+                  text-transform: uppercase;
+                "
+                >Base Profile Simulation</span
+              >
+              <button class="tutorial-btn" data-tutorial="base_sim">?</button>
+            </div>
+            <button id="calculate-btn">FOR THE EMPEROR!</button>
           </div>
-          <button id="advanced-analytics-btn">FOR THE ADVANCED EMPEROR!</button>
+
+          <div
+            style="flex: 1; display: flex; flex-direction: column; gap: 10px"
+          >
+            <div
+              style="
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 8px;
+              "
+            >
+              <span
+                style="
+                  color: var(--theme-text-muted);
+                  font-size: 0.85rem;
+                  font-weight: bold;
+                  text-transform: uppercase;
+                "
+                >Modifier Delta Analysis</span
+              >
+              <button class="tutorial-btn" data-tutorial="adv_sim">?</button>
+            </div>
+            <button id="advanced-analytics-btn">
+              FOR THE ADVANCED EMPEROR!
+            </button>
+          </div>
         </div>
       </div>
 

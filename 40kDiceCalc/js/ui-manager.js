@@ -20,100 +20,108 @@ export const ModifierDictionary = {
     "reroll_hits_all": { name: "Reroll All (Hit)", hasInput: false },
     "reroll_wounds_1": { name: "Reroll 1s (Wound)", hasInput: false },
     "reroll_wounds_all": { name: "Reroll All (Wound)", hasInput: false },
-    "fish_crits": { name: "Fish for Crits", hasInput: false }
+    "fish_crits": { name: "Fish for Crits", hasInput: false },
+    "reroll_damage": { name: "Reroll Damage (1-2)", hasInput: false }
 };
 
 export function addAttackerModule(containerElement) {
     const moduleHTML = `
       <div class="attacker-module" style="background: var(--surface-color); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px;">
-        
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-            <div class="input-field" style="flex-grow: 1; margin-right: 15px;">
-                <input type="text" class="in-unit-name" value="Attacker Unit" style="font-weight: bold; font-size: 1.2rem; color: var(--theme-text-light); border: none; border-bottom: 1px solid var(--border-color); border-radius: 0; padding: 5px 0; background: transparent; box-shadow: none;" />
-                <div class="attached-leaders-display" style="color: var(--theme-text-light); font-size: 0.85rem; font-weight: bold; margin-top: 5px;"></div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                <div class="input-field" style="flex-grow: 1; margin-right: 15px;">
+                    <input type="text" class="in-unit-name" value="Attacker Unit" style="font-weight: bold; font-size: 1.2rem; color: var(--theme-text-light); border: none; border-bottom: 1px solid var(--border-color); border-radius: 0; padding: 5px 0; background: transparent; box-shadow: none;" />
+                    <div class="attached-leaders-display" style="color: var(--theme-text-light); font-size: 0.85rem; font-weight: bold; margin-top: 5px;"></div>
+                </div>
+                <button class="remove-btn" style="background: var(--theme-text-light); color: var(--bg-color); border: none; border-radius: 4px; padding: 5px 10px; font-weight: bold;">X</button>
             </div>
-            <button class="remove-btn" style="background: var(--theme-text-light); color: var(--bg-color); border: none; border-radius: 4px; padding: 5px 10px; font-weight: bold;">X</button>
-        </div>
 
-        <div style="margin-bottom: 15px;">
-          <label style="cursor: pointer; color: var(--theme-text-light); font-weight: bold; font-size: 0.9rem; text-transform: uppercase;">
-             <input type="checkbox" class="is-leader" style="margin-right: 5px;"> Declare Leader
-          </label>
-        </div>
+            <div style="margin-bottom: 15px;">
+              <label style="cursor: pointer; color: var(--theme-text-light); font-weight: bold; font-size: 0.9rem; text-transform: uppercase;">
+                 <input type="checkbox" class="is-leader" style="margin-right: 5px;"> Declare Leader
+              </label>
+            </div>
 
-        <div class="leader-options" style="display: none; background: var(--surface-hover); padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid var(--border-color);">
-          <div class="core-stats-row">
-              <div class="input-field">
-                 <label>Attach to Unit:</label>
-                 <select class="attach-to"><option value="">-- Select Unit --</option></select>
+            <div class="leader-options" style="display: none; background: var(--surface-hover); padding: 15px; border-radius: 6px; margin-bottom: 15px; border: 1px solid var(--border-color);">
+              <div class="core-stats-row">
+                  <div class="input-field">
+                     <label>Attach to Unit:</label>
+                     <select class="attach-to"><option value="">-- Select Unit --</option></select>
+                  </div>
+                  <div class="input-field">
+                     <label>Grant Keyword to Unit:</label>
+                     <select class="grant-keyword">
+                        <option value="none">None</option>
+                        <option value="lethal">Lethal Hits</option>
+                        <option value="devastating">Devastating Wounds</option>
+                        <option value="sustained">Sustained Hits</option>
+                        <option value="lance">Lance</option>
+                        <option value="reroll_hits_1">Reroll 1s to Hit</option>
+                        <option value="reroll_hits_all">Reroll All (Hit)</option>
+                        <option value="reroll_wounds_1">Reroll 1s to Wound</option>
+                        <option value="reroll_wounds_all">Reroll All (Wound)</option>
+                        <option value="hit_plus_1">+1 to Hit</option>
+                        <option value="wound_plus_1">+1 to Wound</option>
+                     </select>
+                  </div>
               </div>
-              <div class="input-field">
-                 <label>Grant Keyword to Unit:</label>
-                 <select class="grant-keyword">
-                    <option value="none">None</option>
-                    <option value="lethal">Lethal Hits</option>
-                    <option value="devastating">Devastating Wounds</option>
-                    <option value="sustained">Sustained Hits</option>
-                    <option value="lance">Lance</option>
-                    <option value="reroll_hits_1">Reroll 1s to Hit</option>
-                    <option value="reroll_hits_all">Reroll All (Hit)</option>
-                    <option value="reroll_wounds_1">Reroll 1s to Wound</option>
-                    <option value="reroll_wounds_all">Reroll All (Wound)</option>
-                    <option value="hit_plus_1">+1 to Hit</option>
-                    <option value="wound_plus_1">+1 to Wound</option>
-                 </select>
-              </div>
-          </div>
-        </div>
+            </div>
 
-        <h4>Core Profile</h4>
-        <div class="core-stats-row">
-          <div class="input-field"><label>Units</label><input type="number" class="in-units" value="1" min="1" /></div>
-          <div class="input-field"><label>Models</label><input type="number" class="in-models" value="5" min="1" /></div>
-          <div class="input-field"><label>Attacks</label><input type="text" class="in-attacks" value="4" min="1" placeholder="D3+1" /></div>
-          <div class="input-field"><label>BS/WS</label><input type="text" class="in-bsws" value="3" placeholder="NA" /></div>
-          <div class="input-field"><label>Strength</label><input type="number" class="in-str" value="4" min="1" /></div>
-          <div class="input-field"><label>AP</label><input type="number" class="in-ap" value="-1" max="0" /></div>
-          <div class="input-field"><label>Damage</label><input type="text" class="in-dam" value="1" placeholder="D6+1" /></div>
-          <div class="input-field"><label>Crit Hit</label><input type="number" class="in-crit-hit" value="6" min="2" max="6" /></div>
-          <div class="input-field"><label>Crit Wnd</label><input type="number" class="in-crit-wound" value="6" min="2" max="6" /></div>
-        </div>
+            <h4>Core Profile</h4>
+            <div class="core-stats-row" style="grid-template-columns: repeat(2, 1fr); max-width: 300px;">
+              <div class="input-field"><label>Units</label><input type="number" class="in-units" value="1" min="1" /></div>
+              <div class="input-field"><label>Models</label><input type="number" class="in-models" value="5" min="1" /></div>
+            </div>
+            
+            <div class="core-stats-row" style="grid-template-columns: repeat(5, 1fr);">
+              <div class="input-field"><label>Attacks</label><input type="text" class="in-attacks" value="4" min="1" placeholder="D3+1" /></div>
+              <div class="input-field"><label>BS/WS</label><input type="text" class="in-bsws" value="3" placeholder="NA" /></div>
+              <div class="input-field"><label>Strength</label><input type="number" class="in-str" value="4" min="1" /></div>
+              <div class="input-field"><label>AP</label><input type="number" class="in-ap" value="-1" max="0" /></div>
+              <div class="input-field"><label>Damage</label><input type="text" class="in-dam" value="1" placeholder="D6+1" /></div>
+            </div>
 
-        <h4>Active Modifiers</h4>
-        <div class="modifier-adder-row">
-            <select class="mod-dropdown" style="flex-grow: 1;">
-                <option value="none">-- Select a Rule to Add --</option>
-                <optgroup label="Weapon Rules">
-                    <option value="lethal">Lethal Hits</option>
-                    <option value="devastating">Devastating Wounds</option>
-                    <option value="sustained">Sustained Hits</option>
-                    <option value="melta">Melta</option>
-                    <option value="anti">Anti-X</option>
-                    <option value="rapidfire">Rapid Fire</option>
-                    <option value="lance">Lance</option>
-                    <option value="torrent">Torrent</option>
-                    <option value="twinlinked">Twin-Linked</option>
-                    <option value="blast">Blast</option>
-                    <option value="cleave">Cleave</option>
-                </optgroup>
-                <optgroup label="Flat Modifiers">
-                    <option value="hit_plus_1">+1 to Hit</option>
-                    <option value="hit_minus_1">-1 to Hit</option>
-                    <option value="wound_plus_1">+1 to Wound</option>
-                    <option value="wound_minus_1">-1 to Wound</option>
-                </optgroup>
-                <optgroup label="Rerolls">
-                    <option value="reroll_hits_1">Reroll 1s to Hit</option>
-                    <option value="reroll_hits_all">Reroll All Hits</option>
-                    <option value="reroll_wounds_1">Reroll 1s to Wound</option>
-                    <option value="reroll_wounds_all">Reroll All Wounds</option>
-                    <option value="fish_crits">Fish for Crits (Greedy)</option>
-                </optgroup>
-            </select>
-            <button class="btn-primary add-mod-btn">Add Rule</button>
-        </div>
-        
-        <div class="active-modifiers-list"></div>
+            <div class="core-stats-row" style="grid-template-columns: repeat(2, 1fr); max-width: 300px;">
+              <div class="input-field"><label>Crit Hit</label><input type="number" class="in-crit-hit" value="6" min="2" max="6" /></div>
+              <div class="input-field"><label>Crit Wnd</label><input type="number" class="in-crit-wound" value="6" min="2" max="6" /></div>
+            </div>
+
+            <h4>Active Modifiers</h4>
+            <div class="modifier-adder-row">
+                <select class="mod-dropdown" style="flex-grow: 1;">
+                    <option value="none">-- Select a Rule to Add --</option>
+                    <optgroup label="Weapon Rules">
+                        <option value="lethal">Lethal Hits</option>
+                        <option value="devastating">Devastating Wounds</option>
+                        <option value="sustained">Sustained Hits</option>
+                        <option value="melta">Melta</option>
+                        <option value="anti">Anti-X</option>
+                        <option value="rapidfire">Rapid Fire</option>
+                        <option value="lance">Lance</option>
+                        <option value="torrent">Torrent</option>
+                        <option value="twinlinked">Twin-Linked</option>
+                        <option value="blast">Blast</option>
+                        <option value="cleave">Cleave</option>
+                    </optgroup>
+                    <optgroup label="Flat Modifiers">
+                        <option value="hit_plus_1">+1 to Hit</option>
+                        <option value="hit_minus_1">-1 to Hit</option>
+                        <option value="wound_plus_1">+1 to Wound</option>
+                        <option value="wound_minus_1">-1 to Wound</option>
+                    </optgroup>
+                    <optgroup label="Rerolls">
+                        <option value="reroll_hits_1">Reroll 1s to Hit</option>
+                        <option value="reroll_hits_all">Reroll All Hits</option>
+                        <option value="reroll_wounds_1">Reroll 1s to Wound</option>
+                        <option value="reroll_wounds_all">Reroll All Wounds</option>
+                        <option value="fish_crits">Fish for Crits (Greedy)</option>
+                        <option value="reroll_damage">Reroll Damage (1s & 2s)</option>
+                    </optgroup>
+                </select>
+                <button class="btn-primary add-mod-btn">Add Rule</button>
+            </div>
+            
+            <div class="active-modifiers-list"></div>
       </div>
     `;
 
@@ -285,6 +293,7 @@ export function buildRosterFromJSON(containerElement, jsonData, clearRoster = tr
             if (mods.rerollWounds === "all") addBadgeToModule(newModule, "reroll_wounds_all", false);
             if (mods.rerollWounds === "ones") addBadgeToModule(newModule, "reroll_wounds_1", false);
             if (mods.fishForCrits) addBadgeToModule(newModule, "fish_crits", false);
+            if (mods.rerollDamage) addBadgeToModule(newModule, "reroll_damage", false);
 
             if (mods.sustained > 0) {
                 addBadgeToModule(newModule, "sustained", false);
