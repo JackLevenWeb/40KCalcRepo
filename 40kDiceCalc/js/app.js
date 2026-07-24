@@ -3,11 +3,12 @@
 import { Unit } from './classes/Unit.js';
 import { Weapon } from './classes/Weapon.js';
 import { runSimulation } from './logic.js';
-import { addAttackerModule, syncAppUI, buildRosterFromJSON, spawnReportCard, addBadgeToModule, spawnLeaderboard, renderCombiMirror } from './ui-manager.js';
+import { addAttackerModule, syncAppUI, buildRosterFromJSON, spawnReportCard, addBadgeToModule, spawnLeaderboard, renderCombiMirror, renderCombinatorialLeaderboard } from './ui-manager.js';
 import { initDataBase, loadDataIntoSQL, queryComparisonData, clearDataBase, ModLabels, loadAveragesIntoSQL, queryAveragesData } from './db-manager.js';
 import { renderChart, renderAdvancedChart } from './chart-manager.js';
 import { initializeWatchers } from './event-manager.js';
 import { applyTheme, getCurrentTheme } from './theme-manager.js';
+import { scrapeCombinatorialSelections, generateCombinations } from './combinatorial-engine.js';
 
 import './fetchUnitStats.js'
 const SIMULATION_ITERATIONS = 100000;
@@ -37,6 +38,9 @@ const ClearBtn = document.getElementById("clear-dashboard-btn");
 
 let currentSimulationResults = null;
 let currentIsSingleTarget = false;
+
+let activeCombiWeapons = [];
+let activeCombiTarget = null;
 
 initDataBase();
 
@@ -862,10 +866,10 @@ function clearDashboard() {
     syncAppUI();
 }
 
-// Listen for the custom event from the Theme Changer
+
 document.addEventListener("App:ClearDashboard", clearDashboard);
 
-// manual Clear Dashboard Button
+// manual clear dashboard button
 if (ClearBtn) {
     ClearBtn.addEventListener("click", () => {
         if (confirm("Are you sure you want to clear all units and reset the dashboard?")) {
@@ -875,33 +879,98 @@ if (ClearBtn) {
 }
 
 
-///combi engine
+///combi engine>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 const SyncCombiBtn = document.getElementById("sync-combi-roster-btn");
 
 if (SyncCombiBtn) {
     SyncCombiBtn.addEventListener("click", () => {
         const allWeapons = createWeaponsArray();
-        const targetUnit = createUnit();
+        activeCombiTarget = createUnit();
 
-        const combiWeapons = [];
+        activeCombiWeapons = [];
         const modules = document.querySelectorAll('.attacker-module');
 
         modules.forEach((mod, index) => {
             const toggle = mod.querySelector('.in-combi-roster');
             if (toggle && toggle.checked && allWeapons[index]) {
-                combiWeapons.push(allWeapons[index]);
+                activeCombiWeapons.push(allWeapons[index]);
             }
         });
 
-        if (combiWeapons.length === 0) {
-            alert("No units selected. Toggle 'Add to Combi Roster' on standard units first.");
+        if (activeCombiWeapons.length === 0) {
+            alert("No units selected.");
             return;
         }
 
-        if (combiWeapons.length > 4) {
-            alert("Maximum of 4 units allowed in the Combi Roster. Only the first 4 will be synced.");
+        if (activeCombiWeapons.length > 4) {
+            alert("Maximum of 4 units allowed.");
         }
 
-        renderCombiMirror(combiWeapons, targetUnit);
+        renderCombiMirror(activeCombiWeapons, activeCombiTarget);
+    });
+}
+
+
+const combiButton = document.getElementById("run-combinatorial-btn");
+
+if (combiButton) {
+    combiButton.addEventListener("click", async () => {
+        if (activeCombiWeapons.length === 0 || !activeCombiTarget) {
+            alert("Please sync the Combi Roster first.");
+            return;
+        }
+
+        combiButton.disabled = true;
+        combiButton.textContent = "CALCULATING PERMUTATIONS...";
+
+        const selectedMods = scrapeCombinatorialSelections();
+        const allWeaponsLeaderboard = [];
+
+        for (const weapon of activeCombiWeapons) {
+            const comboYield = generateCombinations(selectedMods);
+            const masterCompArray = [];
+
+            for (const mod of comboYield) {
+                let moddedWeapon = JSON.parse(JSON.stringify(weapon));
+
+                for (const modKey of mod) {
+                    applyModifierToWeapon(moddedWeapon, modKey);
+                }
+
+                const payload = {
+                    targetProfile: activeCombiTarget,
+                    attackerRoster: [moddedWeapon],
+                    iterations: SIMULATION_ITERATIONS
+                };
+
+                const workerResult = await new Promise((resolve, reject) => {
+                    const worker = new Worker(new URL('./webWorker.js', import.meta.url), { type: 'module' });
+                    worker.onmessage = (e) => {
+                        resolve(e.data);
+                        worker.terminate();
+                    };
+                    worker.onerror = (err) => {
+                        reject(err);
+                        worker.terminate();
+                    };
+                    worker.postMessage(payload);
+                });
+
+                masterCompArray.push([mod, workerResult]);
+            }
+
+            masterCompArray.sort((a, b) => b[1].averages.killed - a[1].averages.killed);
+            const topThree = masterCompArray.slice(0, 3);
+
+            allWeaponsLeaderboard.push({
+                weapon: weapon,
+                topCombos: topThree
+            });
+        }
+
+        renderCombinatorialLeaderboard(allWeaponsLeaderboard);
+
+        combiButton.disabled = false;
+        combiButton.textContent = "RUN PERMUTATIONS";
     });
 }

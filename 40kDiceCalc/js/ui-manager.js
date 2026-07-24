@@ -479,3 +479,90 @@ export function renderCombiMirror(weaponsArray, targetUnit) {
     html += `</div>`;
     container.innerHTML = html;
 }
+
+export function renderCombinatorialLeaderboard(leaderboardData) {
+    const container = document.getElementById("combinatorial-results-container");
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    if (!leaderboardData || leaderboardData.length === 0) {
+        container.innerHTML = "<p style='text-align: center; color: var(--theme-text-light);'>No results generated.</p>";
+        return;
+    }
+
+    leaderboardData.forEach(item => {
+        const weapon = item.weapon;
+        const topCombos = item.topCombos;
+
+        let baseModsArray = [];
+        if (weapon.modifiers.lethal) baseModsArray.push("Lethal");
+        if (weapon.modifiers.devastating) baseModsArray.push("Dev Wounds");
+        if (weapon.modifiers.sustained > 0) baseModsArray.push(`Sustained ${weapon.modifiers.sustained}`);
+        if (weapon.modifiers.rerollHits !== "none") baseModsArray.push(`RR Hits`);
+        if (weapon.modifiers.rerollWounds !== "none") baseModsArray.push(`RR Wounds`);
+        if (weapon.modifiers.anti > 0) baseModsArray.push(`Anti-${weapon.modifiers.anti}+`);
+        if (weapon.modifiers.lance) baseModsArray.push("Lance");
+        if (weapon.modifiers.rapidFire > 0) baseModsArray.push(`Rapid Fire ${weapon.modifiers.rapidFire}`);
+        if (weapon.modifiers.melta > 0) baseModsArray.push(`Melta ${weapon.modifiers.melta}`);
+        if (weapon.modifiers.torrent) baseModsArray.push("Torrent");
+        if (weapon.modifiers.twinLinked) baseModsArray.push("Twin-Linked");
+        if (weapon.modifiers.blast) baseModsArray.push("Blast");
+        if (weapon.modifiers.cleave) baseModsArray.push("Cleave");
+        if (weapon.modifiers.hitMod > 0) baseModsArray.push(`+${weapon.modifiers.hitMod} Hit`);
+        if (weapon.modifiers.hitMod < 0) baseModsArray.push(`${weapon.modifiers.hitMod} Hit`);
+        if (weapon.modifiers.woundMod > 0) baseModsArray.push(`+${weapon.modifiers.woundMod} Wound`);
+        if (weapon.modifiers.woundMod < 0) baseModsArray.push(`${weapon.modifiers.woundMod} Wound`);
+        if (weapon.modifiers.rerollDamage) baseModsArray.push(`RR Damage`);
+
+        const baseMods = baseModsArray.length > 0 ? baseModsArray.join(", ") : "None";
+
+        const card = document.createElement("div");
+        card.style.cssText = `
+            background: var(--surface-hover); 
+            padding: 20px; 
+            border-radius: 6px; 
+            border: 1px solid var(--border-color); 
+            margin-bottom: 25px;
+        `;
+
+        let htmlString = `
+            <h3 style="margin-top: 0; margin-bottom: 5px; color: var(--theme-accent); font-size: 1.3rem;">
+                ${weapon.unitName || "Unknown Weapon"}
+            </h3>
+            <p style="font-size: 0.95rem; color: var(--theme-text-light); border-bottom: 1px solid var(--theme-mid); padding-bottom: 15px; margin-top: 0; margin-bottom: 15px;">
+                <strong>Native Base Modifiers:</strong> <span style="font-style: italic;">${baseMods}</span>
+            </p>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+        `;
+
+        topCombos.forEach((comboData, index) => {
+            const modsUsed = comboData[0];
+            const stats = comboData[1];
+
+            const modString = modsUsed.length > 0
+                ? modsUsed.join(" + ").replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())
+                : "Base Profile Only";
+
+            const kills = stats.averages.killed.toFixed(2);
+            const damage = stats.averages.damage.toFixed(2);
+
+            htmlString += `
+                <div style="background: rgba(0, 0, 0, 0.3); padding: 12px 15px; border-radius: 4px; border-left: 4px solid var(--theme-accent); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div style="flex-grow: 1;">
+                        <strong style="color: #fff; font-size: 1.05rem;">#${index + 1}: ${modString}</strong>
+                    </div>
+                    <div style="text-align: right; min-width: 150px;">
+                        <span style="color: var(--danger-red); font-weight: bold; font-size: 1.1rem;">${kills} Kills</span> 
+                        <span style="color: var(--theme-text-muted); margin: 0 8px;">|</span> 
+                        <span style="color: var(--theme-text-light); font-size: 0.95rem;">${damage} DMG</span>
+                    </div>
+                </div>
+            `;
+        });
+
+        htmlString += `</div>`;
+        card.innerHTML = htmlString;
+        container.appendChild(card);
+    });
+}

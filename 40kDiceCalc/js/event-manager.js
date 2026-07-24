@@ -276,7 +276,7 @@ if (combiUI) {
             }
         };
 
-        handleExclusion("hit_plus_1", "heavy");
+
         handleExclusion("reroll_hits_all", "reroll_hits_1");
         handleExclusion("reroll_wounds_all", "reroll_wounds_1");
     });
