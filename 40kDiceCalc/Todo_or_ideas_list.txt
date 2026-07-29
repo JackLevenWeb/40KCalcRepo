@@ -34,8 +34,28 @@ fixes / improvements:
 * indirect fire
 
 
+UI todo:
+[ ] Combi Leaderboard Color-Coding: Color-code each modifier keyword in the combi results leaderboard to match the specific block/bucket it was placed into.
 
-SPRAQL and sematic engineer and Ontologist and Taxonomist remote
+[ ] Combi Auto-Save Integration: Ensure full auto-save support for the combi tab state, including bucket configurations and combi roster selections.
+
+[ ] Attacker Unit Grouping: Support grouped unit simulations in the combi tab, automatically pairing base units with their attached leaders.
+
+[ ] Combi UI Polish: Streamline and compact the attacking unit and target unit mirror display in the combi tab.
+
+[ ] Accordion-Style Combi Results: Transform the combinatorial result cards into clean accordion-style collapsible menus.
+
+[ ] Categorized Available Pool: Split the draggable items in the "Available Pool" into their 3 general categories, and validate rules to prevent placing items into incorrect categories.
+
+[ ] Combi Reset Button: Add a dedicated reset button specifically for clearing and resetting the combi tab layout.
+
+[ ] Streamline Simulation Banner: Remove the large "Auspex Engine Exhausted / distinct battle simulations executed" banner section, keeping only the live simulation counter display above the button.
+
+[ ] Streamline Tutorial Buttons: Consolidate tutorial ? buttons so that there is only 1 tutorial button per bucket type rather than multiple.
+
+
+
+
 
 
 

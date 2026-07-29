@@ -821,13 +821,63 @@ function autoSave() {
         const rosterState = {
             roster: createWeaponsArray(),
             target: createUnit(),
-            globalRule: globalDrop ? globalDrop.value : "none"
+            globalRule: globalDrop ? globalDrop.value : "none",
+            combiBuckets: typeof scrapeCombinatorialSelections === "function" ? scrapeCombinatorialSelections() : null,
+            combiRoster: activeCombiWeapons,
+            combiTarget: activeCombiTarget
         };
         localStorage.setItem("40kRoster", JSON.stringify(rosterState, null, 2));
         console.log("Auto-saved successfully!");
     } catch (error) {
         console.error("Failed to auto-save:", error);
     }
+}
+
+if (localStorage.getItem("40kRoster")) {
+    console.log("Found save data. Attempting to load...");
+    const loadSavedRoster = localStorage.getItem("40kRoster");
+    try {
+        const jsonData = JSON.parse(loadSavedRoster);
+
+        if (Array.isArray(jsonData)) {
+            buildRosterFromJSON(RosterContainer, jsonData);
+        } else {
+            buildRosterFromJSON(RosterContainer, jsonData.roster);
+            if (jsonData.target) loadTargetProfile(jsonData.target);
+            if (jsonData.globalRule) {
+                const globalDrop = document.getElementById("global-mod-dropdown");
+                if (globalDrop) globalDrop.value = jsonData.globalRule;
+            }
+            if (jsonData.combiBuckets) {
+                const moveMods = (arr, targetId) => {
+                    const target = document.getElementById(targetId);
+                    if (target && arr) {
+                        arr.forEach(modKey => {
+                            const el = document.querySelector(`[data-mod="${modKey}"]`);
+                            if (el) target.appendChild(el);
+                        });
+                    }
+                };
+                moveMods(jsonData.combiBuckets.independent, 'bucket-independent');
+                moveMods(jsonData.combiBuckets.mutExclusiveA, 'bucket-exclusive-a');
+                moveMods(jsonData.combiBuckets.mutExclusiveB, 'bucket-exclusive-b');
+                moveMods(jsonData.combiBuckets.mutExclusiveC, 'bucket-exclusive-c');
+                moveMods(jsonData.combiBuckets.inclusiveA, 'bucket-inclusive-a');
+                moveMods(jsonData.combiBuckets.inclusiveB, 'bucket-inclusive-b');
+                moveMods(jsonData.combiBuckets.inclusiveC, 'bucket-inclusive-c');
+            }
+            if (jsonData.combiRoster && jsonData.combiTarget) {
+                activeCombiWeapons = jsonData.combiRoster;
+                activeCombiTarget = jsonData.combiTarget;
+                renderCombiMirror(activeCombiWeapons, activeCombiTarget);
+            }
+        }
+        if (ImportInput) ImportInput.value = "";
+    } catch (error) {
+        console.error("Save Data Crashed. Error details:", error);
+    }
+} else {
+    addAttackerModule(RosterContainer);
 }
 
 
@@ -909,7 +959,6 @@ if (SyncCombiBtn) {
         renderCombiMirror(activeCombiWeapons, activeCombiTarget);
     });
 }
-
 const combiButton = document.getElementById("run-combinatorial-btn");
 const simCounterDisplay = document.getElementById("sim-counter-display");
 
@@ -919,6 +968,8 @@ if (combiButton) {
             alert("Please sync the Combi Roster first.");
             return;
         }
+
+        document.dispatchEvent(new CustomEvent("App:AutoSave"));
 
         combiButton.disabled = true;
         combiButton.textContent = "CALCULATING PERMUTATIONS...";
@@ -932,7 +983,30 @@ if (combiButton) {
             const allWeaponsLeaderboard = [];
             let totalSimulationsRun = 0;
 
-            for (const weapon of activeCombiWeapons) {
+            const attackGroups = [];
+            const processedNames = new Set();
+
+            activeCombiWeapons.forEach(w => {
+                if (!w.isLeader) {
+                    const group = [w];
+                    processedNames.add(w.unitName);
+                    activeCombiWeapons.forEach(lw => {
+                        if (lw.isLeader && lw.attachTarget === w.unitName) {
+                            group.push(lw);
+                            processedNames.add(lw.unitName);
+                        }
+                    });
+                    attackGroups.push({ groupName: w.unitName + (group.length > 1 ? " & Attached Leaders" : ""), weapons: group });
+                }
+            });
+
+            activeCombiWeapons.forEach(w => {
+                if (w.isLeader && !processedNames.has(w.unitName)) {
+                    attackGroups.push({ groupName: w.unitName + " (Solo)", weapons: [w] });
+                }
+            });
+
+            for (const attackGroup of attackGroups) {
                 const comboYield = generateCombinations(
                     selectedMods.independent,
                     selectedMods.mutExclusiveA,
@@ -947,25 +1021,21 @@ if (combiButton) {
                 const worker = new Worker(new URL('./webWorker.js', import.meta.url), { type: 'module' });
 
                 for (const mod of comboYield) {
-                    let moddedWeapon = JSON.parse(JSON.stringify(weapon));
+                    let moddedWeapons = JSON.parse(JSON.stringify(attackGroup.weapons));
 
                     for (const modKey of mod) {
-                        applyModifierToWeapon(moddedWeapon, modKey);
+                        moddedWeapons.forEach(mw => applyModifierToWeapon(mw, modKey));
                     }
 
                     const payload = {
                         targetUnit: activeCombiTarget,
-                        weaponsArray: [moddedWeapon],
+                        weaponsArray: moddedWeapons,
                         iterations: SIMULATION_ITERATIONS
                     };
 
                     const workerResult = await new Promise((resolve, reject) => {
-                        worker.onmessage = (e) => {
-                            resolve(e.data);
-                        };
-                        worker.onerror = (err) => {
-                            reject(err);
-                        };
+                        worker.onmessage = (e) => resolve(e.data);
+                        worker.onerror = (err) => reject(err);
                         worker.postMessage(payload);
                     });
 
@@ -982,13 +1052,17 @@ if (combiButton) {
                 masterCompArray.sort((a, b) => b[1].averages.killed - a[1].averages.killed);
                 const topThree = masterCompArray.slice(0, 10);
 
+                const baseCombo = masterCompArray.find(c => c[0].length === 0);
+                const baseResult = baseCombo ? baseCombo[1] : null;
+
                 allWeaponsLeaderboard.push({
-                    weapon: weapon,
-                    topCombos: topThree
+                    groupName: attackGroup.groupName,
+                    topCombos: topThree,
+                    baseResult: baseResult
                 });
             }
 
-            renderCombinatorialLeaderboard(allWeaponsLeaderboard);
+            renderCombinatorialLeaderboard(allWeaponsLeaderboard, totalSimulationsRun, selectedMods);
 
         } catch (error) {
             console.error("Combinatorial Engine Failed:", error);

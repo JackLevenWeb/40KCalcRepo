@@ -457,21 +457,18 @@ export function renderCombiMirror(weaponsArray, targetUnit) {
 
     let html = `
     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <div style="flex: 1; min-width: 150px; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 4px; border-left: 3px solid var(--theme-btn-standard);">
-            <div style="color: var(--theme-text-muted); font-size: 0.6rem; font-weight: bold; text-transform: uppercase;">Target</div>
-            <div style="font-size: 0.8rem; color: #fff; font-weight: bold;">
-                T${targetUnit.toughness} | W${targetUnit.wounds} | SV${targetUnit.save}+
-            </div>
+        <div style="flex: 1; min-width: 180px; background: rgba(0,0,0,0.4); padding: 8px 12px; border-radius: 4px; border-left: 4px solid var(--theme-btn-standard); display: flex; justify-content: space-between; align-items: center;">
+            <span style="color: var(--theme-text-muted); font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Defending Target</span>
+            <span style="font-size: 0.85rem; color: #fff; font-weight: bold;">T${targetUnit.toughness} | W${targetUnit.wounds} | SV${targetUnit.save}+</span>
         </div>
     `;
 
     weaponsArray.slice(0, 4).forEach(w => {
+        const typeLabel = w.isLeader ? "Leader" : "Unit";
         html += `
-        <div style="flex: 1; min-width: 150px; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 4px; border-left: 3px solid var(--theme-accent);">
-            <div style="color: var(--theme-text-muted); font-size: 0.6rem; font-weight: bold; text-transform: uppercase;">${w.unitName}</div>
-            <div style="font-size: 0.8rem; color: #fff; font-weight: bold;">
-                ${w.attack}A | S${w.strength} | AP${w.Ap} | D${w.damage}
-            </div>
+        <div style="flex: 1; min-width: 180px; background: rgba(0,0,0,0.4); padding: 8px 12px; border-radius: 4px; border-left: 4px solid var(--theme-accent); display: flex; justify-content: space-between; align-items: center;">
+            <span style="color: var(--theme-text-muted); font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">${typeLabel}: ${w.unitName}</span>
+            <span style="font-size: 0.85rem; color: #fff; font-weight: bold;">${w.attack}A | S${w.strength} | AP${w.Ap} | D${w.damage}</span>
         </div>
         `;
     });
@@ -480,7 +477,7 @@ export function renderCombiMirror(weaponsArray, targetUnit) {
     container.innerHTML = html;
 }
 
-export function renderCombinatorialLeaderboard(leaderboardData) {
+export function renderCombinatorialLeaderboard(leaderboardData, totalSims = 0, bucketState = null) {
     const container = document.getElementById("combinatorial-results-container");
     if (!container) return;
 
@@ -491,49 +488,62 @@ export function renderCombinatorialLeaderboard(leaderboardData) {
         return;
     }
 
+    if (totalSims > 0) {
+        const statsBanner = document.createElement("div");
+        statsBanner.style.cssText = `
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--theme-accent);
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        `;
+        statsBanner.innerHTML = `
+            <h3 style="margin: 0; color: var(--theme-accent); text-transform: uppercase; letter-spacing: 1px;">
+                Auspex Engine Exhausted
+            </h3>
+            <p style="margin: 5px 0 0 0; color: var(--theme-text-light); font-size: 1.1rem;">
+                <strong>${totalSims.toLocaleString()}</strong> distinct battle simulations executed.
+            </p>
+        `;
+        container.appendChild(statsBanner);
+    }
+
+    const formatMod = (mod) => {
+        let color = "var(--theme-text-light)";
+        if (bucketState) {
+            if (bucketState.mutExclusiveA.includes(mod) || bucketState.mutExclusiveB.includes(mod) || bucketState.mutExclusiveC.includes(mod)) {
+                color = "var(--theme-accent)";
+            } else if (bucketState.inclusiveA.includes(mod) || bucketState.inclusiveB.includes(mod) || bucketState.inclusiveC.includes(mod)) {
+                color = "#8FE07F";
+            }
+        }
+        const formattedName = mod.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+        return `<span style="color: ${color}; font-weight: bold;">${formattedName}</span>`;
+    };
+
     leaderboardData.forEach(item => {
-        const weapon = item.weapon;
+        const groupName = item.groupName;
         const topCombos = item.topCombos;
+        const baseStats = item.baseResult;
 
-        let baseModsArray = [];
-        if (weapon.modifiers.lethal) baseModsArray.push("Lethal");
-        if (weapon.modifiers.devastating) baseModsArray.push("Dev Wounds");
-        if (weapon.modifiers.sustained > 0) baseModsArray.push(`Sustained ${weapon.modifiers.sustained}`);
-        if (weapon.modifiers.rerollHits !== "none") baseModsArray.push(`RR Hits`);
-        if (weapon.modifiers.rerollWounds !== "none") baseModsArray.push(`RR Wounds`);
-        if (weapon.modifiers.anti > 0) baseModsArray.push(`Anti-${weapon.modifiers.anti}+`);
-        if (weapon.modifiers.lance) baseModsArray.push("Lance");
-        if (weapon.modifiers.rapidFire > 0) baseModsArray.push(`Rapid Fire ${weapon.modifiers.rapidFire}`);
-        if (weapon.modifiers.melta > 0) baseModsArray.push(`Melta ${weapon.modifiers.melta}`);
-        if (weapon.modifiers.torrent) baseModsArray.push("Torrent");
-        if (weapon.modifiers.twinLinked) baseModsArray.push("Twin-Linked");
-        if (weapon.modifiers.blast) baseModsArray.push("Blast");
-        if (weapon.modifiers.cleave) baseModsArray.push("Cleave");
-        if (weapon.modifiers.hitMod > 0) baseModsArray.push(`+${weapon.modifiers.hitMod} Hit`);
-        if (weapon.modifiers.hitMod < 0) baseModsArray.push(`${weapon.modifiers.hitMod} Hit`);
-        if (weapon.modifiers.woundMod > 0) baseModsArray.push(`+${weapon.modifiers.woundMod} Wound`);
-        if (weapon.modifiers.woundMod < 0) baseModsArray.push(`${weapon.modifiers.woundMod} Wound`);
-        if (weapon.modifiers.rerollDamage) baseModsArray.push(`RR Damage`);
-
-        const baseMods = baseModsArray.length > 0 ? baseModsArray.join(", ") : "None";
-
-        const card = document.createElement("div");
+        const card = document.createElement("details");
+        card.open = true;
         card.style.cssText = `
-            background: var(--surface-hover); 
-            padding: 20px; 
+            background: var(--bg-color); 
             border-radius: 6px; 
             border: 1px solid var(--border-color); 
             margin-bottom: 25px;
+            overflow: hidden;
         `;
 
         let htmlString = `
-            <h3 style="margin-top: 0; margin-bottom: 5px; color: var(--theme-accent); font-size: 1.3rem;">
-                ${weapon.unitName || "Unknown Weapon"}
-            </h3>
-            <p style="font-size: 0.95rem; color: var(--theme-text-light); border-bottom: 1px solid var(--theme-mid); padding-bottom: 15px; margin-top: 0; margin-bottom: 15px;">
-                <strong>Native Base Modifiers:</strong> <span style="font-style: italic;">${baseMods}</span>
-            </p>
-            <div style="display: flex; flex-direction: column; gap: 12px;">
+            <summary style="background: var(--surface-hover); padding: 15px; cursor: pointer; font-size: 1.2rem; font-weight: bold; color: var(--theme-accent); outline: none; border-bottom: 1px solid var(--border-color);">
+                ${groupName}
+            </summary>
+            <div style="padding: 20px;">
+                <div style="display: flex; flex-direction: column; gap: 12px;">
         `;
 
         topCombos.forEach((comboData, index) => {
@@ -541,27 +551,46 @@ export function renderCombinatorialLeaderboard(leaderboardData) {
             const stats = comboData[1];
 
             const modString = modsUsed.length > 0
-                ? modsUsed.join(" + ").replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())
+                ? modsUsed.map(formatMod).join(' <span style="color: var(--theme-text-muted);">+</span> ')
                 : "Base Profile Only";
 
             const kills = stats.averages.killed.toFixed(2);
             const damage = stats.averages.damage.toFixed(2);
+
+            let deltaHTML = "";
+            if (baseStats) {
+                const deltaKills = (stats.averages.killed - baseStats.averages.killed).toFixed(2);
+                const deltaDmg = (stats.averages.damage - baseStats.averages.damage).toFixed(2);
+                const killColor = deltaKills >= 0 ? "#8FE07F" : "var(--danger-red)";
+                const dmgColor = deltaDmg >= 0 ? "#8FE07F" : "var(--danger-red)";
+                const killSign = deltaKills >= 0 ? "+" : "";
+                const dmgSign = deltaDmg >= 0 ? "+" : "";
+
+                deltaHTML = `
+                    <div style="font-size: 0.8rem; color: var(--theme-text-muted); margin-top: 5px; text-align: right;">
+                        Δ Base: <span style="color: ${killColor}">${killSign}${deltaKills} Kills</span> | <span style="color: ${dmgColor}">${dmgSign}${deltaDmg} DMG</span>
+                    </div>
+                `;
+            }
 
             htmlString += `
                 <div style="background: rgba(0, 0, 0, 0.3); padding: 12px 15px; border-radius: 4px; border-left: 4px solid var(--theme-accent); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                     <div style="flex-grow: 1;">
                         <strong style="color: #fff; font-size: 1.05rem;">#${index + 1}: ${modString}</strong>
                     </div>
-                    <div style="text-align: right; min-width: 150px;">
-                        <span style="color: var(--danger-red); font-weight: bold; font-size: 1.1rem;">${kills} Kills</span> 
-                        <span style="color: var(--theme-text-muted); margin: 0 8px;">|</span> 
-                        <span style="color: var(--theme-text-light); font-size: 0.95rem;">${damage} DMG</span>
+                    <div style="min-width: 150px; display: flex; flex-direction: column; align-items: flex-end;">
+                        <div>
+                            <span style="color: var(--danger-red); font-weight: bold; font-size: 1.1rem;">${kills} Kills</span> 
+                            <span style="color: var(--theme-text-muted); margin: 0 8px;">|</span> 
+                            <span style="color: var(--theme-text-light); font-size: 0.95rem;">${damage} DMG</span>
+                        </div>
+                        ${deltaHTML}
                     </div>
                 </div>
             `;
         });
 
-        htmlString += `</div>`;
+        htmlString += `</div></div>`;
         card.innerHTML = htmlString;
         container.appendChild(card);
     });

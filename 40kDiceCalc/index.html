@@ -57,6 +57,7 @@
             color: var(--theme-text-light);
             font-size: 1.1rem;
             padding: 12px 24px;
+            display: none;
           "
         >
           Data-Loom
@@ -668,9 +669,18 @@
                   color: var(--theme-text-light);
                   font-weight: bold;
                   margin: 0;
+                  display: flex;
+                  align-items: center;
                 "
               >
                 Active Combi Roster (Max 4 Units)
+                <button
+                  class="tutorial-btn"
+                  data-tutorial="combi_roster"
+                  style="margin-left: 10px"
+                >
+                  ?
+                </button>
               </p>
               <button
                 id="sync-combi-roster-btn"
@@ -709,9 +719,19 @@
                   margin-top: 0;
                   border-bottom: 1px solid var(--theme-mid);
                   padding-bottom: 5px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
                 "
               >
                 Available Pool
+                <button
+                  class="tutorial-btn"
+                  data-tutorial="combi_pool"
+                  style="margin: 0"
+                >
+                  ?
+                </button>
               </h4>
               <div
                 id="bucket-available"
@@ -723,6 +743,7 @@
                   min-height: 100%;
                 "
               >
+                <!-- Draggable items remain the same -->
                 <div
                   draggable="true"
                   data-mod="lethal"
@@ -946,9 +967,19 @@
                     border-bottom: 1px solid var(--theme-accent);
                     padding-bottom: 5px;
                     color: var(--theme-accent);
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
                   "
                 >
                   Mutually Exclusive A
+                  <button
+                    class="tutorial-btn"
+                    data-tutorial="combi_exclusive"
+                    style="margin: 0"
+                  >
+                    ?
+                  </button>
                 </h4>
                 <div
                   id="bucket-exclusive-a"
@@ -977,9 +1008,19 @@
                     border-bottom: 1px solid #2e8b57;
                     padding-bottom: 5px;
                     color: #8fe07f;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
                   "
                 >
                   Inclusive A (AND)
+                  <button
+                    class="tutorial-btn"
+                    data-tutorial="combi_inclusive"
+                    style="margin: 0"
+                  >
+                    ?
+                  </button>
                 </h4>
                 <div
                   id="bucket-inclusive-a"
@@ -1010,9 +1051,19 @@
                     border-bottom: 1px solid var(--theme-accent);
                     padding-bottom: 5px;
                     color: var(--theme-accent);
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
                   "
                 >
                   Mutually Exclusive B
+                  <button
+                    class="tutorial-btn"
+                    data-tutorial="combi_exclusive"
+                    style="margin: 0"
+                  >
+                    ?
+                  </button>
                 </h4>
                 <div
                   id="bucket-exclusive-b"
@@ -1041,9 +1092,19 @@
                     border-bottom: 1px solid #2e8b57;
                     padding-bottom: 5px;
                     color: #8fe07f;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
                   "
                 >
                   Inclusive B (AND)
+                  <button
+                    class="tutorial-btn"
+                    data-tutorial="combi_inclusive"
+                    style="margin: 0"
+                  >
+                    ?
+                  </button>
                 </h4>
                 <div
                   id="bucket-inclusive-b"
@@ -1074,9 +1135,19 @@
                     border-bottom: 1px solid var(--theme-accent);
                     padding-bottom: 5px;
                     color: var(--theme-accent);
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
                   "
                 >
                   Mutually Exclusive C
+                  <button
+                    class="tutorial-btn"
+                    data-tutorial="combi_exclusive"
+                    style="margin: 0"
+                  >
+                    ?
+                  </button>
                 </h4>
                 <div
                   id="bucket-exclusive-c"
@@ -1105,9 +1176,19 @@
                     border-bottom: 1px solid #2e8b57;
                     padding-bottom: 5px;
                     color: #8fe07f;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
                   "
                 >
                   Inclusive C (AND)
+                  <button
+                    class="tutorial-btn"
+                    data-tutorial="combi_inclusive"
+                    style="margin: 0"
+                  >
+                    ?
+                  </button>
                 </h4>
                 <div
                   id="bucket-inclusive-c"
@@ -1136,40 +1217,31 @@
                   margin-top: 0;
                   border-bottom: 1px solid var(--theme-mid);
                   padding-bottom: 5px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
                 "
               >
-                Independent
+                Included in all tests
+                <button
+                  class="tutorial-btn"
+                  data-tutorial="combi_included"
+                  style="margin: 0"
+                >
+                  ?
+                </button>
               </h4>
               <div
+                id="bucket-independent"
+                class="bucket-dropzone"
                 style="
-                  background: var(--surface-hover);
-                  padding: 15px;
-                  border-radius: 6px;
-                  border: 1px solid var(--theme-text-light);
-                  grid-column: 2 / span 3;
+                  display: flex;
+                  flex-direction: row;
+                  flex-wrap: wrap;
+                  gap: 10px;
+                  min-height: 60px;
                 "
-              >
-                <h4
-                  style="
-                    margin-top: 0;
-                    border-bottom: 1px solid var(--theme-mid);
-                    padding-bottom: 5px;
-                  "
-                >
-                  Included in all tests
-                </h4>
-                <div
-                  id="bucket-independent"
-                  class="bucket-dropzone"
-                  style="
-                    display: flex;
-                    flex-direction: row;
-                    flex-wrap: wrap;
-                    gap: 10px;
-                    min-height: 60px;
-                  "
-                ></div>
-              </div>
+              ></div>
             </div>
           </div>
 
@@ -1196,27 +1268,43 @@
               >
             </div>
 
-            <button
-              id="run-combinatorial-btn"
+            <div
               style="
-                width: 100%;
-                max-width: 400px;
-                background-color: var(--theme-btn-standard);
-                color: #fff;
-                border: 2px solid #000;
-                border-radius: 6px;
-                padding: 18px 20px;
-                font-size: 1.2rem;
-                font-weight: 800;
-                text-transform: uppercase;
-                letter-spacing: 2px;
-                cursor: pointer;
-                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
-                transition: all 0.2s;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 15px;
               "
             >
-              Run Permutations
-            </button>
+              <button
+                id="run-combinatorial-btn"
+                style="
+                  width: 100%;
+                  max-width: 400px;
+                  background-color: var(--theme-btn-standard);
+                  color: #fff;
+                  border: 2px solid #000;
+                  border-radius: 6px;
+                  padding: 18px 20px;
+                  font-size: 1.2rem;
+                  font-weight: 800;
+                  text-transform: uppercase;
+                  letter-spacing: 2px;
+                  cursor: pointer;
+                  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+                  transition: all 0.2s;
+                "
+              >
+                Run Permutations
+              </button>
+              <button
+                class="tutorial-btn"
+                data-tutorial="combi_run"
+                style="width: 32px; height: 32px; font-size: 1.2rem; margin: 0"
+              >
+                ?
+              </button>
+            </div>
           </div>
 
           <div id="combinatorial-results-container"></div>

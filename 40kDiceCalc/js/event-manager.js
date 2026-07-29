@@ -162,7 +162,55 @@ export function initializeWatchers() {
                     <p style="margin-top: 10px;">Because Devastating Wounds bypass the target's Save phase entirely and convert directly into damage, their impact is best visualized in the final Damage and Models Killed reports.</p>
                     <p style="margin-top: 10px;"><strong>Overkill/Efficiency (Wasted Damage):</strong> The amount of damage dealt that exceeded a model's remaining wounds (e.g., dealing 3 damage to a 1-wound model results in 2 wasted damage).</p>
                 `;
+            } else if (tutType === "combinatorial_engine") {
+                tutTitle.textContent = "Combinatorial Modifier Analysis";
+                tutBody.innerHTML = `
+                    <p>The Combinatorial Engine is a theory-crafting tool designed to find the mathematically optimal loadout for your units.</p>
+                    <p style="margin-top: 10px;">Instead of testing one modifier at a time, you can drag and drop multiple rules into the testing buckets below. The engine will automatically generate and simulate every valid combination of those rules, and then rank the results in a final leaderboard.</p>
+                    <p style="margin-top: 10px;"><strong>Warning:</strong> The more modifiers you test at once, the more combinations the engine must generate. Testing too many modifiers simultaneously may take several minutes to compute!</p>
+                `;
+            } else if (tutType === "combi_pool") {
+                tutTitle.textContent = "Available Pool";
+                tutBody.innerHTML = `
+                    <p>This is your staging area. Modifiers left in this bucket are completely ignored by the simulation engine.</p>
+                    <p style="margin-top: 10px;">Click and drag these rules into the designated testing buckets to the right to include them in your mathematical permutations.</p>
+                `;
+            } else if (tutType === "combi_exclusive") {
+                tutTitle.textContent = "Mutually Exclusive (OR Logic)";
+                tutBody.innerHTML = `
+                    <p>Modifiers placed in a Mutually Exclusive bucket will <strong>never</strong> be applied at the same time during a simulation test.</p>
+                    <p style="margin-top: 10px;"><strong>Example:</strong> If you place <em>Lethal Hits</em> and <em>Sustained Hits</em> into Mutually Exclusive A, the engine will test a scenario with Lethal Hits, and a separate scenario with Sustained Hits, but it will never test a scenario where both are active together.</p>
+                    <p style="margin-top: 10px;">Use the separate A, B, and C buckets to isolate different categories of rules (e.g., put Weapon Rules in A, and Reroll buffs in B).</p>
+                `;
+            } else if (tutType === "combi_inclusive") {
+                tutTitle.textContent = "Inclusive (AND Logic / Package Deal)";
+                tutBody.innerHTML = `
+                    <p>Modifiers placed in an Inclusive bucket are bound together into an unbreakable "package deal."</p>
+                    <p style="margin-top: 10px;">The engine will only generate two states for these rules: an "All" state where every modifier in the bucket is applied simultaneously, and a "Nothing" state where none of them are applied.</p>
+                    <p style="margin-top: 10px;"><strong>Example:</strong> Useful for representing a stratagem or character aura that grants multiple buffs at once.</p>
+                `;
+            } else if (tutType === "combi_included") {
+                tutTitle.textContent = "Included in All Tests";
+                tutBody.innerHTML = `
+                    <p>Modifiers placed in this bucket have no constraints placed on them. The engine will calculate every possible "On / Off" combination for every item in this bucket.</p>
+                    <p style="margin-top: 10px;"><strong>Example:</strong> If you place 3 rules here, the engine will test a scenario where none are applied, scenarios where only 1 is applied, scenarios where 2 are applied, and a scenario where all 3 are applied.</p>
+                    <p style="margin-top: 10px;"><em>Note: The more rules you place here, the longer the calculation will take.</em></p>
+                `;
+            } else if (tutType === "combi_roster") {
+                tutTitle.textContent = "Active Combi Roster";
+                tutBody.innerHTML = `
+                    <p>This panel displays the specific attacking units and attached leaders you have synced from the Standard Analytics tab for testing.</p>
+                    <p style="margin-top: 10px;">The engine will automatically detect Leaders and group them with their attached units to execute combined-arms simulations.</p>
+                `;
+            } else if (tutType === "combi_run") {
+                tutTitle.textContent = "Calculation Methodology";
+                tutBody.innerHTML = `
+                    <p><strong>Damage vs. Models Killed:</strong></p>
+                    <p style="margin-top: 10px;">The engine tracks <em>wasted damage</em> (overkill) strictly. For example, dealing 3 Damage to a 1-Wound model will record 3 Total Damage, but only 1 Model Killed.</p>
+                    <p style="margin-top: 10px;">Because of this, weapons with high Damage characteristics might display massive Total Damage outputs, but relatively lower Models Killed compared to weapons with many low-Damage attacks. Always evaluate your combinations against your specific target's wound characteristics!</p>
+                `;
             }
+
             tutorialModal.style.display = "block";
         }
     });
