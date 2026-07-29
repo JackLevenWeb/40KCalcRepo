@@ -687,10 +687,11 @@
           </div>
 
           <div
+            id="combinatorial-buckets"
             style="
               display: grid;
-              grid-template-columns: repeat(3, 1fr);
-              gap: 20px;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 15px;
               margin-bottom: 30px;
             "
           >
@@ -700,6 +701,7 @@
                 padding: 15px;
                 border-radius: 6px;
                 border: 1px solid var(--border-color);
+                grid-row: span 2;
               "
             >
               <h4
@@ -709,166 +711,414 @@
                   padding-bottom: 5px;
                 "
               >
-                Weapon Rules
+                Available Pool
               </h4>
               <div
-                style="display: flex; flex-direction: column; gap: 12px"
-                id="pool-weapon-rules"
+                id="bucket-available"
+                class="bucket-dropzone"
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 10px;
+                  min-height: 100%;
+                "
               >
-                <label
+                <div
+                  draggable="true"
+                  data-mod="lethal"
+                  class="draggable-mod"
                   style="
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    cursor: pointer;
+                    background: var(--bg-color);
+                    padding: 10px;
+                    border: 1px solid var(--theme-mid);
+                    border-radius: 4px;
+                    cursor: grab;
                     color: var(--theme-text-light);
-                    font-size: 0.9rem;
+                    font-size: 0.85rem;
+                    font-weight: bold;
                   "
                 >
-                  <label class="toggle-switch"
-                    ><input
-                      type="checkbox"
-                      value="lethal"
-                      class="combinatorial-checkbox" /><span
-                      class="toggle-slider"
-                    ></span
-                  ></label>
                   Lethal Hits
-                </label>
-                <label
+                </div>
+                <div
+                  draggable="true"
+                  data-mod="devastating"
+                  class="draggable-mod"
                   style="
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    cursor: pointer;
+                    background: var(--bg-color);
+                    padding: 10px;
+                    border: 1px solid var(--theme-mid);
+                    border-radius: 4px;
+                    cursor: grab;
                     color: var(--theme-text-light);
-                    font-size: 0.9rem;
+                    font-size: 0.85rem;
+                    font-weight: bold;
                   "
                 >
-                  <label class="toggle-switch"
-                    ><input
-                      type="checkbox"
-                      value="devastating"
-                      class="combinatorial-checkbox" /><span
-                      class="toggle-slider"
-                    ></span
-                  ></label>
                   Devastating Wounds
-                </label>
-                <label
+                </div>
+                <div
+                  draggable="true"
+                  data-mod="sustained_hits"
+                  class="draggable-mod"
                   style="
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    cursor: pointer;
+                    background: var(--bg-color);
+                    padding: 10px;
+                    border: 1px solid var(--theme-mid);
+                    border-radius: 4px;
+                    cursor: grab;
                     color: var(--theme-text-light);
-                    font-size: 0.9rem;
+                    font-size: 0.85rem;
+                    font-weight: bold;
                   "
                 >
-                  <label class="toggle-switch"
-                    ><input
-                      type="checkbox"
-                      value="sustained_hits"
-                      class="combinatorial-checkbox" /><span
-                      class="toggle-slider"
-                    ></span
-                  ></label>
                   Sustained Hits 1
-                </label>
-              </div>
-            </div>
-
-            <div
-              style="
-                background: var(--surface-hover);
-                padding: 15px;
-                border-radius: 6px;
-                border: 1px solid var(--border-color);
-              "
-            >
-              <h4
-                style="
-                  margin-top: 0;
-                  border-bottom: 1px solid var(--theme-mid);
-                  padding-bottom: 5px;
-                "
-              >
-                Flat Modifiers
-              </h4>
-              <div
-                style="display: flex; flex-direction: column; gap: 12px"
-                id="pool-flat-mods"
-              >
-                <label
+                </div>
+                <div
+                  draggable="true"
+                  data-mod="hit_plus_1"
+                  class="draggable-mod"
                   style="
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    cursor: pointer;
+                    background: var(--bg-color);
+                    padding: 10px;
+                    border: 1px solid var(--theme-mid);
+                    border-radius: 4px;
+                    cursor: grab;
                     color: var(--theme-text-light);
-                    font-size: 0.9rem;
+                    font-size: 0.85rem;
+                    font-weight: bold;
                   "
                 >
-                  <label class="toggle-switch"
-                    ><input
-                      type="checkbox"
-                      value="hit_plus_1"
-                      class="combinatorial-checkbox combi-hit-mod" /><span
-                      class="toggle-slider"
-                    ></span
-                  ></label>
                   +1 to Hit
-                </label>
-                <label
+                </div>
+                <div
+                  draggable="true"
+                  data-mod="wound_plus_1"
+                  class="draggable-mod"
                   style="
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    cursor: pointer;
+                    background: var(--bg-color);
+                    padding: 10px;
+                    border: 1px solid var(--theme-mid);
+                    border-radius: 4px;
+                    cursor: grab;
                     color: var(--theme-text-light);
-                    font-size: 0.9rem;
+                    font-size: 0.85rem;
+                    font-weight: bold;
                   "
                 >
-                <label
-                  style="
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    cursor: pointer;
-                    color: var(--theme-text-light);
-                    font-size: 0.9rem;
-                  "
-                >
-                  <label class="toggle-switch"
-                    ><input
-                      type="checkbox"
-                      value="wound_plus_1"
-                      class="combinatorial-checkbox" /><span
-                      class="toggle-slider"
-                    ></span
-                  ></label>
                   +1 to Wound
-                </label>
-                <label
+                </div>
+                <div
+                  draggable="true"
+                  data-mod="extra_ap_1"
+                  class="draggable-mod"
                   style="
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    cursor: pointer;
+                    background: var(--bg-color);
+                    padding: 10px;
+                    border: 1px solid var(--theme-mid);
+                    border-radius: 4px;
+                    cursor: grab;
                     color: var(--theme-text-light);
-                    font-size: 0.9rem;
+                    font-size: 0.85rem;
+                    font-weight: bold;
                   "
                 >
-                  <label class="toggle-switch"
-                    ><input
-                      type="checkbox"
-                      value="extra_ap_1"
-                      class="combinatorial-checkbox" /><span
-                      class="toggle-slider"
-                    ></span
-                  ></label>
                   AP +1
-                </label>
+                </div>
+                <div
+                  draggable="true"
+                  data-mod="reroll_hits_1"
+                  class="draggable-mod"
+                  style="
+                    background: var(--bg-color);
+                    padding: 10px;
+                    border: 1px solid var(--theme-mid);
+                    border-radius: 4px;
+                    cursor: grab;
+                    color: var(--theme-text-light);
+                    font-size: 0.85rem;
+                    font-weight: bold;
+                  "
+                >
+                  Reroll 1s (Hit)
+                </div>
+                <div
+                  draggable="true"
+                  data-mod="reroll_hits_all"
+                  class="draggable-mod"
+                  style="
+                    background: var(--bg-color);
+                    padding: 10px;
+                    border: 1px solid var(--theme-mid);
+                    border-radius: 4px;
+                    cursor: grab;
+                    color: var(--theme-text-light);
+                    font-size: 0.85rem;
+                    font-weight: bold;
+                  "
+                >
+                  Reroll All (Hit)
+                </div>
+                <div
+                  draggable="true"
+                  data-mod="reroll_wounds_1"
+                  class="draggable-mod"
+                  style="
+                    background: var(--bg-color);
+                    padding: 10px;
+                    border: 1px solid var(--theme-mid);
+                    border-radius: 4px;
+                    cursor: grab;
+                    color: var(--theme-text-light);
+                    font-size: 0.85rem;
+                    font-weight: bold;
+                  "
+                >
+                  Reroll 1s (Wound)
+                </div>
+                <div
+                  draggable="true"
+                  data-mod="reroll_wounds_all"
+                  class="draggable-mod"
+                  style="
+                    background: var(--bg-color);
+                    padding: 10px;
+                    border: 1px solid var(--theme-mid);
+                    border-radius: 4px;
+                    cursor: grab;
+                    color: var(--theme-text-light);
+                    font-size: 0.85rem;
+                    font-weight: bold;
+                  "
+                >
+                  Reroll All (Wound)
+                </div>
+                <div
+                  draggable="true"
+                  data-mod="fish_crits"
+                  class="draggable-mod"
+                  style="
+                    background: var(--bg-color);
+                    padding: 10px;
+                    border: 1px solid var(--theme-mid);
+                    border-radius: 4px;
+                    cursor: grab;
+                    color: var(--theme-text-light);
+                    font-size: 0.85rem;
+                    font-weight: bold;
+                  "
+                >
+                  Fish for Crits
+                </div>
+                <div
+                  draggable="true"
+                  data-mod="reroll_damage"
+                  class="draggable-mod"
+                  style="
+                    background: var(--bg-color);
+                    padding: 10px;
+                    border: 1px solid var(--theme-mid);
+                    border-radius: 4px;
+                    cursor: grab;
+                    color: var(--theme-text-light);
+                    font-size: 0.85rem;
+                    font-weight: bold;
+                  "
+                >
+                  Reroll Damage
+                </div>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 15px">
+              <div
+                style="
+                  background: var(--surface-hover);
+                  padding: 15px;
+                  border-radius: 6px;
+                  border: 1px solid var(--theme-accent);
+                  flex: 1;
+                "
+              >
+                <h4
+                  style="
+                    margin-top: 0;
+                    border-bottom: 1px solid var(--theme-accent);
+                    padding-bottom: 5px;
+                    color: var(--theme-accent);
+                  "
+                >
+                  Mutually Exclusive A
+                </h4>
+                <div
+                  id="bucket-exclusive-a"
+                  class="bucket-dropzone"
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    min-height: 150px;
+                  "
+                ></div>
+              </div>
+
+              <div
+                style="
+                  background: var(--surface-hover);
+                  padding: 15px;
+                  border-radius: 6px;
+                  border: 1px solid #2e8b57;
+                  flex: 1;
+                "
+              >
+                <h4
+                  style="
+                    margin-top: 0;
+                    border-bottom: 1px solid #2e8b57;
+                    padding-bottom: 5px;
+                    color: #8fe07f;
+                  "
+                >
+                  Inclusive A (AND)
+                </h4>
+                <div
+                  id="bucket-inclusive-a"
+                  class="bucket-dropzone"
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    min-height: 150px;
+                  "
+                ></div>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 15px">
+              <div
+                style="
+                  background: var(--surface-hover);
+                  padding: 15px;
+                  border-radius: 6px;
+                  border: 1px solid var(--theme-accent);
+                  flex: 1;
+                "
+              >
+                <h4
+                  style="
+                    margin-top: 0;
+                    border-bottom: 1px solid var(--theme-accent);
+                    padding-bottom: 5px;
+                    color: var(--theme-accent);
+                  "
+                >
+                  Mutually Exclusive B
+                </h4>
+                <div
+                  id="bucket-exclusive-b"
+                  class="bucket-dropzone"
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    min-height: 150px;
+                  "
+                ></div>
+              </div>
+
+              <div
+                style="
+                  background: var(--surface-hover);
+                  padding: 15px;
+                  border-radius: 6px;
+                  border: 1px solid #2e8b57;
+                  flex: 1;
+                "
+              >
+                <h4
+                  style="
+                    margin-top: 0;
+                    border-bottom: 1px solid #2e8b57;
+                    padding-bottom: 5px;
+                    color: #8fe07f;
+                  "
+                >
+                  Inclusive B (AND)
+                </h4>
+                <div
+                  id="bucket-inclusive-b"
+                  class="bucket-dropzone"
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    min-height: 150px;
+                  "
+                ></div>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 15px">
+              <div
+                style="
+                  background: var(--surface-hover);
+                  padding: 15px;
+                  border-radius: 6px;
+                  border: 1px solid var(--theme-accent);
+                  flex: 1;
+                "
+              >
+                <h4
+                  style="
+                    margin-top: 0;
+                    border-bottom: 1px solid var(--theme-accent);
+                    padding-bottom: 5px;
+                    color: var(--theme-accent);
+                  "
+                >
+                  Mutually Exclusive C
+                </h4>
+                <div
+                  id="bucket-exclusive-c"
+                  class="bucket-dropzone"
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    min-height: 150px;
+                  "
+                ></div>
+              </div>
+
+              <div
+                style="
+                  background: var(--surface-hover);
+                  padding: 15px;
+                  border-radius: 6px;
+                  border: 1px solid #2e8b57;
+                  flex: 1;
+                "
+              >
+                <h4
+                  style="
+                    margin-top: 0;
+                    border-bottom: 1px solid #2e8b57;
+                    padding-bottom: 5px;
+                    color: #8fe07f;
+                  "
+                >
+                  Inclusive C (AND)
+                </h4>
+                <div
+                  id="bucket-inclusive-c"
+                  class="bucket-dropzone"
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    min-height: 150px;
+                  "
+                ></div>
               </div>
             </div>
 
@@ -877,7 +1127,8 @@
                 background: var(--surface-hover);
                 padding: 15px;
                 border-radius: 6px;
-                border: 1px solid var(--border-color);
+                border: 1px solid var(--theme-text-light);
+                grid-column: 2 / span 3;
               "
             >
               <h4
@@ -887,137 +1138,64 @@
                   padding-bottom: 5px;
                 "
               >
-                Rerolls
+                Independent
               </h4>
               <div
-                style="display: flex; flex-direction: column; gap: 12px"
-                id="pool-rerolls"
+                style="
+                  background: var(--surface-hover);
+                  padding: 15px;
+                  border-radius: 6px;
+                  border: 1px solid var(--theme-text-light);
+                  grid-column: 2 / span 3;
+                "
               >
-                <label
+                <h4
                   style="
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    cursor: pointer;
-                    color: var(--theme-text-light);
-                    font-size: 0.9rem;
+                    margin-top: 0;
+                    border-bottom: 1px solid var(--theme-mid);
+                    padding-bottom: 5px;
                   "
                 >
-                  <label class="toggle-switch"
-                    ><input
-                      type="checkbox"
-                      value="reroll_hits_1"
-                      class="combinatorial-checkbox combi-reroll-hit" /><span
-                      class="toggle-slider"
-                    ></span
-                  ></label>
-                  Reroll 1s (Hit)
-                </label>
-                <label
+                  Included in all tests
+                </h4>
+                <div
+                  id="bucket-independent"
+                  class="bucket-dropzone"
                   style="
                     display: flex;
-                    align-items: center;
+                    flex-direction: row;
+                    flex-wrap: wrap;
                     gap: 10px;
-                    cursor: pointer;
-                    color: var(--theme-text-light);
-                    font-size: 0.9rem;
+                    min-height: 60px;
                   "
-                >
-                  <label class="toggle-switch"
-                    ><input
-                      type="checkbox"
-                      value="reroll_hits_all"
-                      class="combinatorial-checkbox combi-reroll-hit" /><span
-                      class="toggle-slider"
-                    ></span
-                  ></label>
-                  Reroll All (Hit)
-                </label>
-                <label
-                  style="
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    cursor: pointer;
-                    color: var(--theme-text-light);
-                    font-size: 0.9rem;
-                  "
-                >
-                  <label class="toggle-switch"
-                    ><input
-                      type="checkbox"
-                      value="reroll_wounds_1"
-                      class="combinatorial-checkbox combi-reroll-wound" /><span
-                      class="toggle-slider"
-                    ></span
-                  ></label>
-                  Reroll 1s (Wound)
-                </label>
-                <label
-                  style="
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    cursor: pointer;
-                    color: var(--theme-text-light);
-                    font-size: 0.9rem;
-                  "
-                >
-                  <label class="toggle-switch"
-                    ><input
-                      type="checkbox"
-                      value="reroll_wounds_all"
-                      class="combinatorial-checkbox combi-reroll-wound" /><span
-                      class="toggle-slider"
-                    ></span
-                  ></label>
-                  Reroll All (Wound)
-                </label>
-                <label
-                  style="
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    cursor: pointer;
-                    color: var(--theme-text-light);
-                    font-size: 0.9rem;
-                  "
-                >
-                  <label class="toggle-switch"
-                    ><input
-                      type="checkbox"
-                      value="fish_crits"
-                      class="combinatorial-checkbox" /><span
-                      class="toggle-slider"
-                    ></span
-                  ></label>
-                  Fish for Crits
-                </label>
-                <label
-                  style="
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    cursor: pointer;
-                    color: var(--theme-text-light);
-                    font-size: 0.9rem;
-                  "
-                >
-                  <label class="toggle-switch"
-                    ><input
-                      type="checkbox"
-                      value="reroll_damage"
-                      class="combinatorial-checkbox" /><span
-                      class="toggle-slider"
-                    ></span
-                  ></label>
-                  Reroll Damage
-                </label>
+                ></div>
               </div>
             </div>
           </div>
 
           <div style="text-align: center; margin-bottom: 30px">
+            <div style="margin-bottom: 15px">
+              <span
+                style="
+                  color: var(--theme-text-muted);
+                  font-size: 0.9rem;
+                  font-weight: bold;
+                  text-transform: uppercase;
+                  letter-spacing: 1px;
+                "
+                >Simulations Executed:
+              </span>
+              <span
+                id="sim-counter-display"
+                style="
+                  color: var(--theme-accent);
+                  font-size: 1.2rem;
+                  font-weight: bold;
+                "
+                >0</span
+              >
+            </div>
+
             <button
               id="run-combinatorial-btn"
               style="

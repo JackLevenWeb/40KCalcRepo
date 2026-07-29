@@ -35,6 +35,11 @@ fixes / improvements:
 
 
 
+SPRAQL and sematic engineer and Ontologist and Taxonomist remote
+
+
+
+
 for importing units(eg Rugged Resilience no system to import abilities yet), need to be able to map things like stealth and -1 to hit etc as well
 
 {

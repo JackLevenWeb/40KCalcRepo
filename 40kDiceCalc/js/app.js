@@ -910,8 +910,8 @@ if (SyncCombiBtn) {
     });
 }
 
-
 const combiButton = document.getElementById("run-combinatorial-btn");
+const simCounterDisplay = document.getElementById("sim-counter-display");
 
 if (combiButton) {
     combiButton.addEventListener("click", async () => {
@@ -923,54 +923,79 @@ if (combiButton) {
         combiButton.disabled = true;
         combiButton.textContent = "CALCULATING PERMUTATIONS...";
 
-        const selectedMods = scrapeCombinatorialSelections();
-        const allWeaponsLeaderboard = [];
-
-        for (const weapon of activeCombiWeapons) {
-            const comboYield = generateCombinations(selectedMods);
-            const masterCompArray = [];
-
-            for (const mod of comboYield) {
-                let moddedWeapon = JSON.parse(JSON.stringify(weapon));
-
-                for (const modKey of mod) {
-                    applyModifierToWeapon(moddedWeapon, modKey);
-                }
-
-                const payload = {
-                    targetProfile: activeCombiTarget,
-                    attackerRoster: [moddedWeapon],
-                    iterations: SIMULATION_ITERATIONS
-                };
-
-                const workerResult = await new Promise((resolve, reject) => {
-                    const worker = new Worker(new URL('./webWorker.js', import.meta.url), { type: 'module' });
-                    worker.onmessage = (e) => {
-                        resolve(e.data);
-                        worker.terminate();
-                    };
-                    worker.onerror = (err) => {
-                        reject(err);
-                        worker.terminate();
-                    };
-                    worker.postMessage(payload);
-                });
-
-                masterCompArray.push([mod, workerResult]);
-            }
-
-            masterCompArray.sort((a, b) => b[1].averages.killed - a[1].averages.killed);
-            const topThree = masterCompArray.slice(0, 3);
-
-            allWeaponsLeaderboard.push({
-                weapon: weapon,
-                topCombos: topThree
-            });
+        if (simCounterDisplay) {
+            simCounterDisplay.textContent = "0";
         }
 
-        renderCombinatorialLeaderboard(allWeaponsLeaderboard);
+        try {
+            const selectedMods = scrapeCombinatorialSelections();
+            const allWeaponsLeaderboard = [];
+            let totalSimulationsRun = 0;
 
-        combiButton.disabled = false;
-        combiButton.textContent = "RUN PERMUTATIONS";
+            for (const weapon of activeCombiWeapons) {
+                const comboYield = generateCombinations(
+                    selectedMods.independent,
+                    selectedMods.mutExclusiveA,
+                    selectedMods.mutExclusiveB,
+                    selectedMods.mutExclusiveC,
+                    selectedMods.inclusiveA,
+                    selectedMods.inclusiveB,
+                    selectedMods.inclusiveC
+                );
+
+                const masterCompArray = [];
+                const worker = new Worker(new URL('./webWorker.js', import.meta.url), { type: 'module' });
+
+                for (const mod of comboYield) {
+                    let moddedWeapon = JSON.parse(JSON.stringify(weapon));
+
+                    for (const modKey of mod) {
+                        applyModifierToWeapon(moddedWeapon, modKey);
+                    }
+
+                    const payload = {
+                        targetUnit: activeCombiTarget,
+                        weaponsArray: [moddedWeapon],
+                        iterations: SIMULATION_ITERATIONS
+                    };
+
+                    const workerResult = await new Promise((resolve, reject) => {
+                        worker.onmessage = (e) => {
+                            resolve(e.data);
+                        };
+                        worker.onerror = (err) => {
+                            reject(err);
+                        };
+                        worker.postMessage(payload);
+                    });
+
+                    masterCompArray.push([mod, workerResult]);
+
+                    totalSimulationsRun += SIMULATION_ITERATIONS;
+                    if (simCounterDisplay) {
+                        simCounterDisplay.textContent = totalSimulationsRun.toLocaleString();
+                    }
+                }
+
+                worker.terminate();
+
+                masterCompArray.sort((a, b) => b[1].averages.killed - a[1].averages.killed);
+                const topThree = masterCompArray.slice(0, 10);
+
+                allWeaponsLeaderboard.push({
+                    weapon: weapon,
+                    topCombos: topThree
+                });
+            }
+
+            renderCombinatorialLeaderboard(allWeaponsLeaderboard);
+
+        } catch (error) {
+            console.error("Combinatorial Engine Failed:", error);
+            alert("An error occurred during permutations. Check your console for details.");
+        } finally {
+            combiButton.disabled = false;
+            combiButton.textContent = "RUN PERMUTATIONS";
+        }
     });
 }

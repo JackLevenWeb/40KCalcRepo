@@ -261,23 +261,27 @@ export function initializeWatchers() {
 }
 
 //combi engine >>>>
-const combiUI = document.getElementById("combinatorial-ui");
-if (combiUI) {
-    combiUI.addEventListener("change", (e) => {
-        if (!e.target.classList.contains("combinatorial-checkbox")) return;
+const draggables = document.querySelectorAll('.draggable-mod');
+const dropzones = document.querySelectorAll('.bucket-dropzone');
 
-        const handleExclusion = (val1, val2) => {
-            if (e.target.value === val1) {
-                const other = combiUI.querySelector(`input[value="${val2}"]`);
-                if (other) other.disabled = e.target.checked;
-            } else if (e.target.value === val2) {
-                const other = combiUI.querySelector(`input[value="${val1}"]`);
-                if (other) other.disabled = e.target.checked;
-            }
-        };
-
-
-        handleExclusion("reroll_hits_all", "reroll_hits_1");
-        handleExclusion("reroll_wounds_all", "reroll_wounds_1");
+draggables.forEach(draggable => {
+    draggable.addEventListener('dragstart', () => {
+        draggable.classList.add('dragging');
+        draggable.style.opacity = '0.4';
     });
-}
+
+    draggable.addEventListener('dragend', () => {
+        draggable.classList.remove('dragging');
+        draggable.style.opacity = '1';
+    });
+});
+
+dropzones.forEach(zone => {
+    zone.addEventListener('dragover', e => {
+        e.preventDefault();
+        const draggable = document.querySelector('.dragging');
+        if (draggable) {
+            zone.appendChild(draggable);
+        }
+    });
+});
