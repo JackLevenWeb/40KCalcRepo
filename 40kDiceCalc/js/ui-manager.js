@@ -488,28 +488,6 @@ export function renderCombinatorialLeaderboard(leaderboardData, totalSims = 0, b
         return;
     }
 
-    if (totalSims > 0) {
-        const statsBanner = document.createElement("div");
-        statsBanner.style.cssText = `
-            background: rgba(0,0,0,0.4);
-            border: 1px solid var(--theme-accent);
-            border-radius: 6px;
-            padding: 15px;
-            text-align: center;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-        `;
-        statsBanner.innerHTML = `
-            <h3 style="margin: 0; color: var(--theme-accent); text-transform: uppercase; letter-spacing: 1px;">
-                Auspex Engine Exhausted
-            </h3>
-            <p style="margin: 5px 0 0 0; color: var(--theme-text-light); font-size: 1.1rem;">
-                <strong>${totalSims.toLocaleString()}</strong> distinct battle simulations executed.
-            </p>
-        `;
-        container.appendChild(statsBanner);
-    }
-
     const formatMod = (mod) => {
         let color = "var(--theme-text-light)";
         if (bucketState) {
