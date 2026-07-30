@@ -3,15 +3,15 @@
 import { Unit } from './classes/Unit.js';
 import { Weapon } from './classes/Weapon.js';
 import { runSimulation } from './logic.js';
-import { addAttackerModule, syncAppUI, buildRosterFromJSON, spawnReportCard, addBadgeToModule, spawnLeaderboard, renderCombiMirror, renderCombinatorialLeaderboard } from './ui-manager.js';
+import { addAttackerModule, syncAppUI, buildRosterFromJSON, spawnReportCard, addBadgeToModule, spawnLeaderboard, renderCombiMirror, renderCombinatorialLeaderboard, initCombinatorialPool } from './ui-manager.js';
 import { initDataBase, loadDataIntoSQL, queryComparisonData, clearDataBase, ModLabels, loadAveragesIntoSQL, queryAveragesData } from './db-manager.js';
 import { renderChart, renderAdvancedChart } from './chart-manager.js';
-import { initializeWatchers } from './event-manager.js';
+import { initializeWatchers, setupDragAndDrop } from './event-manager.js';
 import { applyTheme, getCurrentTheme } from './theme-manager.js';
 import { scrapeCombinatorialSelections, generateCombinations } from './combinatorial-engine.js';
-
 import './fetchUnitStats.js'
-const SIMULATION_ITERATIONS = 100000;
+
+const SIMULATION_ITERATIONS = 200000;
 
 initializeWatchers();
 
@@ -42,16 +42,23 @@ let currentIsSingleTarget = false;
 let activeCombiWeapons = [];
 let activeCombiTarget = null;
 
+// initialize before loading save data
 initDataBase();
+initCombinatorialPool();
+setupDragAndDrop();
 
-//create weapon array from modules(html elements)
 
 function createWeaponsArray() {
     const modules = document.querySelectorAll('.attacker-module');
     const weaponsArray = [];
 
     modules.forEach(module => {
-        const unitName = module.querySelector(".in-unit-name").value.trim();
+
+        // extract name and swap apostrophes for backticks to prevent SQL crashes
+        const rawUnitName = module.querySelector(".in-unit-name").value.trim();
+        const unitName = rawUnitName.replace(/'/g, "`");
+
+
         const attack = module.querySelector(".in-attacks").value.trim().toUpperCase() || "1";
         const damage = module.querySelector(".in-dam").value.trim().toUpperCase() || "1";
         const bsws = module.querySelector(".in-bsws").value.trim().toUpperCase();
@@ -104,7 +111,10 @@ function createWeaponsArray() {
             anti: getModVal("anti"),
             rapidFire: getModVal("rapidfire"),
             fishForCrits: hasMod("fish_crits"),
-            rerollDamage: hasMod("reroll_damage")
+            rerollDamage: hasMod("reroll_damage"),
+            rerollOneHit: hasMod("reroll_one_hit"),
+            rerollOneWound: hasMod("reroll_one_wound"),
+            rerollOneDamage: hasMod("reroll_one_damage")
         };
 
         const newWeapon = new Weapon(unitName, attack, bsws, strength, ap, damage, modelCount, unitCount, modifiers);
@@ -118,8 +128,10 @@ function createWeaponsArray() {
     return weaponsArray;
 }
 
-//create unit from html elements
 function createUnit() {
+    const nameInput = document.getElementById("target-name");
+    const targetName = nameInput ? nameInput.value.trim() : "Target Unit";
+
     const toughness = parseInt(document.getElementById("toughness").value, 10);
     const wounds = parseInt(document.getElementById("wounds").value, 10);
     const save = parseInt(document.getElementById("save").value, 10);
@@ -138,7 +150,9 @@ function createUnit() {
         plusOneSave: document.getElementById("def-plus-one-save") ? document.getElementById("def-plus-one-save").checked : false
     };
 
-    return new Unit(toughness, wounds, save, inVul, fnp, modelCount, modifiers);
+    const unit = new Unit(toughness, wounds, save, inVul, fnp, modelCount, modifiers);
+    unit.name = targetName;
+    return unit;
 }
 
 function runWorkerSimulation(iterations, weaponsArray, targetUnit) {
@@ -186,6 +200,10 @@ function applyModifierToWeapon(weapon, modKey) {
     if (modKey === "devastating") weapon.modifiers.devastating = true;
     if (modKey === "fish_crits") weapon.modifiers.fishForCrits = true;
     if (modKey === "reroll_damage") weapon.modifiers.rerollDamage = true;
+
+    if (modKey === "reroll_one_hit") weapon.modifiers.rerollOneHit = true;
+    if (modKey === "reroll_one_wound") weapon.modifiers.rerollOneWound = true;
+    if (modKey === "reroll_one_damage") weapon.modifiers.rerollOneDamage = true;
 }
 
 function checkSkipReason(weaponsArray, targetUnit, modKey) {
@@ -204,17 +222,14 @@ function checkSkipReason(weaponsArray, targetUnit, modKey) {
 
         if (modKey === "melta_range" && w.modifiers.melta === 0) return "not_applicable";
 
-        //variable damage vs flat
         let rawDam = w.damage;
         let parsedDam = parseInt(rawDam, 10);
         let isFlatDamage = !isNaN(parsedDam) && String(parsedDam) === String(rawDam).trim();
         if (modKey === "reroll_damage" && isFlatDamage) return "ineffective";
 
-        //hit roll unaffected
         let effectiveBs = parseInt(w.BsWs) - w.modifiers.hitMod;
         if (modKey === "hit_plus_1" && effectiveBs <= 2) return "ineffective";
         if (modKey === "reroll_hits_all" && effectiveBs <= 2) return "ineffective";
-
 
         let baseWoundTarget = 5;
         if (w.strength >= targetUnit.toughness * 2) baseWoundTarget = 2;
@@ -234,7 +249,6 @@ function checkSkipReason(weaponsArray, targetUnit, modKey) {
 }
 
 function applyModifiersToTarget(targetUnit, modKey) {
-
     if (modKey === "hit_minus_1") targetUnit.modifiers.minusOneHit = true;
     if (modKey === "cover") targetUnit.modifiers.cover = true;
     if (modKey === "wound_minus_1") targetUnit.modifiers.minusOneWound = true;
@@ -243,11 +257,9 @@ function applyModifiersToTarget(targetUnit, modKey) {
     if (modKey === "damage_half") targetUnit.modifiers.halfDamage = true;
     if (modKey === "FNP") targetUnit.fnp = 5;
     if (modKey === "plus_1_save") targetUnit.modifiers.plusOneSave = true;
-
-};
+}
 
 function checkSkipReasonTarget(targetUnit, weaponsArray, modKey) {
-
     if (modKey === "hit_minus_1" && targetUnit.modifiers.minusOneHit) return "applied";
     if (modKey === "cover" && targetUnit.modifiers.cover) return "applied";
     if (modKey === "wound_minus_1" && targetUnit.modifiers.minusOneWound) return "applied";
@@ -264,11 +276,8 @@ function checkSkipReasonTarget(targetUnit, weaponsArray, modKey) {
     if (isFlatDamage) {
         if (modKey === "damage_minus_1" && parsedDam <= 1) return "ineffective";
         if (modKey === "damage_half" && parsedDam <= 1) return "ineffective";
-
-        //check for when damage_half and -1 damage result in the same - we keep the damage -1 rather
         let halfDmg = Math.ceil(parsedDam / 2);
         let minusOneDmg = Math.max(1, parsedDam - 1);
-
         if (modKey === "damage_half" && halfDmg === minusOneDmg) return "ineffective";
     }
 
@@ -280,9 +289,7 @@ function checkSkipReasonTarget(targetUnit, weaponsArray, modKey) {
 
 if (CalcBtn) {
     CalcBtn.addEventListener("click", () => {
-
         document.dispatchEvent(new CustomEvent("App:AutoSave"));
-
         CalcBtn.textContent = "Rolling dice...";
         CalcBtn.disabled = true;
         const attackerWeapons = createWeaponsArray();
@@ -323,19 +330,12 @@ if (CalcBtn) {
                 <div class="stat-sub">Damage Efficiency: ${results.averages.efficiency}%</div>
             </div>
         `;
-
             renderChart(results.damageDistribution, results.killedDistribution, results.SimulatedRuns, currentIsSingleTarget);
-
             CalcBtn.textContent = getCurrentTheme().btnStandardText;
             CalcBtn.disabled = false;
             worker.terminate();
         });
-
-        worker.postMessage({
-            iterations: SIMULATION_ITERATIONS,
-            weaponsArray: attackerWeapons,
-            targetUnit: targetUnit
-        });
+        worker.postMessage({ iterations: SIMULATION_ITERATIONS, weaponsArray: attackerWeapons, targetUnit: targetUnit });
     });
 }
 
@@ -361,7 +361,6 @@ if (advAnalyticsBtn) {
 
             for (const baseWeapon of baseWeapons) {
                 const unitName = baseWeapon.unitName;
-
                 const mainContainer = document.getElementById("advanced-reports-container");
 
                 if (!isFirstUnit) {
@@ -376,8 +375,6 @@ if (advAnalyticsBtn) {
 
                 const unitAccordion = document.createElement("details");
                 unitAccordion.dataset.unit = unitName;
-
-
                 unitAccordion.style.marginBottom = "20px";
                 unitAccordion.style.border = "1px solid var(--border-color)";
                 unitAccordion.style.borderRadius = "8px";
@@ -428,12 +425,9 @@ if (advAnalyticsBtn) {
 
                 baseWeapon.modifiers.melta = originalMelta;
 
-                //attacker sim loop
                 for (const [category, mods] of Object.entries(SIMULATION_SCENARIOS)) {
                     for (const modKey of mods) {
-
                         const skipReason = checkSkipReason([baseWeapon], targetUnit, modKey);
-
                         if (skipReason === "not_applicable") continue;
 
                         if (category === "Hit Mods") allowedHitMods.push(modKey);
@@ -451,7 +445,6 @@ if (advAnalyticsBtn) {
 
                         let moddedWeapon = JSON.parse(JSON.stringify(baseWeapon));
                         applyModifierToWeapon(moddedWeapon, modKey);
-
                         let results = await runWorkerSimulation(SIMULATION_ITERATIONS, [moddedWeapon], targetUnit);
 
                         loadDataIntoSQL(unitName, modKey, "Hit", results.hitDistribution);
@@ -463,16 +456,11 @@ if (advAnalyticsBtn) {
                     }
                 }
 
-
-                //target unit sim loop
                 for (const [category, mods] of Object.entries(target_SIMULATION_SCENARIOS)) {
                     for (const modKey of mods) {
-
                         const skipReason = checkSkipReasonTarget(targetUnit, [baseWeapon], modKey);
-
                         if (skipReason === "not_applicable") continue;
 
-                        //these arrays are now shared by attacking and target unit
                         if (category === "Save/Ap") allowedSaveMods.push(modKey);
                         if (category === "Damage Mods") {
                             allowedDamageMods.push(modKey);
@@ -480,15 +468,12 @@ if (advAnalyticsBtn) {
                         }
 
                         if (skipReason) {
-                            //skipped mods is also shared
                             skippedMods[modKey] = skipReason;
                             continue;
                         }
 
                         let moddedTarget = JSON.parse(JSON.stringify(targetUnit));
-
                         applyModifiersToTarget(moddedTarget, modKey);
-
                         let results = await runWorkerSimulation(SIMULATION_ITERATIONS, [baseWeapon], moddedTarget);
 
                         loadDataIntoSQL(unitName, modKey, "Hit", results.hitDistribution);
@@ -497,7 +482,6 @@ if (advAnalyticsBtn) {
                         loadDataIntoSQL(unitName, modKey, "Damage", results.damageDistribution);
                         loadDataIntoSQL(unitName, modKey, "ModelsKilled", results.killedDistribution);
                         loadAveragesIntoSQL(unitName, modKey, results.averages);
-
                     }
                 }
 
@@ -505,13 +489,12 @@ if (advAnalyticsBtn) {
                 const sqlAvgData = queryAveragesData(unitName);
                 const attackerUnitReport = unitAccordion.querySelector('.unit-reports-wrapper');
 
-
-                // create each report section
                 generateAdvancedReport(`${unitName}: Hit Averages`, "Hit", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedHitMods, skippedMods, statsHTML, attackerUnitReport, isSingleTarget);
                 generateAdvancedReport(`${unitName}: Wound Averages <button class="tutorial-btn" data-tutorial="wound_avg">?</button>`, "Wound", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedWoundMods, skippedMods, statsHTML, attackerUnitReport, isSingleTarget);
                 generateAdvancedReport(`${unitName}: Save Averages`, "Save", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedSaveMods, skippedMods, statsHTML, attackerUnitReport, isSingleTarget);
                 generateAdvancedReport(`${unitName}: Damage Averages <button class="tutorial-btn" data-tutorial="damage_avg">?</button>`, "Damage", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedDamageMods, skippedMods, statsHTML, attackerUnitReport, isSingleTarget);
                 generateAdvancedReport(`${unitName}: Models Killed Averages <button class="tutorial-btn" data-tutorial="damage_avg">?</button>`, "ModelsKilled", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedKilledMods, skippedMods, statsHTML, attackerUnitReport, isSingleTarget);
+
                 const sidebars = attackerUnitReport.querySelectorAll('.avg-stats-sidebar');
                 let maxHeight = 0;
                 sidebars.forEach(sidebar => {
@@ -522,7 +505,6 @@ if (advAnalyticsBtn) {
                 });
             }
 
-            //leaderboard to ui-manager
             const mainContainer = document.getElementById("advanced-reports-container");
             spawnLeaderboard(mainContainer, leaderboardStats, isSingleTarget);
         } catch (error) {
@@ -534,18 +516,13 @@ if (advAnalyticsBtn) {
         advAnalyticsBtn.disabled = false;
     });
 }
-function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns, allowedMods, skippedMods, statsHTML, targetContainer, isSingleTarget = false) {
 
+function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns, allowedMods, skippedMods, statsHTML, targetContainer, isSingleTarget = false) {
     const baseRow = sqlAvgData.find(r => r.modifier_name === "Base");
     const processedRows = allowedMods.map(modName => {
         let skipReason = skippedMods[modName] || null;
         let dataRow = skipReason ? baseRow : sqlAvgData.find(r => r.modifier_name === modName);
-
-        return {
-            ...dataRow,
-            modifier_name: modName,
-            skipReason: skipReason
-        };
+        return { ...dataRow, modifier_name: modName, skipReason: skipReason };
     }).filter(r => r.unit_name);
 
     const th = `padding: 8px 10px; color: var(--theme-text-muted); font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid var(--border-color);`;
@@ -558,7 +535,6 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
     const getRowNameHTML = (row) => {
         let name = ModLabels[row.modifier_name] || row.modifier_name;
         if (row.modifier_name === "Base") name = "Base Profile";
-
         if (row.skipReason === "applied") {
             return `${name} <span style="margin-left: 8px; padding: 2px 6px; background: rgba(255,255,255,0.1); color: var(--theme-text-light); border-radius: 4px; font-size: 0.65rem; text-transform: uppercase;">Active</span>`;
         } else if (row.skipReason === "ineffective") {
@@ -570,7 +546,6 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
     if (category === "Hit") {
         const hasBonus = processedRows.some(r => r.hits_bonus > 0);
         const hasAuto = processedRows.some(r => r.hits_auto > 0);
-
         let headers = `<th style="${th}">Rule</th><th style="${th}">Avg Total Hits</th>`;
         if (hasBonus) headers += `<th style="${th}">Inc. Sustained</th>`;
         if (hasAuto) headers += `<th style="${th}">Inc. Lethal</th>`;
@@ -578,11 +553,8 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
 
         processedRows.forEach(row => {
             let rowStyle = row.skipReason ? `opacity: 0.5;` : ``;
-
-            // summing all buckets for the true total
             let totalHits = row.hits_success + row.hits_bonus + row.hits_auto;
             let cells = [totalHits.toFixed(2)];
-
             if (hasBonus) cells.push(row.hits_bonus > 0 ? row.hits_bonus.toFixed(2) : '-');
             if (hasAuto) cells.push(row.hits_auto > 0 ? row.hits_auto.toFixed(2) : '-');
 
@@ -592,11 +564,9 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
             });
             avgStatsHTML += rowHTML + `</tr>`;
         });
-    }
-    else if (category === "Wound") {
+    } else if (category === "Wound") {
         const hasDev = processedRows.some(r => r.wounds_dev > 0);
-        const hasAuto = processedRows.some(r => r.hits_auto > 0); // Lethals act as auto-wounds
-
+        const hasAuto = processedRows.some(r => r.hits_auto > 0);
         let headers = `<th style="${th}">Rule</th><th style="${th}">Avg Total Wounds</th>`;
         if (hasDev) headers += `<th style="${th}">Inc. Devastating</th>`;
         if (hasAuto) headers += `<th style="${th}">Inc. Lethal</th>`;
@@ -604,11 +574,8 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
 
         processedRows.forEach(row => {
             let rowStyle = row.skipReason ? `opacity: 0.5;` : ``;
-
-            // summing normal wounds, devastating wounds and auto-wounding lethals
             let totalWounds = row.wounds_success + row.wounds_dev + row.hits_auto;
             let cells = [totalWounds.toFixed(2)];
-
             if (hasDev) cells.push(row.wounds_dev > 0 ? row.wounds_dev.toFixed(2) : '-');
             if (hasAuto) cells.push(row.hits_auto > 0 ? row.hits_auto.toFixed(2) : '-');
 
@@ -618,22 +585,19 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
             });
             avgStatsHTML += rowHTML + `</tr>`;
         });
-    }
-    else if (category === "Save") {
+    } else if (category === "Save") {
         avgStatsHTML += `<tr><th style="${th}">Rule</th><th style="${th}">Saves Forced</th><th style="${th}">Passed</th><th style="${th}">Failed (Dmg)</th></tr>`;
         processedRows.forEach(row => {
             let rowStyle = row.skipReason ? `opacity: 0.5;` : ``;
             avgStatsHTML += `<tr style="${rowStyle}"><td style="${tdFirst}">${getRowNameHTML(row)}</td><td style="${td}">${row.saves_forced.toFixed(2)}</td><td style="${td}">${row.saves_passed.toFixed(2)}</td><td style="${tdLast}">${row.saves_failed.toFixed(2)}</td></tr>`;
         });
-    }
-    else if (category === "Damage") {
+    } else if (category === "Damage") {
         avgStatsHTML += `<tr><th style="${th}">Rule</th><th style="${th}">Avg Total Damage</th></tr>`;
         processedRows.forEach(row => {
             let rowStyle = row.skipReason ? `opacity: 0.5;` : ``;
             avgStatsHTML += `<tr style="${rowStyle}"><td style="${tdFirst}">${getRowNameHTML(row)}</td><td style="${tdLast}">${row.avg_damage.toFixed(2)}</td></tr>`;
         });
-    }
-    else if (category === "ModelsKilled") {
+    } else if (category === "ModelsKilled") {
         const killHeader = isSingleTarget ? "Probability to Kill" : "Expected Models Killed";
         avgStatsHTML += `<tr><th style="${th}">Rule</th><th style="${th}">${killHeader}</th><th style="${th}">Overkill</th><th style="${th}">Efficiency</th></tr>`;
         processedRows.forEach(row => {
@@ -651,7 +615,6 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
 
 function buildBaseStatsHTML(weaponsArray, targetUnit) {
     let html = `<div style="display: flex; gap: 10px; flex-wrap: wrap; width: 100%;">`;
-
     weaponsArray.forEach(w => {
         let activeMods = [];
         if (w.modifiers.lethal) activeMods.push("Lethal");
@@ -702,45 +665,22 @@ function buildBaseStatsHTML(weaponsArray, targetUnit) {
             T${targetUnit.toughness}  |  W${targetUnit.wounds}  |  SV ${targetUnit.save}+ ${targetUnit.inVul ? ' |  ' + targetUnit.inVul + '++' : ''}
         </div>
         <div style="color: var(--theme-btn-standard); font-size: 0.7rem; font-weight: bold;">${targetModsStr}</div>
-    </div>`;
-
-    html += `</div>`;
+    </div></div>`;
     return html;
 }
 
-function loadTargetProfile(targetData) {
-    if (!targetData) return;
-    document.getElementById("toughness").value = targetData.toughness;
-    document.getElementById("wounds").value = targetData.wounds;
-    document.getElementById("save").value = targetData.save;
-    document.getElementById("inVul").value = targetData.inVul || "";
-    document.getElementById("target-models").value = targetData.modelCount;
-    document.getElementById("def-fnp").value = targetData.fnp || "0";
-
-    const mods = targetData.modifiers;
-    if (mods) {
-        document.getElementById("def-minus-hit").checked = mods.minusOneHit;
-        document.getElementById("def-minus-wound").checked = mods.minusOneWound;
-        document.getElementById("def-minus-wound-str").checked = mods.minusOneWoundHighStr;
-        document.getElementById("def-cover").checked = mods.cover;
-        document.getElementById("def-plus-one-save").checked = mods.plusOneSave;
-
-        if (mods.halfDamage) {
-            document.getElementById("def-reduce-dam").value = "half";
-        } else if (mods.minusOneDamage) {
-            document.getElementById("def-reduce-dam").value = "minus1";
-        } else {
-            document.getElementById("def-reduce-dam").value = "none";
-        }
-    }
-}
-
 function exportRoster() {
-    const weaponsArray = createWeaponsArray();
+    const globalDrop = document.getElementById("global-mod-dropdown");
+    const exportState = {
+        roster: createWeaponsArray(),
+        target: createUnit(),
+        globalRule: globalDrop ? globalDrop.value : "none"
+    };
+
     let fileName = RosterNameInput.value.trim();
     if (!fileName.endsWith(".json")) fileName += ".json";
 
-    const blob = new Blob([JSON.stringify(weaponsArray, null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(exportState, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -763,58 +703,21 @@ function handleImport(file) {
                 buildRosterFromJSON(RosterContainer, jsonData, false);
             } else {
                 buildRosterFromJSON(RosterContainer, jsonData.roster, false);
-
-                if (jsonData.target) {
-                    loadTargetProfile(jsonData.target);
-                }
-
+                if (jsonData.target) loadTargetProfile(jsonData.target);
                 if (jsonData.globalRule) {
                     const globalDrop = document.getElementById("global-mod-dropdown");
                     if (globalDrop) globalDrop.value = jsonData.globalRule;
                 }
             }
             syncAppUI();
-
-
-            setTimeout(() => {
-                document.dispatchEvent(new CustomEvent("App:AutoSave"));
-            }, 100);
-
+            setTimeout(() => document.dispatchEvent(new CustomEvent("App:AutoSave")), 100);
         } catch (error) {
             alert("Invalid JSON file! Could not parse roster.");
-            console.error(error);
         }
     };
     reader.readAsText(file);
 }
 
-if (localStorage.getItem("40kRoster")) {
-    console.log("Found save data. Attempting to load...");
-    const loadSavedRoster = localStorage.getItem("40kRoster");
-    try {
-        const jsonData = JSON.parse(loadSavedRoster);
-        console.log("Parsed JSON:", jsonData);
-
-        if (Array.isArray(jsonData)) {
-            buildRosterFromJSON(RosterContainer, jsonData);
-        } else {
-            buildRosterFromJSON(RosterContainer, jsonData.roster);
-            if (jsonData.target) loadTargetProfile(jsonData.target);
-            if (jsonData.globalRule) {
-                const globalDrop = document.getElementById("global-mod-dropdown");
-                if (globalDrop) globalDrop.value = jsonData.globalRule;
-            }
-        }
-        if (ImportInput) ImportInput.value = "";
-    } catch (error) {
-        console.error("Save Data Crashed. Error details:", error);
-
-    }
-} else {
-    addAttackerModule(RosterContainer);
-}
-
-//autosave
 function autoSave() {
     try {
         const globalDrop = document.getElementById("global-mod-dropdown");
@@ -827,18 +730,15 @@ function autoSave() {
             combiTarget: activeCombiTarget
         };
         localStorage.setItem("40kRoster", JSON.stringify(rosterState, null, 2));
-        console.log("Auto-saved successfully!");
     } catch (error) {
         console.error("Failed to auto-save:", error);
     }
 }
 
 if (localStorage.getItem("40kRoster")) {
-    console.log("Found save data. Attempting to load...");
     const loadSavedRoster = localStorage.getItem("40kRoster");
     try {
         const jsonData = JSON.parse(loadSavedRoster);
-
         if (Array.isArray(jsonData)) {
             buildRosterFromJSON(RosterContainer, jsonData);
         } else {
@@ -880,15 +780,14 @@ if (localStorage.getItem("40kRoster")) {
     addAttackerModule(RosterContainer);
 }
 
-
-// function to wipe the board completely
 function clearDashboard() {
     localStorage.removeItem("40kRoster");
-
     RosterContainer.innerHTML = '';
     addAttackerModule(RosterContainer);
 
-    // reset Target Profile Stats
+    const targetNameInput = document.getElementById("target-name");
+    if (targetNameInput) targetNameInput.value = "Target Unit";
+
     document.getElementById("toughness").value = 4;
     document.getElementById("wounds").value = 2;
     document.getElementById("save").value = 3;
@@ -916,10 +815,8 @@ function clearDashboard() {
     syncAppUI();
 }
 
-
 document.addEventListener("App:ClearDashboard", clearDashboard);
 
-// manual clear dashboard button
 if (ClearBtn) {
     ClearBtn.addEventListener("click", () => {
         if (confirm("Are you sure you want to clear all units and reset the dashboard?")) {
@@ -928,18 +825,14 @@ if (ClearBtn) {
     });
 }
 
-
-///combi engine>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 const SyncCombiBtn = document.getElementById("sync-combi-roster-btn");
-
 if (SyncCombiBtn) {
     SyncCombiBtn.addEventListener("click", () => {
         const allWeapons = createWeaponsArray();
         activeCombiTarget = createUnit();
-
         activeCombiWeapons = [];
-        const modules = document.querySelectorAll('.attacker-module');
 
+        const modules = document.querySelectorAll('.attacker-module');
         modules.forEach((mod, index) => {
             const toggle = mod.querySelector('.in-combi-roster');
             if (toggle && toggle.checked && allWeapons[index]) {
@@ -959,6 +852,39 @@ if (SyncCombiBtn) {
         renderCombiMirror(activeCombiWeapons, activeCombiTarget);
     });
 }
+
+const ResetCombiBtn = document.getElementById("reset-combi-btn");
+if (ResetCombiBtn) {
+    ResetCombiBtn.addEventListener("click", () => {
+        if (!confirm("Are you sure you want to reset the Combinatorial Engine?")) return;
+
+        activeCombiWeapons = [];
+        activeCombiTarget = null;
+
+        const mirrorContainer = document.getElementById("combi-mirror-container");
+        if (mirrorContainer) mirrorContainer.innerHTML = "";
+
+        const resultsContainer = document.getElementById("combinatorial-results-container");
+        if (resultsContainer) resultsContainer.innerHTML = "";
+
+        const simCounterDisplay = document.getElementById("sim-counter-display");
+        if (simCounterDisplay) simCounterDisplay.textContent = "0";
+
+        const allDraggables = document.querySelectorAll('.draggable-mod');
+        allDraggables.forEach(mod => {
+            const category = mod.getAttribute('data-category');
+            if (category) {
+                const homePool = document.getElementById(`pool-${category}`);
+                if (homePool) {
+                    homePool.appendChild(mod);
+                }
+            }
+        });
+
+        document.dispatchEvent(new CustomEvent("App:AutoSave"));
+    });
+}
+
 const combiButton = document.getElementById("run-combinatorial-btn");
 const simCounterDisplay = document.getElementById("sim-counter-display");
 
@@ -974,9 +900,7 @@ if (combiButton) {
         combiButton.disabled = true;
         combiButton.textContent = "CALCULATING PERMUTATIONS...";
 
-        if (simCounterDisplay) {
-            simCounterDisplay.textContent = "0";
-        }
+        if (simCounterDisplay) simCounterDisplay.textContent = "0";
 
         try {
             const selectedMods = scrapeCombinatorialSelections();
@@ -1042,9 +966,7 @@ if (combiButton) {
                     masterCompArray.push([mod, workerResult]);
 
                     totalSimulationsRun += SIMULATION_ITERATIONS;
-                    if (simCounterDisplay) {
-                        simCounterDisplay.textContent = totalSimulationsRun.toLocaleString();
-                    }
+                    if (simCounterDisplay) simCounterDisplay.textContent = totalSimulationsRun.toLocaleString();
                 }
 
                 worker.terminate();

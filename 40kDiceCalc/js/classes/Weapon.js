@@ -34,7 +34,10 @@ export class Weapon {
             critHitThreshold: modifiers.critHitThreshold || 6,
             critWoundThreshold: modifiers.critWoundThreshold || 6,
             fishForCrits: modifiers.fishForCrits || false,
-            rerollDamage: modifiers.rerollDamage || false
+            rerollDamage: modifiers.rerollDamage || false,
+            rerollOneHit: modifiers.rerollOneHit || false,
+            rerollOneWound: modifiers.rerollOneWound || false,
+            rerollOneDamage: modifiers.rerollOneDamage || false
         };
     }
 }

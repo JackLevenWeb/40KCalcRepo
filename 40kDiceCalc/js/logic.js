@@ -146,7 +146,8 @@ export function runHurtSystem(weapon, unit, startingHealth) {
             critThreshold: weapon.modifiers.critHitThreshold,
             sustained: weapon.modifiers.sustained,
             isLethalOrDev: weapon.modifiers.lethal,
-            fishForCrits: weapon.modifiers.fishForCrits
+            fishForCrits: weapon.modifiers.fishForCrits,
+            rerollOne: weapon.modifiers.rerollOneHit
         });
 
         autoWounds = hitData.autos;
@@ -184,7 +185,8 @@ export function runHurtSystem(weapon, unit, startingHealth) {
         critThreshold: activeCritWound,
         sustained: 0,
         isLethalOrDev: weapon.modifiers.devastating,
-        fishForCrits: weapon.modifiers.fishForCrits
+        fishForCrits: weapon.modifiers.fishForCrits,
+        rerollOne: weapon.modifiers.rerollOneWound
     });
 
     const normalWounds = woundData.successes + autoWounds;
@@ -270,7 +272,7 @@ function calculateWoundTarget(strength, toughness) {
 }
 
 // variable damage like "D3", "D6+2", "2D6"
-function resolveDamage(damageString, shouldReroll = false) {
+function resolveDamage(damageString, shouldReroll = false, singleRerollState = { available: false }) {
     let str = String(damageString).toUpperCase().replace(/\s/g, '');
     if (/^\d+$/.test(str)) return parseInt(str, 10);
     let total = 0;
@@ -281,9 +283,15 @@ function resolveDamage(damageString, shouldReroll = false) {
         let sides = parseInt(match[2], 10);
         for (let i = 0; i < numDice; i++) {
             let roll = Math.floor(Math.random() * sides) + 1;
+
             if (shouldReroll && (roll === 1 || roll === 2)) {
                 roll = Math.floor(Math.random() * sides) + 1;
+            } else if (!shouldReroll && singleRerollState.available && roll <= Math.floor(sides / 2)) {
+                // Single Reroll: Triggers if you roll below the mathematical average (e.g., 1-3 on a D6)
+                roll = Math.floor(Math.random() * sides) + 1;
+                singleRerollState.available = false; // Turn off immediately after use
             }
+
             total += roll;
         }
     }
@@ -302,8 +310,11 @@ function modelsKill(damageEvents, weapon, unit, startingHealth) {
     let currentHealth = startingHealth;
     let totalActualDamageTaken = 0;
 
+    // Create the persistent tracker for the damage events loop
+    let singleDamageRerollState = { available: weapon.modifiers.rerollOneDamage };
+
     for (let i = 0; i < damageEvents; i++) {
-        let baseDmg = resolveDamage(weapon.damage, weapon.modifiers.rerollDamage);
+        let baseDmg = resolveDamage(weapon.damage, weapon.modifiers.rerollDamage, singleDamageRerollState);
         let dmgInstance = baseDmg + (weapon.modifiers.melta || 0);
 
         if (unit.modifiers.halfDamage) dmgInstance = Math.ceil(dmgInstance / 2);

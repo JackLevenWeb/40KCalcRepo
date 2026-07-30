@@ -252,7 +252,7 @@ export function initializeWatchers() {
     });
 
     const targetIDs = [
-        "toughness", "wounds", "save", "inVul", "target-models",
+        "target-name", "toughness", "wounds", "save", "inVul", "target-models",
         "def-fnp", "def-minus-hit", "def-minus-wound", "def-minus-wound-str",
         "def-cover", "def-reduce-dam"
     ];
@@ -309,27 +309,40 @@ export function initializeWatchers() {
 }
 
 //combi engine >>>>
-const draggables = document.querySelectorAll('.draggable-mod');
-const dropzones = document.querySelectorAll('.bucket-dropzone');
+export function setupDragAndDrop() {
+    const draggables = document.querySelectorAll('.draggable-mod');
+    const dropzones = document.querySelectorAll('.bucket-dropzone');
 
-draggables.forEach(draggable => {
-    draggable.addEventListener('dragstart', () => {
-        draggable.classList.add('dragging');
-        draggable.style.opacity = '0.4';
+    draggables.forEach(draggable => {
+        draggable.addEventListener('dragstart', () => {
+            draggable.classList.add('dragging');
+            draggable.style.opacity = '0.4';
+        });
+
+        draggable.addEventListener('dragend', () => {
+            draggable.classList.remove('dragging');
+            draggable.style.opacity = '1';
+            document.dispatchEvent(new CustomEvent("App:AutoSave"));
+        });
     });
 
-    draggable.addEventListener('dragend', () => {
-        draggable.classList.remove('dragging');
-        draggable.style.opacity = '1';
+    dropzones.forEach(zone => {
+        zone.addEventListener('dragover', e => {
+            e.preventDefault();
+            const draggable = document.querySelector('.dragging');
+            if (draggable) {
+                //  enforce correct snapping
+                if (zone.classList.contains('available-pool-zone')) {
+                    const zoneAccepts = zone.getAttribute('data-accept');
+                    const modCategory = draggable.getAttribute('data-category');
+                    if (zoneAccepts === modCategory) {
+                        zone.appendChild(draggable);
+                    }
+                } else {
+                    // else it's a testing bucket allow all drops
+                    zone.appendChild(draggable);
+                }
+            }
+        });
     });
-});
-
-dropzones.forEach(zone => {
-    zone.addEventListener('dragover', e => {
-        e.preventDefault();
-        const draggable = document.querySelector('.dragging');
-        if (draggable) {
-            zone.appendChild(draggable);
-        }
-    });
-});
+}

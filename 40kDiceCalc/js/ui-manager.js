@@ -17,10 +17,13 @@ export const ModifierDictionary = {
     "wound_minus_1": { name: "-1 to Wound", hasInput: false },
     "reroll_hits_1": { name: "Reroll 1s (Hit)", hasInput: false },
     "reroll_hits_all": { name: "Reroll All (Hit)", hasInput: false },
+    "reroll_one_hit": { name: "Reroll 1 Hit Roll", hasInput: false },
     "reroll_wounds_1": { name: "Reroll 1s (Wound)", hasInput: false },
     "reroll_wounds_all": { name: "Reroll All (Wound)", hasInput: false },
+    "reroll_one_wound": { name: "Reroll 1 Wound Roll", hasInput: false },
     "fish_crits": { name: "Fish for Crits", hasInput: false },
-    "reroll_damage": { name: "Reroll Damage (1-2)", hasInput: false }
+    "reroll_damage": { name: "Reroll Damage (1-2)", hasInput: false },
+    "reroll_one_damage": { name: "Reroll 1 Dmg Roll", hasInput: false }
 };
 
 export function switchDashboardView(activeTabId, activeViewId) {
@@ -145,13 +148,16 @@ export function addAttackerModule(containerElement) {
                         <option value="wound_plus_1">+1 to Wound</option>
                         <option value="wound_minus_1">-1 to Wound</option>
                     </optgroup>
-                    <optgroup label="Rerolls">
+                  <optgroup label="Rerolls">
                         <option value="reroll_hits_1">Reroll 1s to Hit</option>
                         <option value="reroll_hits_all">Reroll All Hits</option>
+                        <option value="reroll_one_hit">Reroll 1 Hit Roll</option>
                         <option value="reroll_wounds_1">Reroll 1s to Wound</option>
                         <option value="reroll_wounds_all">Reroll All Wounds</option>
+                        <option value="reroll_one_wound">Reroll 1 Wound Roll</option>
                         <option value="fish_crits">Fish for Crits (Greedy)</option>
                         <option value="reroll_damage">Reroll Damage (1s & 2s)</option>
+                        <option value="reroll_one_damage">Reroll 1 Dmg Roll</option>
                     </optgroup>
                 </select>
                 <button class="btn-primary add-mod-btn">Add Rule</button>
@@ -328,8 +334,11 @@ export function buildRosterFromJSON(containerElement, jsonData, clearRoster = tr
             if (mods.rerollHits === "ones") addBadgeToModule(newModule, "reroll_hits_1", false);
             if (mods.rerollWounds === "all") addBadgeToModule(newModule, "reroll_wounds_all", false);
             if (mods.rerollWounds === "ones") addBadgeToModule(newModule, "reroll_wounds_1", false);
+            if (mods.rerollOneHit) addBadgeToModule(newModule, "reroll_one_hit", false);
+            if (mods.rerollOneWound) addBadgeToModule(newModule, "reroll_one_wound", false);
             if (mods.fishForCrits) addBadgeToModule(newModule, "fish_crits", false);
             if (mods.rerollDamage) addBadgeToModule(newModule, "reroll_damage", false);
+            if (mods.rerollOneDamage) addBadgeToModule(newModule, "reroll_one_damage", false);
 
             if (mods.sustained > 0) {
                 addBadgeToModule(newModule, "sustained", false);
@@ -451,17 +460,84 @@ export function spawnLeaderboard(container, statsArray, isSingleTarget = false) 
 
 
 //combi engine >>>
+
+// dictionary specifically for combi engine
+export const CombiModifierDictionary = [
+    { key: "lethal", name: "Lethal Hits", category: "weapon_rules" },
+    { key: "devastating", name: "Devastating Wounds", category: "weapon_rules" },
+    { key: "sustained_hits", name: "Sustained Hits 1", category: "weapon_rules" },
+    { key: "hit_plus_1", name: "+1 to Hit", category: "flat_mods" },
+    { key: "wound_plus_1", name: "+1 to Wound", category: "flat_mods" },
+    { key: "extra_ap_1", name: "AP +1", category: "flat_mods" },
+    { key: "reroll_hits_1", name: "Reroll 1s (Hit)", category: "rerolls" },
+    { key: "reroll_hits_all", name: "Reroll All (Hit)", category: "rerolls" },
+    { key: "reroll_one_hit", name: "Reroll 1 Hit Roll", category: "rerolls" },
+    { key: "reroll_wounds_1", name: "Reroll 1s (Wound)", category: "rerolls" },
+    { key: "reroll_wounds_all", name: "Reroll All (Wound)", category: "rerolls" },
+    { key: "reroll_one_wound", name: "Reroll 1 Wound Roll", category: "rerolls" },
+    { key: "fish_crits", name: "Fish for Crits", category: "rerolls" },
+    { key: "reroll_damage", name: "Reroll Damage", category: "rerolls" },
+    { key: "reroll_one_damage", name: "Reroll 1 Dmg Roll", category: "rerolls" }
+];
+
+const categoryTitles = {
+    "weapon_rules": "Weapon Rules",
+    "flat_mods": "Flat Modifiers",
+    "rerolls": "Reroll Rules"
+};
+
+export function initCombinatorialPool() {
+    const container = document.getElementById("bucket-available");
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    const categories = [...new Set(CombiModifierDictionary.map(m => m.category))];
+
+    categories.forEach(cat => {
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = `
+            <div style="color: var(--theme-text-muted); font-size: 0.75rem; font-weight: bold; text-transform: uppercase; margin-bottom: 8px;">
+                ${categoryTitles[cat] || cat}
+            </div>
+            <div id="pool-${cat}" class="bucket-dropzone available-pool-zone" data-accept="${cat}" style="display: flex; flex-direction: column; gap: 8px; min-height: 40px; padding: 5px; border: 1px dashed var(--theme-mid); border-radius: 4px;">
+            </div>
+        `;
+        container.appendChild(wrapper);
+    });
+
+    CombiModifierDictionary.forEach(mod => {
+        const dropzone = document.getElementById(`pool-${mod.category}`);
+        if (dropzone) {
+            const el = document.createElement("div");
+            el.draggable = true;
+            el.className = "draggable-mod";
+            el.dataset.mod = mod.key;
+            el.dataset.category = mod.category;
+            el.style.cssText = "background: var(--bg-color); padding: 8px; border: 1px solid var(--theme-mid); border-radius: 4px; cursor: grab; color: var(--theme-text-light); font-size: 0.85rem; font-weight: bold;";
+            el.textContent = mod.name;
+            dropzone.appendChild(el);
+        }
+    });
+}
+
+
+
 export function renderCombiMirror(weaponsArray, targetUnit) {
     const container = document.getElementById("combi-mirror-container");
     if (!container) return;
 
+    const targetName = targetUnit.name || "Defending Target";
+
     let html = `
     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
         <div style="flex: 1; min-width: 180px; background: rgba(0,0,0,0.4); padding: 8px 12px; border-radius: 4px; border-left: 4px solid var(--theme-btn-standard); display: flex; justify-content: space-between; align-items: center;">
-            <span style="color: var(--theme-text-muted); font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Defending Target</span>
+            <span style="color: var(--theme-text-muted); font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Target: ${targetName}</span>
             <span style="font-size: 0.85rem; color: #fff; font-weight: bold;">T${targetUnit.toughness} | W${targetUnit.wounds} | SV${targetUnit.save}+</span>
         </div>
     `;
+
+
 
     weaponsArray.slice(0, 4).forEach(w => {
         const typeLabel = w.isLeader ? "Leader" : "Unit";

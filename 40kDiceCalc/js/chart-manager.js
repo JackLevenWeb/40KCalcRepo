@@ -211,6 +211,25 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
         return a.areaSum - b.areaSum;
     });
 
+    const visibleDatasets = new Set();
+
+    // always keep base profile visible
+    const baseDataset = datasets.find(d => d.label === "Base Profile");
+    if (baseDataset) visibleDatasets.add(baseDataset);
+
+    // keep the top performing datasets visible up to 3 total
+    for (let i = datasets.length - 1; i >= 0; i--) {
+        if (visibleDatasets.size >= 3) break;
+        visibleDatasets.add(datasets[i]);
+    }
+
+    // set hidden property for all other datasets
+    datasets.forEach(d => {
+        if (!visibleDatasets.has(d)) {
+            d.hidden = true;
+        }
+    });
+
 
 
 

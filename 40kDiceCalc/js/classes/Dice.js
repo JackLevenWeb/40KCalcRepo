@@ -9,14 +9,14 @@ export class Dice {
     }
 
     //  evaluation Function
-    static rollPool({ poolSize, target, modifier, rerollRule, critThreshold, sustained, isLethalOrDev, fishForCrits }) {
+    static rollPool({ poolSize, target, modifier, rerollRule, critThreshold, sustained, isLethalOrDev, fishForCrits, rerollOne = false }) {
         let initialRolls = this.rollRaw(poolSize);
         let finalRolls = [];
 
         const isFishingActive = fishForCrits && (isLethalOrDev || sustained > 0) && (rerollRule === "all" || rerollRule === "ones");
-
-        // calculate the capped modifier FIRST so it can be used to evaluate misses
         const cappedMod = Math.max(-1, Math.min(1, modifier));
+
+        let singleRerollUsed = false;
 
         // process Rerolls
         for (const r of initialRolls) {
@@ -38,6 +38,14 @@ export class Dice {
                 }
             }
 
+
+            if (!shouldReroll && rerollOne && !singleRerollUsed) {
+                if (r === 1 || (r < critThreshold && r + cappedMod < target)) {
+                    shouldReroll = true;
+                    singleRerollUsed = true;
+                }
+            }
+
             if (shouldReroll) {
                 finalRolls.push(this.rollRaw(1)[0]);
             } else {
@@ -52,27 +60,21 @@ export class Dice {
         let bonus = 0;
 
         for (const r of finalRolls) {
-            // check for natural 1s (Automatic Failure)
             if (r === 1) {
                 fails++;
                 continue;
             }
-
-            // check for natural criticals (Ignores modifiers)
             if (r >= critThreshold) {
                 if (isLethalOrDev) {
                     autos++;
                 } else {
                     successes++;
                 }
-
                 if (sustained > 0) {
                     bonus += sustained;
                 }
                 continue;
             }
-
-            // check for normal successes (Applies modifiers)
             if (r + cappedMod >= target) {
                 successes++;
             } else {
