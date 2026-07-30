@@ -1,15 +1,20 @@
-// manages the in-memory sqlite database, data formatting, and querying.
+// manages in-memory sqlite database and data formatting
+
+//#region database initialization >>>>>>>>>>>>>>>>>>>>>>>
 
 const SIMULATION_ITERATIONS = 200000;
 
-
-//In-Memory SQLite Database via WebAssembly
+// in-memory sqlite database via webassembly
 let db;
 
+// creates schema for simulation runs and averages
 export async function initDataBase() {
     try {
+        // initSqlJs from sql-wasm.js
         const SQL = await initSqlJs({ locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}` });
+
         db = new SQL.Database();
+
         db.run(`
             CREATE TABLE simulation_runs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,24 +41,35 @@ export async function initDataBase() {
                 saves_failed REAL
             );
         `);
+
         console.log("SQLite Database Initialized");
-    } catch (error) { console.error("Failed to initialize SQLite:", error); }
+    } catch (error) {
+        console.error("Failed to initialize SQLite:", error);
+    }
 }
-//for distibution
+
+//#endregion
+
+//#region data loading >>>>>>>>>>>>>>>>>>>>>>>
+
+// inserts distribution data into db
 export function loadDataIntoSQL(unitName, modifierName, category, distribution) {
     if (!db) return;
+
     const stmt = db.prepare(`INSERT INTO simulation_runs (unit_name, modifier_name, category, value, occurrence_count) VALUES (?, ?, ?, ?, ?)`);
 
-    // Convert distribution { "5": 1200 } into rows
+    // converts distribution object into db rows
     for (const [amount, count] of Object.entries(distribution)) {
         stmt.run([unitName, modifierName, category, parseInt(amount, 10), count]);
     }
+
     stmt.free();
 }
 
-//for averages
+// inserts calculated averages into db
 export function loadAveragesIntoSQL(unitName, modifierName, averages) {
     if (!db) return;
+
     const stmt = db.prepare(`
         INSERT INTO simulation_averages (
             unit_name, modifier_name, avg_damage, avg_killed, avg_wasted, efficiency,
@@ -68,10 +84,15 @@ export function loadAveragesIntoSQL(unitName, modifierName, averages) {
         averages.wounds_success, averages.wounds_dev,
         averages.saves_forced, averages.saves_passed, averages.saves_failed
     ]);
+
     stmt.free();
 }
 
-//for distibution
+//#endregion
+
+//#region data querying >>>>>>>>>>>>>>>>>>>>>>>
+
+// retrieves distribution data for specific unit
 export function queryComparisonData(unitName) {
     const result = db.exec(`
         SELECT modifier_name, value, category, occurrence_count 
@@ -79,24 +100,35 @@ export function queryComparisonData(unitName) {
         WHERE unit_name = '${unitName}' 
         ORDER BY modifier_name ASC, value ASC;
     `);
+
     return result.length === 0 ? [] : result[0].values;
 }
-//for averages
+
+// retrieves averages data for specific unit
 export function queryAveragesData(unitName) {
     const result = db.exec(`SELECT * FROM simulation_averages WHERE unit_name = '${unitName}';`);
+
     if (result.length === 0) return [];
 
-    // convert SQL arrays back into JS objects
+    // converts sql arrays back into js objects
     const columns = result[0].columns;
+
     return result[0].values.map(row => {
         let obj = {};
+
         columns.forEach((col, index) => {
             obj[col] = row[index];
         });
+
         return obj;
     });
 }
 
+//#endregion
+
+//#region labels and utilities >>>>>>>>>>>>>>>>>>>>>>>
+
+// maps modifier keys to ui readable labels
 export const ModLabels = {
     "Base": "Base Profile",
     "hit_plus_1": "+1 to Hit",
@@ -121,12 +153,12 @@ export const ModLabels = {
     "plus_1_save": "Target: +1 to Save"
 };
 
+// truncates tables for new simulation runs
 export function clearDataBase() {
-
     if (db) {
         db.run("DELETE FROM simulation_runs;");
         db.run("DELETE FROM simulation_averages;");
-
     }
-
 }
+
+//#endregion

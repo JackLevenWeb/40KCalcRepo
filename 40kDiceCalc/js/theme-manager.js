@@ -1,5 +1,6 @@
-// manages dynamic color palettes and CSS variable injection using Token Mapping
+//#region theme configurations >>>>>>>>>>>>>>>>>>>>>>>
 
+// manages dynamic color palettes and css variable injection
 export const Themes = {
     space_wolves: {
         textLight: "#9ac1df", textMuted: "#8C9BA8", inputBg: "#c5ddef",
@@ -7,7 +8,7 @@ export const Themes = {
         accent: "#C48235", accentGlow: "rgba(196, 130, 53, 0.4)",
         chartColors: ["#9ac1df", "#C48235", "#9B2226", "#E2A958", "#7A8FA6"],
         btnStandardText: "FOR THE ALL FATHER!", btnAdvancedText: "FOR RUSS!", divider: "#9B2226",
-        inclusive: "#9B2226"
+        inclusive: "#7EB09B"
     },
     necrons: {
         textLight: "#8FE07F", textMuted: "#66B39A", inputBg: "#C1E8C1",
@@ -125,12 +126,17 @@ export const Themes = {
 
 let currentThemeKey = "space_wolves";
 
+//#endregion
+
+//#region theme application >>>>>>>>>>>>>>>>>>>>>>>
+
 export function getCurrentTheme() {
     return Themes[currentThemeKey];
 }
 
 export function applyTheme(themeKey) {
     if (!Themes[themeKey]) themeKey = "space_wolves";
+
     currentThemeKey = themeKey;
     const theme = Themes[currentThemeKey];
     const root = document.documentElement;
@@ -149,19 +155,19 @@ export function applyTheme(themeKey) {
     root.style.setProperty('--theme-mid-hover', theme.midHover);
     root.style.setProperty('--theme-btn-standard', theme.btnStandard);
     root.style.setProperty('--theme-btn-standard-hover', theme.btnStandardHover);
-    root.style.setProperty('--theme-accent', theme.accent);
-    root.style.setProperty('--theme-accent-glow', theme.accentGlow);
-    root.style.setProperty('--theme-divider', theme.divider);
 
     root.style.setProperty('--theme-accent', theme.accent);
     root.style.setProperty('--theme-accent-glow', theme.accentGlow);
     root.style.setProperty('--theme-divider', theme.divider);
-    root.style.setProperty('--theme-inclusive', theme.inclusive); // <-- Added
+    root.style.setProperty('--theme-inclusive', theme.inclusive);
 
     const calcBtn = document.getElementById("calculate-btn");
     if (calcBtn) calcBtn.textContent = theme.btnStandardText;
+
     const advBtn = document.getElementById("advanced-analytics-btn");
     if (advBtn) advBtn.textContent = theme.btnAdvancedText;
 
     localStorage.setItem("40kTheme", themeKey);
 }
+
+//#endregion

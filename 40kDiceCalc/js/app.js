@@ -1,4 +1,4 @@
-// main orchestrator file. handles initialization and high-level pipeline execution.
+//#region imports >>>>>>>>>>>>>>>>>>>>>>>
 
 import { Unit } from './classes/Unit.js';
 import { Weapon } from './classes/Weapon.js';
@@ -11,11 +11,18 @@ import { applyTheme, getCurrentTheme } from './theme-manager.js';
 import { scrapeCombinatorialSelections, generateCombinations } from './combinatorial-engine.js';
 import './fetchUnitStats.js'
 
+//#endregion
+
+//#region initialization and state >>>>>>>>>>>>>>>>>>>>>>>
+
 const SIMULATION_ITERATIONS = 200000;
 
+// initializeWatchers from event-manager.js
 initializeWatchers();
 
 const savedTheme = localStorage.getItem("40kTheme") || "space_wolves";
+
+// applyTheme from theme-manager.js
 applyTheme(savedTheme);
 
 document.addEventListener("App:AutoSave", autoSave);
@@ -24,7 +31,9 @@ document.addEventListener("App:ImportRoster", (e) => handleImport(e.detail.file)
 
 document.addEventListener("App:ThemeChanged", () => {
     const stdResults = document.getElementById("results-wrapper");
+
     if (stdResults && stdResults.style.display !== "none" && currentSimulationResults) {
+        // renderChart from chart-manager.js
         renderChart(currentSimulationResults.damageDistribution, currentSimulationResults.killedDistribution, currentSimulationResults.SimulatedRuns, currentIsSingleTarget);
     }
 });
@@ -42,17 +51,25 @@ let currentIsSingleTarget = false;
 let activeCombiWeapons = [];
 let activeCombiTarget = null;
 
-// initialize before loading save data
+// initDataBase from db-manager.js
 initDataBase();
+
+// initCombinatorialPool from ui-manager.js
 initCombinatorialPool();
+
+// setupDragAndDrop from event-manager.js
 setupDragAndDrop();
 
+//#endregion
+
+//#region core data builders >>>>>>>>>>>>>>>>>>>>>>>
+
+// parse ui modules into weapon data
 function createWeaponsArray(stripBadges = false) {
     const modules = document.querySelectorAll('.attacker-module');
     const weaponsArray = [];
 
     modules.forEach(module => {
-        //  name and swap apostrophes for backticks to prevent SQL crashes
         const rawUnitName = module.querySelector(".in-unit-name").value.trim();
         const unitName = rawUnitName.replace(/'/g, "`");
 
@@ -63,13 +80,11 @@ function createWeaponsArray(stripBadges = false) {
         const ap = parseInt(module.querySelector(".in-ap").value, 10);
         const modelCount = parseInt(module.querySelector(".in-models").value, 10);
         const unitCount = parseInt(module.querySelector(".in-units").value, 10);
+
         const isLeader = module.querySelector('.is-leader').checked;
         const attachTarget = module.querySelector('.attach-to').value || null;
 
-
         const grantedKeyword = stripBadges ? "none" : module.querySelector('.grant-keyword').value;
-
-
 
         const badgesToStrip = [
             "lethal", "devastating", "sustained", "hit_plus_1", "hit_minus_1", "wound_plus_1", "wound_minus_1",
@@ -78,15 +93,17 @@ function createWeaponsArray(stripBadges = false) {
             "lance", "twinlinked"
         ];
 
-
         const hasMod = (key) => {
             if (stripBadges && badgesToStrip.includes(key)) return false;
+
             return module.querySelector(`.mod-badge[data-key="${key}"]`) !== null;
         };
 
         const getModVal = (key) => {
             if (stripBadges && badgesToStrip.includes(key)) return 0;
+
             const badge = module.querySelector(`.mod-badge[data-key="${key}"]`);
+
             return badge ? parseInt(badge.querySelector(".badge-val").value, 10) : 0;
         };
 
@@ -131,12 +148,12 @@ function createWeaponsArray(stripBadges = false) {
             rerollOneDamage: hasMod("reroll_one_damage")
         };
 
+        // Weapon from Weapon.js
         const newWeapon = new Weapon(unitName, attack, bsws, strength, ap, damage, modelCount, unitCount, modifiers);
+
         newWeapon.isLeader = isLeader;
         newWeapon.attachTarget = attachTarget;
         newWeapon.grantedKeyword = grantedKeyword;
-
-        // Capture the Combi Roster toggle state
         newWeapon.includeInCombi = module.querySelector('.in-combi-roster') ? module.querySelector('.in-combi-roster').checked : false;
 
         weaponsArray.push(newWeapon);
@@ -145,6 +162,7 @@ function createWeaponsArray(stripBadges = false) {
     return weaponsArray;
 }
 
+// parse ui into target unit data
 function createUnit() {
     const nameInput = document.getElementById("target-name");
     const targetName = nameInput ? nameInput.value.trim() : "Target Unit";
@@ -167,12 +185,15 @@ function createUnit() {
         plusOneSave: document.getElementById("def-plus-one-save") ? document.getElementById("def-plus-one-save").checked : false
     };
 
+    // Unit from Unit.js
     const unit = new Unit(toughness, wounds, save, inVul, fnp, modelCount, modifiers);
+
     unit.name = targetName;
+
     return unit;
 }
 
-// Maps saved target data back into the UI
+// maps saved target data back into the ui
 function loadTargetProfile(targetData) {
     if (!targetData) return;
 
@@ -211,18 +232,26 @@ function loadTargetProfile(targetData) {
     }
 }
 
+//#endregion
+
+//#region simulation worker and scenarios >>>>>>>>>>>>>>>>>>>>>>>
+
+// execute simulation in background thread
 function runWorkerSimulation(iterations, weaponsArray, targetUnit) {
     return new Promise((resolve, reject) => {
         const worker = new Worker(new URL('./webWorker.js', import.meta.url), { type: 'module' });
+
         worker.addEventListener('message', (event) => {
             const results = event.data;
             worker.terminate();
             resolve(results);
         });
+
         worker.addEventListener('error', (error) => {
             worker.terminate();
             reject(error);
         });
+
         worker.postMessage({ iterations, weaponsArray, targetUnit });
     });
 }
@@ -241,6 +270,11 @@ const target_SIMULATION_SCENARIOS = {
     "Damage Mods": ["damage_minus_1", "damage_half", "FNP"]
 };
 
+//#endregion
+
+//#region modifier logic >>>>>>>>>>>>>>>>>>>>>>>
+
+// directly apply active rule to weapon stats
 function applyModifierToWeapon(weapon, modKey) {
     if (modKey === "hit_plus_1") weapon.modifiers.hitMod += 1;
     if (modKey === "reroll_hits_1") weapon.modifiers.rerollHits = "ones";
@@ -262,6 +296,7 @@ function applyModifierToWeapon(weapon, modKey) {
     if (modKey === "reroll_one_damage") weapon.modifiers.rerollOneDamage = true;
 }
 
+// prevent redundant or mathematically impossible rules
 function checkSkipReason(weaponsArray, targetUnit, modKey) {
     for (const w of weaponsArray) {
         if (modKey === "hit_plus_1" && w.modifiers.hitMod > 0) return "applied";
@@ -281,12 +316,15 @@ function checkSkipReason(weaponsArray, targetUnit, modKey) {
         let rawDam = w.damage;
         let parsedDam = parseInt(rawDam, 10);
         let isFlatDamage = !isNaN(parsedDam) && String(parsedDam) === String(rawDam).trim();
+
         if (modKey === "reroll_damage" && isFlatDamage) return "ineffective";
 
         let effectiveBs = parseInt(w.BsWs) - w.modifiers.hitMod;
+
         if (modKey === "hit_plus_1" && effectiveBs <= 2) return "ineffective";
         if (modKey === "reroll_hits_all" && effectiveBs <= 2) return "ineffective";
 
+        // base wound target based on str vs tgh
         let baseWoundTarget = 5;
         if (w.strength >= targetUnit.toughness * 2) baseWoundTarget = 2;
         else if (w.strength > targetUnit.toughness) baseWoundTarget = 3;
@@ -294,6 +332,7 @@ function checkSkipReason(weaponsArray, targetUnit, modKey) {
         else if (w.strength <= targetUnit.toughness / 2) baseWoundTarget = 6;
 
         let effectiveWound = baseWoundTarget - w.modifiers.woundMod;
+
         if (targetUnit.modifiers.minusOneWound) effectiveWound += 1;
         if (targetUnit.modifiers.minusOneWoundHighStr && w.strength > targetUnit.toughness) effectiveWound += 1;
         if (w.modifiers.lance) effectiveWound -= 1;
@@ -304,6 +343,7 @@ function checkSkipReason(weaponsArray, targetUnit, modKey) {
     return false;
 }
 
+// apply defensive buffs
 function applyModifiersToTarget(targetUnit, modKey) {
     if (modKey === "hit_minus_1") targetUnit.modifiers.minusOneHit = true;
     if (modKey === "cover") targetUnit.modifiers.cover = true;
@@ -315,6 +355,7 @@ function applyModifiersToTarget(targetUnit, modKey) {
     if (modKey === "plus_1_save") targetUnit.modifiers.plusOneSave = true;
 }
 
+// prevent redundant target buffs
 function checkSkipReasonTarget(targetUnit, weaponsArray, modKey) {
     if (modKey === "hit_minus_1" && targetUnit.modifiers.minusOneHit) return "applied";
     if (modKey === "cover" && targetUnit.modifiers.cover) return "applied";
@@ -323,6 +364,7 @@ function checkSkipReasonTarget(targetUnit, weaponsArray, modKey) {
     if (modKey === "damage_minus_1" && targetUnit.modifiers.minusOneDamage) return "applied";
     if (modKey === "damage_half" && targetUnit.modifiers.halfDamage) return "applied";
     if (modKey === "FNP" && targetUnit.fnp > 0) return "applied";
+
     if (modKey === "SgT_wound_minus_1" && targetUnit.toughness >= weaponsArray[0].strength) return "ineffective";
 
     let rawDam = weaponsArray[0].damage;
@@ -332,8 +374,10 @@ function checkSkipReasonTarget(targetUnit, weaponsArray, modKey) {
     if (isFlatDamage) {
         if (modKey === "damage_minus_1" && parsedDam <= 1) return "ineffective";
         if (modKey === "damage_half" && parsedDam <= 1) return "ineffective";
+
         let halfDmg = Math.ceil(parsedDam / 2);
         let minusOneDmg = Math.max(1, parsedDam - 1);
+
         if (modKey === "damage_half" && halfDmg === minusOneDmg) return "ineffective";
     }
 
@@ -343,11 +387,17 @@ function checkSkipReasonTarget(targetUnit, weaponsArray, modKey) {
     return false;
 }
 
+//#endregion
+
+//#region primary event listeners >>>>>>>>>>>>>>>>>>>>>>>
+
+// runs base simulation and renders charts
 if (CalcBtn) {
     CalcBtn.addEventListener("click", () => {
         document.dispatchEvent(new CustomEvent("App:AutoSave"));
         CalcBtn.textContent = "Rolling dice...";
         CalcBtn.disabled = true;
+
         const attackerWeapons = createWeaponsArray();
         const targetUnit = createUnit();
 
@@ -362,6 +412,7 @@ if (CalcBtn) {
 
         worker.addEventListener('message', (event) => {
             const results = event.data;
+
             currentSimulationResults = results;
             currentIsSingleTarget = targetUnit.modelCount === 1;
 
@@ -387,20 +438,27 @@ if (CalcBtn) {
             </div>
         `;
             renderChart(results.damageDistribution, results.killedDistribution, results.SimulatedRuns, currentIsSingleTarget);
+
+            // getCurrentTheme from theme-manager.js
             CalcBtn.textContent = getCurrentTheme().btnStandardText;
             CalcBtn.disabled = false;
+
             worker.terminate();
         });
+
         worker.postMessage({ iterations: SIMULATION_ITERATIONS, weaponsArray: attackerWeapons, targetUnit: targetUnit });
     });
 }
 
+// loops through allowed scenarios and populates advanced report
 if (advAnalyticsBtn) {
     advAnalyticsBtn.addEventListener("click", async () => {
         document.dispatchEvent(new CustomEvent("App:AutoSave"));
 
         advAnalyticsBtn.textContent = "Running Pipeline...";
         advAnalyticsBtn.disabled = true;
+
+        // clearDataBase from db-manager.js
         clearDataBase();
 
         document.getElementById("advanced-analytics-wrapper").style.display = "block";
@@ -443,6 +501,7 @@ if (advAnalyticsBtn) {
                     </summary>
                     <div class="unit-reports-wrapper" style="padding: 15px;"></div>
                 `;
+
                 mainContainer.appendChild(unitAccordion);
 
                 if (isFirstUnit) unitAccordion.open = true;
@@ -472,11 +531,14 @@ if (advAnalyticsBtn) {
                     avgKills: baseResults.averages.killed
                 });
 
+                // loadDataIntoSQL from db-manager.js
                 loadDataIntoSQL(unitName, "Base", "Hit", baseResults.hitDistribution);
                 loadDataIntoSQL(unitName, "Base", "Wound", baseResults.woundDistribution);
                 loadDataIntoSQL(unitName, "Base", "Save", baseResults.saveDistribution);
                 loadDataIntoSQL(unitName, "Base", "Damage", baseResults.damageDistribution);
                 loadDataIntoSQL(unitName, "Base", "ModelsKilled", baseResults.killedDistribution);
+
+                // loadAveragesIntoSQL from db-manager.js
                 loadAveragesIntoSQL(unitName, "Base", baseResults.averages);
 
                 baseWeapon.modifiers.melta = originalMelta;
@@ -501,6 +563,7 @@ if (advAnalyticsBtn) {
 
                         let moddedWeapon = JSON.parse(JSON.stringify(baseWeapon));
                         applyModifierToWeapon(moddedWeapon, modKey);
+
                         let results = await runWorkerSimulation(SIMULATION_ITERATIONS, [moddedWeapon], targetUnit);
 
                         loadDataIntoSQL(unitName, modKey, "Hit", results.hitDistribution);
@@ -530,6 +593,7 @@ if (advAnalyticsBtn) {
 
                         let moddedTarget = JSON.parse(JSON.stringify(targetUnit));
                         applyModifiersToTarget(moddedTarget, modKey);
+
                         let results = await runWorkerSimulation(SIMULATION_ITERATIONS, [baseWeapon], moddedTarget);
 
                         loadDataIntoSQL(unitName, modKey, "Hit", results.hitDistribution);
@@ -541,8 +605,12 @@ if (advAnalyticsBtn) {
                     }
                 }
 
+                // queryComparisonData from db-manager.js
                 const sqlData = queryComparisonData(unitName);
+
+                // queryAveragesData from db-manager.js
                 const sqlAvgData = queryAveragesData(unitName);
+
                 const attackerUnitReport = unitAccordion.querySelector('.unit-reports-wrapper');
 
                 generateAdvancedReport(`${unitName}: Hit Averages`, "Hit", sqlData, sqlAvgData, SIMULATION_ITERATIONS, allowedHitMods, skippedMods, statsHTML, attackerUnitReport, isSingleTarget);
@@ -553,16 +621,21 @@ if (advAnalyticsBtn) {
 
                 const sidebars = attackerUnitReport.querySelectorAll('.avg-stats-sidebar');
                 let maxHeight = 0;
+
                 sidebars.forEach(sidebar => {
                     if (sidebar.offsetHeight > maxHeight) maxHeight = sidebar.offsetHeight;
                 });
+
                 sidebars.forEach(sidebar => {
                     sidebar.style.minHeight = maxHeight + 'px';
                 });
             }
 
             const mainContainer = document.getElementById("advanced-reports-container");
+
+            // spawnLeaderboard from ui-manager.js
             spawnLeaderboard(mainContainer, leaderboardStats, isSingleTarget);
+
         } catch (error) {
             console.error("Pipeline Failed:", error);
             alert("Pipeline Failed.");
@@ -573,11 +646,18 @@ if (advAnalyticsBtn) {
     });
 }
 
+//#endregion
+
+//#region report html generators >>>>>>>>>>>>>>>>>>>>>>>
+
+// generates dynamic tables based on allowed mods and skip reasons
 function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns, allowedMods, skippedMods, statsHTML, targetContainer, isSingleTarget = false) {
     const baseRow = sqlAvgData.find(r => r.modifier_name === "Base");
+
     const processedRows = allowedMods.map(modName => {
         let skipReason = skippedMods[modName] || null;
         let dataRow = skipReason ? baseRow : sqlAvgData.find(r => r.modifier_name === modName);
+
         return { ...dataRow, modifier_name: modName, skipReason: skipReason };
     }).filter(r => r.unit_name);
 
@@ -590,27 +670,33 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
 
     const getRowNameHTML = (row) => {
         let name = ModLabels[row.modifier_name] || row.modifier_name;
+
         if (row.modifier_name === "Base") name = "Base Profile";
+
         if (row.skipReason === "applied") {
             return `${name} <span style="margin-left: 8px; padding: 2px 6px; background: rgba(255,255,255,0.1); color: var(--theme-text-light); border-radius: 4px; font-size: 0.65rem; text-transform: uppercase;">Active</span>`;
         } else if (row.skipReason === "ineffective") {
             return `${name} <span style="margin-left: 8px; padding: 2px 6px; background: var(--border-color); color: var(--theme-text-muted); border-radius: 4px; font-size: 0.65rem; text-transform: uppercase;">Redundant</span>`;
         }
+
         return name;
     };
 
     if (category === "Hit") {
         const hasBonus = processedRows.some(r => r.hits_bonus > 0);
         const hasAuto = processedRows.some(r => r.hits_auto > 0);
+
         let headers = `<th style="${th}">Rule</th><th style="${th}">Avg Total Hits</th>`;
         if (hasBonus) headers += `<th style="${th}">Inc. Sustained</th>`;
         if (hasAuto) headers += `<th style="${th}">Inc. Lethal</th>`;
+
         avgStatsHTML += `<tr>${headers}</tr>`;
 
         processedRows.forEach(row => {
             let rowStyle = row.skipReason ? `opacity: 0.5;` : ``;
             let totalHits = row.hits_success + row.hits_bonus + row.hits_auto;
             let cells = [totalHits.toFixed(2)];
+
             if (hasBonus) cells.push(row.hits_bonus > 0 ? row.hits_bonus.toFixed(2) : '-');
             if (hasAuto) cells.push(row.hits_auto > 0 ? row.hits_auto.toFixed(2) : '-');
 
@@ -618,20 +704,25 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
             cells.forEach((val, index) => {
                 rowHTML += `<td style="${index === cells.length - 1 ? tdLast : td}">${val}</td>`;
             });
+
             avgStatsHTML += rowHTML + `</tr>`;
         });
+
     } else if (category === "Wound") {
         const hasDev = processedRows.some(r => r.wounds_dev > 0);
         const hasAuto = processedRows.some(r => r.hits_auto > 0);
+
         let headers = `<th style="${th}">Rule</th><th style="${th}">Avg Total Wounds</th>`;
         if (hasDev) headers += `<th style="${th}">Inc. Devastating</th>`;
         if (hasAuto) headers += `<th style="${th}">Inc. Lethal</th>`;
+
         avgStatsHTML += `<tr>${headers}</tr>`;
 
         processedRows.forEach(row => {
             let rowStyle = row.skipReason ? `opacity: 0.5;` : ``;
             let totalWounds = row.wounds_success + row.wounds_dev + row.hits_auto;
             let cells = [totalWounds.toFixed(2)];
+
             if (hasDev) cells.push(row.wounds_dev > 0 ? row.wounds_dev.toFixed(2) : '-');
             if (hasAuto) cells.push(row.hits_auto > 0 ? row.hits_auto.toFixed(2) : '-');
 
@@ -639,40 +730,56 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
             cells.forEach((val, index) => {
                 rowHTML += `<td style="${index === cells.length - 1 ? tdLast : td}">${val}</td>`;
             });
+
             avgStatsHTML += rowHTML + `</tr>`;
         });
+
     } else if (category === "Save") {
         avgStatsHTML += `<tr><th style="${th}">Rule</th><th style="${th}">Saves Forced</th><th style="${th}">Passed</th><th style="${th}">Failed (Dmg)</th></tr>`;
+
         processedRows.forEach(row => {
             let rowStyle = row.skipReason ? `opacity: 0.5;` : ``;
             avgStatsHTML += `<tr style="${rowStyle}"><td style="${tdFirst}">${getRowNameHTML(row)}</td><td style="${td}">${row.saves_forced.toFixed(2)}</td><td style="${td}">${row.saves_passed.toFixed(2)}</td><td style="${tdLast}">${row.saves_failed.toFixed(2)}</td></tr>`;
         });
+
     } else if (category === "Damage") {
         avgStatsHTML += `<tr><th style="${th}">Rule</th><th style="${th}">Avg Total Damage</th></tr>`;
+
         processedRows.forEach(row => {
             let rowStyle = row.skipReason ? `opacity: 0.5;` : ``;
             avgStatsHTML += `<tr style="${rowStyle}"><td style="${tdFirst}">${getRowNameHTML(row)}</td><td style="${tdLast}">${row.avg_damage.toFixed(2)}</td></tr>`;
         });
+
     } else if (category === "ModelsKilled") {
         const killHeader = isSingleTarget ? "Probability to Kill" : "Expected Models Killed";
+
         avgStatsHTML += `<tr><th style="${th}">Rule</th><th style="${th}">${killHeader}</th><th style="${th}">Overkill</th><th style="${th}">Efficiency</th></tr>`;
+
         processedRows.forEach(row => {
             let rowStyle = row.skipReason ? `opacity: 0.5;` : ``;
             const killValue = isSingleTarget ? (row.avg_killed * 100).toFixed(1) + "%" : row.avg_killed.toFixed(3);
+
             avgStatsHTML += `<tr style="${rowStyle}"><td style="${tdFirst}">${getRowNameHTML(row)}</td><td style="${td}">${killValue}</td><td style="${td}">${row.avg_wasted.toFixed(2)}</td><td style="${tdLast}">${row.efficiency}%</td></tr>`;
         });
     }
+
     avgStatsHTML += `</table>`;
 
+    // spawnReportCard from ui-manager.js
     const card = spawnReportCard(title, targetContainer, statsHTML, avgStatsHTML);
     const chartMods = allowedMods.filter(m => !skippedMods[m]);
+
+    // renderAdvancedChart from chart-manager.js
     renderAdvancedChart(card.querySelector('.adv-chart'), category, sqlData, totalRuns, chartMods, isSingleTarget);
 }
 
+// generates the core stat display for the top of the report cards
 function buildBaseStatsHTML(weaponsArray, targetUnit) {
     let html = `<div style="display: flex; gap: 10px; flex-wrap: wrap; width: 100%;">`;
+
     weaponsArray.forEach(w => {
         let activeMods = [];
+
         if (w.modifiers.lethal) activeMods.push("Lethal");
         if (w.modifiers.devastating) activeMods.push("Dev Wounds");
         if (w.modifiers.sustained > 0) activeMods.push(`Sus ${w.modifiers.sustained}`);
@@ -691,6 +798,7 @@ function buildBaseStatsHTML(weaponsArray, targetUnit) {
         if (w.modifiers.woundMod > 0) activeMods.push(`+${w.modifiers.woundMod} Wound`);
         if (w.modifiers.woundMod < 0) activeMods.push(`${w.modifiers.woundMod} Wound`);
         if (w.modifiers.rerollDamage) activeMods.push(`RR Damage`);
+
         let modsStr = activeMods.length > 0 ? `[${activeMods.join(', ')}]` : `[No Mods]`;
 
         html += `
@@ -704,6 +812,7 @@ function buildBaseStatsHTML(weaponsArray, targetUnit) {
     });
 
     let targetMods = [];
+
     if (targetUnit.modifiers.minusOneHit) targetMods.push("-1 Hit");
     if (targetUnit.modifiers.minusOneWound) targetMods.push("-1 Wnd");
     if (targetUnit.modifiers.minusOneWoundHighStr) targetMods.push("S>T -1 Wnd");
@@ -712,6 +821,7 @@ function buildBaseStatsHTML(weaponsArray, targetUnit) {
     if (targetUnit.modifiers.minusOneDamage) targetMods.push("-1 Dmg");
     if (targetUnit.modifiers.plusOneSave) targetMods.push("+1 Save");
     if (targetUnit.fnp && targetUnit.fnp > 1) targetMods.push(`FNP ${targetUnit.fnp}+`);
+
     let targetModsStr = targetMods.length > 0 ? targetMods.join(' | ') : "[No Mods]";
 
     html += `
@@ -722,11 +832,18 @@ function buildBaseStatsHTML(weaponsArray, targetUnit) {
         </div>
         <div style="color: var(--theme-btn-standard); font-size: 0.7rem; font-weight: bold;">${targetModsStr}</div>
     </div></div>`;
+
     return html;
 }
 
+//#endregion
+
+//#region data management >>>>>>>>>>>>>>>>>>>>>>>
+
+// serialize and save state
 function exportRoster() {
     const globalDrop = document.getElementById("global-mod-dropdown");
+
     const exportState = {
         roster: createWeaponsArray(),
         target: createUnit(),
@@ -738,9 +855,11 @@ function exportRoster() {
 
     const blob = new Blob([JSON.stringify(exportState, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
+
     const a = document.createElement('a');
     a.href = url;
     a.download = fileName;
+
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -749,36 +868,46 @@ function exportRoster() {
 
 function handleImport(file) {
     if (!file) return;
+
     const reader = new FileReader();
+
     reader.onload = (e) => {
         try {
             const rawText = e.target.result;
             const jsonData = JSON.parse(rawText);
 
             if (Array.isArray(jsonData)) {
+                // buildRosterFromJSON from ui-manager.js
                 buildRosterFromJSON(RosterContainer, jsonData, false);
             } else {
                 buildRosterFromJSON(RosterContainer, jsonData.roster, false);
+
                 if (jsonData.target) loadTargetProfile(jsonData.target);
+
                 if (jsonData.globalRule) {
                     const globalDrop = document.getElementById("global-mod-dropdown");
                     if (globalDrop) globalDrop.value = jsonData.globalRule;
                 }
             }
+
+            // syncAppUI from ui-manager.js
             syncAppUI();
+
             setTimeout(() => document.dispatchEvent(new CustomEvent("App:AutoSave")), 100);
+
         } catch (error) {
             alert("Invalid JSON file! Could not parse roster.");
         }
     };
+
     reader.readAsText(file);
 }
 
+// save current dashboard state to local storage
 function autoSave() {
     try {
         const globalDrop = document.getElementById("global-mod-dropdown");
 
-        // Determine which tab the user is actively viewing
         let currentTab = "tab-standard";
         if (document.getElementById("view-combinatorial") && document.getElementById("view-combinatorial").style.display === "block") {
             currentTab = "tab-combinatorial";
@@ -791,27 +920,35 @@ function autoSave() {
             combiBuckets: typeof scrapeCombinatorialSelections === "function" ? scrapeCombinatorialSelections() : null,
             combiRoster: activeCombiWeapons,
             combiTarget: activeCombiTarget,
-            activeTab: currentTab // Inject the active tab string
+            activeTab: currentTab
         };
+
         localStorage.setItem("40kRoster", JSON.stringify(rosterState, null, 2));
+
     } catch (error) {
         console.error("Failed to auto-save:", error);
     }
 }
 
+// restore state from local storage on load
 if (localStorage.getItem("40kRoster")) {
     const loadSavedRoster = localStorage.getItem("40kRoster");
+
     try {
         const jsonData = JSON.parse(loadSavedRoster);
+
         if (Array.isArray(jsonData)) {
             buildRosterFromJSON(RosterContainer, jsonData);
         } else {
             buildRosterFromJSON(RosterContainer, jsonData.roster);
+
             if (jsonData.target) loadTargetProfile(jsonData.target);
+
             if (jsonData.globalRule) {
                 const globalDrop = document.getElementById("global-mod-dropdown");
                 if (globalDrop) globalDrop.value = jsonData.globalRule;
             }
+
             if (jsonData.combiBuckets) {
                 const moveMods = (arr, targetId) => {
                     const target = document.getElementById(targetId);
@@ -822,6 +959,7 @@ if (localStorage.getItem("40kRoster")) {
                         });
                     }
                 };
+
                 moveMods(jsonData.combiBuckets.independent, 'bucket-independent');
                 moveMods(jsonData.combiBuckets.mutExclusiveA, 'bucket-exclusive-a');
                 moveMods(jsonData.combiBuckets.mutExclusiveB, 'bucket-exclusive-b');
@@ -830,16 +968,19 @@ if (localStorage.getItem("40kRoster")) {
                 moveMods(jsonData.combiBuckets.inclusiveB, 'bucket-inclusive-b');
                 moveMods(jsonData.combiBuckets.inclusiveC, 'bucket-inclusive-c');
             }
+
             if (jsonData.combiRoster && jsonData.combiTarget) {
                 activeCombiWeapons = jsonData.combiRoster;
                 activeCombiTarget = jsonData.combiTarget;
+
+                // renderCombiMirror from ui-manager.js
                 renderCombiMirror(activeCombiWeapons, activeCombiTarget);
             }
         }
 
-        // Automatically return the user to the tab they were on safely
         if (jsonData.activeTab) {
             if (jsonData.activeTab === "tab-combinatorial") {
+                // switchDashboardView from ui-manager.js
                 switchDashboardView("tab-combinatorial", "view-combinatorial");
             } else if (jsonData.activeTab === "tab-dataloom") {
                 switchDashboardView("tab-dataloom", "view-dataloom");
@@ -849,16 +990,19 @@ if (localStorage.getItem("40kRoster")) {
         }
 
         if (ImportInput) ImportInput.value = "";
+
     } catch (error) {
         console.error("Save Data Crashed. Error details:", error);
     }
 } else {
+    // addAttackerModule from ui-manager.js
     addAttackerModule(RosterContainer);
 }
 
 function clearDashboard() {
     localStorage.removeItem("40kRoster");
     RosterContainer.innerHTML = '';
+
     addAttackerModule(RosterContainer);
 
     const targetNameInput = document.getElementById("target-name");
@@ -901,11 +1045,14 @@ if (ClearBtn) {
     });
 }
 
+//#endregion
+
+//#region combi engine >>>>>>>>>>>>>>>>>>>>>>>
+
 const SyncCombiBtn = document.getElementById("sync-combi-roster-btn");
 
 if (SyncCombiBtn) {
     SyncCombiBtn.addEventListener("click", () => {
-
         const allCleanWeapons = createWeaponsArray(true);
         activeCombiTarget = createUnit();
 
@@ -914,6 +1061,7 @@ if (SyncCombiBtn) {
 
         modules.forEach((mod, index) => {
             const toggle = mod.querySelector('.in-combi-roster');
+
             if (toggle && toggle.checked && allCleanWeapons[index]) {
                 activeCombiWeapons.push(allCleanWeapons[index]);
             }
@@ -929,13 +1077,12 @@ if (SyncCombiBtn) {
         }
 
         renderCombiMirror(activeCombiWeapons, activeCombiTarget);
-
-
         document.dispatchEvent(new CustomEvent("App:AutoSave"));
     });
 }
 
 const ResetCombiBtn = document.getElementById("reset-combi-btn");
+
 if (ResetCombiBtn) {
     ResetCombiBtn.addEventListener("click", () => {
         if (!confirm("Are you sure you want to reset the Combinatorial Engine?")) return;
@@ -985,6 +1132,7 @@ if (combiButton) {
         if (simCounterDisplay) simCounterDisplay.textContent = "0";
 
         try {
+            // scrapeCombinatorialSelections from combinatorial-engine.js
             const selectedMods = scrapeCombinatorialSelections();
             const allWeaponsLeaderboard = [];
             let totalSimulationsRun = 0;
@@ -997,7 +1145,7 @@ if (combiButton) {
                     const group = [w];
                     processedNames.add(w.unitName);
 
-                    const leaderNames = []; // Array to track specific leaders
+                    const leaderNames = [];
 
                     activeCombiWeapons.forEach(lw => {
                         if (lw.isLeader && lw.attachTarget === w.unitName) {
@@ -1006,7 +1154,6 @@ if (combiButton) {
                             processedNames.add(lw.unitName);
                         }
                     });
-
 
                     let groupTitle = w.unitName;
                     if (leaderNames.length > 0) {
@@ -1023,13 +1170,8 @@ if (combiButton) {
                 }
             });
 
-            activeCombiWeapons.forEach(w => {
-                if (w.isLeader && !processedNames.has(w.unitName)) {
-                    attackGroups.push({ groupName: w.unitName + " (Solo)", weapons: [w] });
-                }
-            });
-
             for (const attackGroup of attackGroups) {
+                // generateCombinations from combinatorial-engine.js
                 const comboYield = generateCombinations(
                     selectedMods.independent,
                     selectedMods.mutExclusiveA,
@@ -1051,16 +1193,13 @@ if (combiButton) {
                         moddedWeapons.forEach(mw => applyModifierToWeapon(mw, modKey));
                     }
 
-
+                    // filter out mathematically invalid combinations
                     moddedWeapons.forEach(mw => {
-
                         const canFishHits = (mw.modifiers.lethal || mw.modifiers.sustained > 0) &&
                             (mw.modifiers.rerollHits !== "none");
 
-
                         const canFishWounds = mw.modifiers.devastating &&
                             (mw.modifiers.rerollWounds !== "none" || mw.modifiers.twinLinked);
-
 
                         if (mw.modifiers.fishForCrits && !canFishHits && !canFishWounds) {
                             isInvalidCombo = true;
@@ -1068,7 +1207,6 @@ if (combiButton) {
                     });
 
                     if (isInvalidCombo) continue;
-
 
                     const payload = {
                         targetUnit: activeCombiTarget,
@@ -1090,9 +1228,7 @@ if (combiButton) {
 
                 worker.terminate();
 
-
                 masterCompArray.sort((a, b) => {
-
                     if (b[1].averages.killed !== a[1].averages.killed) {
                         return b[1].averages.killed - a[1].averages.killed;
                     }
@@ -1105,7 +1241,6 @@ if (combiButton) {
                 });
 
                 const topThree = masterCompArray.slice(0, 10);
-
                 const baseCombo = masterCompArray.find(c => c[0].length === 0);
                 const baseResult = baseCombo ? baseCombo[1] : null;
 
@@ -1116,6 +1251,7 @@ if (combiButton) {
                 });
             }
 
+            // renderCombinatorialLeaderboard from ui-manager.js
             renderCombinatorialLeaderboard(allWeaponsLeaderboard, totalSimulationsRun, selectedMods);
 
         } catch (error) {
@@ -1127,3 +1263,5 @@ if (combiButton) {
         }
     });
 }
+
+//#endregion

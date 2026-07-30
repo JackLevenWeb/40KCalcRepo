@@ -1,7 +1,16 @@
-// central nervous system. manages dom event listeners and broadcasts custom events.
+//#region imports >>>>>>>>>>>>>>>>>>>>>>>
+
+// syncAppUI, addBadgeToModule, addAttackerModule, switchDashboardView from ui-manager.js
 import { syncAppUI, addBadgeToModule, addAttackerModule, switchDashboardView } from './ui-manager.js';
+
+// applyTheme from theme-manager.js
 import { applyTheme } from './theme-manager.js';
 
+//#endregion
+
+//#region dom watchers >>>>>>>>>>>>>>>>>>>>>>>
+
+// manages dom event listeners and custom events
 export function initializeWatchers() {
     const RosterContainer = document.getElementById("attacker-roster");
     const GlobalModBtn = document.getElementById("add-global-mod-btn");
@@ -40,21 +49,17 @@ export function initializeWatchers() {
     if (ThemeSelect) {
         ThemeSelect.addEventListener("change", (e) => {
             const newTheme = e.target.value;
-
             const oldTheme = localStorage.getItem("40kTheme") || "space_wolves";
 
             if (confirm("Changing the theme will wipe your current roster and reset the dashboard. Proceed?")) {
                 applyTheme(newTheme);
                 document.dispatchEvent(new CustomEvent("App:ThemeChanged"));
-
                 document.dispatchEvent(new CustomEvent("App:ClearDashboard"));
             } else {
-
                 e.target.value = oldTheme;
             }
         });
     }
-
 
     const tutorialModal = document.getElementById("tutorial-modal");
     const modalClose = document.querySelector(".modal-close");
@@ -222,20 +227,17 @@ export function initializeWatchers() {
         }
     });
 
-
     if (modalClose) {
         modalClose.addEventListener("click", () => {
             tutorialModal.style.display = "none";
         });
     }
 
-
     window.addEventListener("click", (e) => {
         if (e.target === tutorialModal) {
             tutorialModal.style.display = "none";
         }
     });
-
 
     RosterContainer.addEventListener("input", () => {
         syncAppUI();
@@ -252,6 +254,7 @@ export function initializeWatchers() {
             e.target.classList.contains("remove-mod-btn") ||
             e.target.classList.contains("remove-btn")) {
 
+            // added 50ms delay to ensure dom is fully updated before saving
             setTimeout(() => {
                 triggerSave();
             }, 50);
@@ -278,6 +281,7 @@ export function initializeWatchers() {
             if (modKey === "none") return;
 
             const allModules = document.querySelectorAll('.attacker-module');
+
             allModules.forEach(module => {
                 addBadgeToModule(module, modKey, false);
             });
@@ -309,13 +313,17 @@ export function initializeWatchers() {
         ImportInput.addEventListener("change", (event) => {
             const file = event.target.files[0];
             if (!file) return;
+
             document.dispatchEvent(new CustomEvent("App:ImportRoster", { detail: { file: file } }));
             ImportInput.value = "";
         });
     }
 }
 
-//combi engine >>>>
+//#endregion
+
+//#region combi drag and drop >>>>>>>>>>>>>>>>>>>>>>>
+
 export function setupDragAndDrop() {
     const draggables = document.querySelectorAll('.draggable-mod');
     const dropzones = document.querySelectorAll('.bucket-dropzone');
@@ -329,7 +337,7 @@ export function setupDragAndDrop() {
         draggable.addEventListener('dragend', () => {
             draggable.classList.remove('dragging');
             draggable.style.opacity = '1';
-            // Added 50ms delay to ensure the DOM is fully updated before saving
+
             setTimeout(() => document.dispatchEvent(new CustomEvent("App:AutoSave")), 50);
         });
     });
@@ -338,19 +346,23 @@ export function setupDragAndDrop() {
         zone.addEventListener('dragover', e => {
             e.preventDefault();
             const draggable = document.querySelector('.dragging');
+
             if (draggable) {
-                //  enforce correct snapping
+                // enforce correct snapping
                 if (zone.classList.contains('available-pool-zone')) {
                     const zoneAccepts = zone.getAttribute('data-accept');
                     const modCategory = draggable.getAttribute('data-category');
+
                     if (zoneAccepts === modCategory) {
                         zone.appendChild(draggable);
                     }
                 } else {
-                    // else it's a testing bucket allow all drops
+                    // allow all drops for testing buckets
                     zone.appendChild(draggable);
                 }
             }
         });
     });
 }
+
+//#endregion

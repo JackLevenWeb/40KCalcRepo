@@ -1,33 +1,16 @@
-// handles all dom manipulation, html generation, and visual updates.
-export const ModifierDictionary = {
-    "lethal": { name: "Lethal Hits", hasInput: false },
-    "devastating": { name: "Devastating Wounds", hasInput: false },
-    "lance": { name: "Lance", hasInput: false },
-    "torrent": { name: "Torrent", hasInput: false },
-    "twinlinked": { name: "Twin-Linked", hasInput: false },
-    "blast": { name: "Blast", hasInput: false },
-    "cleave": { name: "Cleave", hasInput: false },
-    "sustained": { name: "Sustained", hasInput: true, defaultVal: 1 },
-    "melta": { name: "Melta", hasInput: true, defaultVal: 2 },
-    "anti": { name: "Anti-X", hasInput: true, defaultVal: 4 },
-    "rapidfire": { name: "Rapid Fire", hasInput: true, defaultVal: 1 },
-    "hit_plus_1": { name: "+1 to Hit", hasInput: false },
-    "hit_minus_1": { name: "-1 to Hit", hasInput: false },
-    "wound_plus_1": { name: "+1 to Wound", hasInput: false },
-    "wound_minus_1": { name: "-1 to Wound", hasInput: false },
-    "reroll_hits_1": { name: "Reroll 1s (Hit)", hasInput: false },
-    "reroll_hits_all": { name: "Reroll All (Hit)", hasInput: false },
-    "reroll_one_hit": { name: "Reroll 1 Hit Roll", hasInput: false },
-    "reroll_wounds_1": { name: "Reroll 1s (Wound)", hasInput: false },
-    "reroll_wounds_all": { name: "Reroll All (Wound)", hasInput: false },
-    "reroll_one_wound": { name: "Reroll 1 Wound Roll", hasInput: false },
-    "fish_crits": { name: "Fish for Crits", hasInput: false },
-    "reroll_damage": { name: "Reroll Damage (1-2)", hasInput: false },
-    "reroll_one_damage": { name: "Reroll 1 Dmg Roll", hasInput: false }
-};
+//#region imports >>>>>>>>>>>>>>>>>>>>>>>
 
+// ModifierRegistry from modifier-registry.js
+import { ModifierRegistry, CombiCategoryTitles } from './modifier-registry.js';
+
+//#endregion
+
+//#region view manager >>>>>>>>>>>>>>>>>>>>>>>
+
+// switch active view based on tab clicked
 export function switchDashboardView(activeTabId, activeViewId) {
     const tabs = ["tab-standard", "tab-combinatorial", "tab-dataloom"];
+
     tabs.forEach(tabId => {
         const el = document.getElementById(tabId);
         if (el) {
@@ -37,23 +20,31 @@ export function switchDashboardView(activeTabId, activeViewId) {
     });
 
     const activeTab = document.getElementById(activeTabId);
+
     if (activeTab) {
         activeTab.style.backgroundColor = "var(--theme-accent)";
         activeTab.style.color = "#0F1115";
     }
 
     const views = ["view-standard", "view-combinatorial"];
+
     views.forEach(viewId => {
         const el = document.getElementById(viewId);
         if (el) el.style.display = "none";
     });
 
     const activeView = document.getElementById(activeViewId);
+
     if (activeView) {
         activeView.style.display = "block";
     }
 }
 
+//#endregion
+
+//#region roster modules >>>>>>>>>>>>>>>>>>>>>>>
+
+// inject html for a new attacker unit module
 export function addAttackerModule(containerElement) {
     const moduleHTML = `
       <div class="attacker-module" style="background: var(--surface-color); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px;">
@@ -168,8 +159,10 @@ export function addAttackerModule(containerElement) {
     `;
 
     containerElement.insertAdjacentHTML('beforeend', moduleHTML);
+
     const newModule = containerElement.lastElementChild;
 
+    // prevent deletion if only one attacker exists
     newModule.querySelector(".remove-btn").addEventListener("click", () => {
         if (document.querySelectorAll('.attacker-module').length > 1) {
             newModule.remove();
@@ -179,9 +172,11 @@ export function addAttackerModule(containerElement) {
         }
     });
 
+    // attach newly selected rule to unit
     newModule.querySelector(".add-mod-btn").addEventListener("click", () => {
         const select = newModule.querySelector(".mod-dropdown");
         const modKey = select.value;
+
         if (modKey !== "none") {
             addBadgeToModule(newModule, modKey, false);
             select.value = "none";
@@ -190,14 +185,18 @@ export function addAttackerModule(containerElement) {
     });
 }
 
+// build dynamic html based on modifier requirements
 export function addBadgeToModule(moduleNode, modKey, isGranted) {
     const list = moduleNode.querySelector(".active-modifiers-list");
+
+    // prevent duplicate badges
     if (list.querySelector(`.mod-badge[data-key="${modKey}"]`)) return;
 
-    const modData = ModifierDictionary[modKey];
+    const modData = ModifierRegistry[modKey];
     if (!modData) return;
 
     const badge = document.createElement("div");
+
     badge.className = "mod-badge";
     badge.dataset.key = modKey;
     if (isGranted) badge.dataset.granted = "true";
@@ -224,6 +223,11 @@ export function addBadgeToModule(moduleNode, modKey, isGranted) {
     list.appendChild(badge);
 }
 
+//#endregion
+
+//#region state sync >>>>>>>>>>>>>>>>>>>>>>>
+
+// update dropdowns and leader assignments across modules
 export function syncAppUI() {
     const modules = document.querySelectorAll('.attacker-module');
     const allNames = Array.from(modules).map(m => m.querySelector('.in-unit-name').value.trim());
@@ -239,7 +243,9 @@ export function syncAppUI() {
         const select = module.querySelector('.attach-to');
         const currentSelection = select.value;
         const myName = module.querySelector('.in-unit-name').value.trim();
+
         select.innerHTML = '<option value="">-- Select Unit --</option>';
+
         allNames.forEach(name => {
             if (name && name !== myName) {
                 const option = document.createElement('option');
@@ -248,9 +254,11 @@ export function syncAppUI() {
                 select.appendChild(option);
             }
         });
+
         if (allNames.includes(currentSelection)) select.value = currentSelection;
     });
 
+    // attach leader logic and auto-grant keywords
     modules.forEach(leaderModule => {
         const isLeader = leaderModule.querySelector('.is-leader').checked;
         const targetName = leaderModule.querySelector('.attach-to').value;
@@ -274,14 +282,15 @@ export function syncAppUI() {
     });
 }
 
+// rebuild modules from imported json state
 export function buildRosterFromJSON(containerElement, jsonData, clearRoster = true) {
-
     if (clearRoster) {
         containerElement.innerHTML = '';
     }
 
     jsonData.forEach(unitData => {
         addAttackerModule(containerElement);
+
         const newModule = containerElement.lastElementChild;
 
         newModule.querySelector(".in-unit-name").value = unitData.unitName || "Attacker Unit";
@@ -290,17 +299,14 @@ export function buildRosterFromJSON(containerElement, jsonData, clearRoster = tr
         newModule.querySelector(".in-str").value = unitData.strength || 4;
         newModule.querySelector(".in-ap").value = unitData.Ap || 0;
         newModule.querySelector(".in-dam").value = unitData.damage || "1";
-
-
         newModule.querySelector(".in-models").value = unitData.modelCount || 5;
         newModule.querySelector(".in-units").value = unitData.unitCount || 1;
 
-        // Restore the Combi Roster toggle state
+        // restore combi roster toggle state
         if (unitData.includeInCombi) {
             const toggle = newModule.querySelector('.in-combi-roster');
             if (toggle) toggle.checked = true;
         }
-
 
         if (unitData.modifiers) {
             if (unitData.modifiers.critHitThreshold) {
@@ -313,17 +319,20 @@ export function buildRosterFromJSON(containerElement, jsonData, clearRoster = tr
 
         if (unitData.isLeader) {
             newModule.querySelector('.is-leader').checked = true;
+
             if (unitData.attachTarget) {
                 const attachSelect = newModule.querySelector('.attach-to');
                 attachSelect.innerHTML = `<option value="${unitData.attachTarget}">${unitData.attachTarget}</option>`;
                 attachSelect.value = unitData.attachTarget;
             }
+
             if (unitData.grantedKeyword) {
                 newModule.querySelector('.grant-keyword').value = unitData.grantedKeyword;
             }
         }
 
         const mods = unitData.modifiers;
+
         if (mods) {
             if (mods.lethal) addBadgeToModule(newModule, "lethal", false);
             if (mods.devastating) addBadgeToModule(newModule, "devastating", false);
@@ -364,9 +373,15 @@ export function buildRosterFromJSON(containerElement, jsonData, clearRoster = tr
             }
         }
     });
+
     syncAppUI();
 };
 
+//#endregion
+
+//#region reporting ui >>>>>>>>>>>>>>>>>>>>>>>
+
+// inject html for advanced analysis report cards
 export function spawnReportCard(title, container, statsHTML, avgStatsHTML) {
     const cardHTML = `
         <div class="report-card" style="margin-bottom: 20px; background: rgba(15, 17, 21, 0.4); border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden;">
@@ -384,13 +399,13 @@ export function spawnReportCard(title, container, statsHTML, avgStatsHTML) {
             </div>
         </div>
     `;
+
     container.insertAdjacentHTML('beforeend', cardHTML);
     return container.lastElementChild;
 }
 
-
 export function spawnLeaderboard(container, statsArray, isSingleTarget = false) {
-
+    // sort by kills then damage
     statsArray.sort((a, b) => {
         if (b.avgKills !== a.avgKills) {
             return b.avgKills - a.avgKills;
@@ -398,8 +413,8 @@ export function spawnLeaderboard(container, statsArray, isSingleTarget = false) 
         return b.avgDamage - a.avgDamage;
     });
 
-
     const summaryCard = document.createElement('div');
+
     summaryCard.style.background = "var(--surface-color)";
     summaryCard.style.padding = "20px";
     summaryCard.style.borderRadius = "8px";
@@ -427,6 +442,7 @@ export function spawnLeaderboard(container, statsArray, isSingleTarget = false) 
     statsArray.forEach((stat, index) => {
         const medal = index === 0 ? "1st: " : index === 1 ? "2nd: " : index === 2 ? "3rd: " : "";
         const killDisplay = isSingleTarget ? (stat.avgKills * 100).toFixed(1) + "%" : stat.avgKills.toFixed(2);
+
         tableHTML += `
             <tr class="leaderboard-row" data-target="${stat.unitName}" style="cursor: pointer;">
                 <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--theme-accent); font-weight: bold;">
@@ -437,96 +453,77 @@ export function spawnLeaderboard(container, statsArray, isSingleTarget = false) 
             </tr>
         `;
     });
+
     tableHTML += `</tbody></table>`;
     summaryCard.innerHTML = tableHTML;
 
-
+    // attach scroll to target accordion functionality
     const rows = summaryCard.querySelectorAll('.leaderboard-row');
+
     rows.forEach(row => {
         row.addEventListener('click', () => {
             const targetUnit = row.getAttribute('data-target');
             const targetAccordion = document.querySelector(`details[data-unit="${targetUnit}"]`);
 
             if (targetAccordion) {
-
                 document.querySelectorAll('#advanced-reports-container details').forEach(d => d.open = false);
-
-
                 targetAccordion.open = true;
-
-
                 targetAccordion.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         });
     });
 
-
     container.insertAdjacentElement('afterbegin', summaryCard);
 }
 
+//#endregion
 
-//combi engine >>>
+//#region combi engine >>>>>>>>>>>>>>>>>>>>>>>
 
-// dictionary specifically for combi engine
-export const CombiModifierDictionary = [
-    { key: "lethal", name: "Lethal Hits", category: "weapon_rules" },
-    { key: "devastating", name: "Devastating Wounds", category: "weapon_rules" },
-    { key: "sustained_hits", name: "Sustained Hits 1", category: "weapon_rules" },
-    { key: "hit_plus_1", name: "+1 to Hit", category: "flat_mods" },
-    { key: "wound_plus_1", name: "+1 to Wound", category: "flat_mods" },
-    { key: "extra_ap_1", name: "AP +1", category: "flat_mods" },
-    { key: "reroll_hits_1", name: "Reroll 1s (Hit)", category: "rerolls" },
-    { key: "reroll_hits_all", name: "Reroll All (Hit)", category: "rerolls" },
-    { key: "reroll_one_hit", name: "Reroll 1 Hit Roll", category: "rerolls" },
-    { key: "reroll_wounds_1", name: "Reroll 1s (Wound)", category: "rerolls" },
-    { key: "reroll_wounds_all", name: "Reroll All (Wound)", category: "rerolls" },
-    { key: "reroll_one_wound", name: "Reroll 1 Wound Roll", category: "rerolls" },
-    { key: "fish_crits", name: "Fish for Crits", category: "rerolls" },
-    { key: "reroll_damage", name: "Reroll Damage", category: "rerolls" },
-    { key: "reroll_one_damage", name: "Reroll 1 Dmg Roll", category: "rerolls" }
-];
-
-const categoryTitles = {
-    "weapon_rules": "Weapon Rules",
-    "flat_mods": "Flat Modifiers",
-    "rerolls": "Reroll Rules"
-};
-
+// build initial testing pool from valid combi modifiers
 export function initCombinatorialPool() {
     const container = document.getElementById("bucket-available");
     if (!container) return;
 
     container.innerHTML = "";
 
-    const categories = [...new Set(CombiModifierDictionary.map(m => m.category))];
+    const combiMods = Object.entries(ModifierRegistry)
+        .filter(([key, data]) => data.combiCategory !== null)
+        .map(([key, data]) => ({ key, ...data }));
+
+    const categories = [...new Set(combiMods.map(m => m.combiCategory))];
 
     categories.forEach(cat => {
         const wrapper = document.createElement("div");
+
         wrapper.innerHTML = `
             <div style="color: var(--theme-text-muted); font-size: 0.75rem; font-weight: bold; text-transform: uppercase; margin-bottom: 8px;">
-                ${categoryTitles[cat] || cat}
+                ${CombiCategoryTitles[cat] || cat}
             </div>
             <div id="pool-${cat}" class="bucket-dropzone available-pool-zone" data-accept="${cat}" style="display: flex; flex-direction: column; gap: 8px; min-height: 40px; padding: 5px; border: 1px dashed var(--theme-mid); border-radius: 4px;">
             </div>
         `;
+
         container.appendChild(wrapper);
     });
 
-    CombiModifierDictionary.forEach(mod => {
-        const dropzone = document.getElementById(`pool-${mod.category}`);
+    combiMods.forEach(mod => {
+        const dropzone = document.getElementById(`pool-${mod.combiCategory}`);
+
         if (dropzone) {
             const el = document.createElement("div");
+
             el.draggable = true;
             el.className = "draggable-mod";
             el.dataset.mod = mod.key;
-            el.dataset.category = mod.category;
+            el.dataset.category = mod.combiCategory;
             el.style.cssText = "background: var(--bg-color); padding: 8px; border: 1px solid var(--theme-mid); border-radius: 4px; cursor: grab; color: var(--theme-text-light); font-size: 0.85rem; font-weight: bold;";
             el.textContent = mod.name;
+
             dropzone.appendChild(el);
         }
     });
 }
-
 
 export function renderCombiMirror(weaponsArray, targetUnit) {
     const container = document.getElementById("combi-mirror-container");
@@ -536,8 +533,9 @@ export function renderCombiMirror(weaponsArray, targetUnit) {
 
     let html = `<div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: stretch;">`;
 
-    // 1. Build the Target Profile Card
+    // build target profile card
     let targetMods = [];
+
     if (targetUnit.modifiers.minusOneHit) targetMods.push("-1 Hit");
     if (targetUnit.modifiers.minusOneWound) targetMods.push("-1 Wnd");
     if (targetUnit.modifiers.minusOneWoundHighStr) targetMods.push("S>T -1 Wnd");
@@ -546,6 +544,7 @@ export function renderCombiMirror(weaponsArray, targetUnit) {
     if (targetUnit.modifiers.minusOneDamage) targetMods.push("-1 Dmg");
     if (targetUnit.modifiers.plusOneSave) targetMods.push("+1 Save");
     if (targetUnit.fnp && targetUnit.fnp > 1) targetMods.push(`FNP ${targetUnit.fnp}+`);
+
     let targetModsStr = targetMods.length > 0 ? targetMods.join(' | ') : "No Defensive Mods";
 
     html += `
@@ -559,9 +558,9 @@ export function renderCombiMirror(weaponsArray, targetUnit) {
     </div>
     `;
 
-
     const groups = [];
     const processed = new Set();
+
     weaponsArray.forEach(w => {
         if (!w.isLeader) {
             const leaders = weaponsArray.filter(lw => lw.isLeader && lw.attachTarget === w.unitName);
@@ -569,15 +568,17 @@ export function renderCombiMirror(weaponsArray, targetUnit) {
             groups.push({ base: w, leaders: leaders });
         }
     });
+
     weaponsArray.forEach(w => {
         if (w.isLeader && !processed.has(w.unitName)) {
             groups.push({ base: null, leaders: [w] });
         }
     });
 
-    // Helper to format active modifiers for the datacards
+    // format active modifiers for datacards
     const getModsString = (w) => {
         let activeMods = [];
+
         if (w.modifiers.lethal) activeMods.push("Lethal");
         if (w.modifiers.devastating) activeMods.push("Dev Wounds");
         if (w.modifiers.sustained > 0) activeMods.push(`Sus ${w.modifiers.sustained}`);
@@ -599,14 +600,14 @@ export function renderCombiMirror(weaponsArray, targetUnit) {
         if (w.modifiers.rerollOneHit) activeMods.push("RR 1 Hit");
         if (w.modifiers.rerollOneWound) activeMods.push("RR 1 Wound");
         if (w.modifiers.rerollOneDamage) activeMods.push("RR 1 Dmg");
+
         return activeMods.length > 0 ? `[${activeMods.join(', ')}]` : "";
     };
 
-    // 3. Build the Grouped Attacker Cards
+    // build grouped attacker cards
     groups.forEach(g => {
         html += `<div style="flex: 1; min-width: 280px; background: var(--surface-color); border: 1px solid var(--border-color); border-top: 4px solid var(--theme-accent); border-radius: 6px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.4); display: flex; flex-direction: column; gap: 10px;">`;
 
-        // Draw the Leader Box(es)
         if (g.leaders.length > 0) {
             html += `<div style="display: flex; flex-direction: column; gap: 5px;">`;
             g.leaders.forEach(l => {
@@ -628,7 +629,6 @@ export function renderCombiMirror(weaponsArray, targetUnit) {
             }
         }
 
-        // Draw the Base Bodyguard Unit Box
         if (g.base) {
             const unitLabel = g.leaders.length > 0 ? "Bodyguard Unit" : "Unit";
             const modsDisplay = getModsString(g.base);
@@ -651,7 +651,6 @@ export function renderCombiMirror(weaponsArray, targetUnit) {
     container.innerHTML = html;
 }
 
-
 export function renderCombinatorialLeaderboard(leaderboardData, totalSims = 0, bucketState = null) {
     const container = document.getElementById("combinatorial-results-container");
     if (!container) return;
@@ -663,15 +662,18 @@ export function renderCombinatorialLeaderboard(leaderboardData, totalSims = 0, b
         return;
     }
 
+    // format modifier display names and apply bucket colors
     const formatMod = (mod) => {
         let color = "var(--theme-text-light)";
+
         if (bucketState) {
             if (bucketState.mutExclusiveA.includes(mod) || bucketState.mutExclusiveB.includes(mod) || bucketState.mutExclusiveC.includes(mod)) {
                 color = "var(--theme-accent)";
             } else if (bucketState.inclusiveA.includes(mod) || bucketState.inclusiveB.includes(mod) || bucketState.inclusiveC.includes(mod)) {
-                color = "var(--theme-inclusive)"; // <-- Updated
+                color = "var(--theme-inclusive)";
             }
         }
+
         const formattedName = mod.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
         return `<span style="color: ${color}; font-weight: bold;">${formattedName}</span>`;
     };
@@ -711,6 +713,7 @@ export function renderCombinatorialLeaderboard(leaderboardData, totalSims = 0, b
             const damage = stats.averages.damage.toFixed(2);
 
             let deltaHTML = "";
+
             if (baseStats) {
                 const deltaKills = (stats.averages.killed - baseStats.averages.killed).toFixed(2);
                 const deltaDmg = (stats.averages.damage - baseStats.averages.damage).toFixed(2);
@@ -748,3 +751,5 @@ export function renderCombinatorialLeaderboard(leaderboardData, totalSims = 0, b
         container.appendChild(card);
     });
 }
+
+//#endregion

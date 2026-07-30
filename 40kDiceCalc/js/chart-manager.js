@@ -1,10 +1,22 @@
-// handles the rendering and updating of all chart.js visual graphs.
+//#region imports >>>>>>>>>>>>>>>>>>>>>>>
 
+// ModLabels from db-manager.js
 import { ModLabels } from './db-manager.js';
+
+// getCurrentTheme from theme-manager.js
 import { getCurrentTheme } from './theme-manager.js';
+
+//#endregion
+
+//#region global state >>>>>>>>>>>>>>>>>>>>>>>
 
 let damageChartInstance = null;
 
+//#endregion
+
+//#region chart rendering >>>>>>>>>>>>>>>>>>>>>>>
+
+// renders the base profile distribution chart
 export function renderChart(damageDistribution, killedDistribution, totalRuns, isSingleTarget = false) {
     const ctx = document.getElementById('damageChart').getContext('2d');
     const theme = getCurrentTheme();
@@ -15,6 +27,7 @@ export function renderChart(damageDistribution, killedDistribution, totalRuns, i
 
     const rawDamageNumbers = Object.keys(damageDistribution).map(Number);
     const rawKilledNumbers = Object.keys(killedDistribution).map(Number);
+
     const maxVal = Math.max(...rawDamageNumbers, ...rawKilledNumbers, 0);
 
     const chartLabels = [];
@@ -23,16 +36,21 @@ export function renderChart(damageDistribution, killedDistribution, totalRuns, i
     const cumulativeDamage = [];
     const cumulativeKilled = [];
 
+    // build raw distribution arrays
     for (let i = 0; i <= maxVal; i++) {
         chartLabels.push(i);
+
         const dmgCount = damageDistribution[i] || 0;
         const killCount = killedDistribution[i] || 0;
+
         exactDamageData.push((dmgCount / totalRuns) * 100);
         exactKilledData.push((killCount / totalRuns) * 100);
     }
 
     let runningDmgTotal = 0;
     let runningKillTotal = 0;
+
+    // convert to cumulative at least probabilities
     for (let i = exactDamageData.length - 1; i >= 0; i--) {
         runningDmgTotal += exactDamageData[i];
         cumulativeDamage[i] = runningDmgTotal;
@@ -51,7 +69,11 @@ export function renderChart(damageDistribution, killedDistribution, totalRuns, i
             borderColor: theme.chartColors[1],
             backgroundColor: theme.chartColors[1] + '70',
             fill: true,
-            borderWidth: 2, tension: 0.1, pointRadius: 0, pointHoverRadius: 5, cubicInterpolationMode: 'monotone'
+            borderWidth: 2,
+            tension: 0.1,
+            pointRadius: 0,
+            pointHoverRadius: 5,
+            cubicInterpolationMode: 'monotone'
         },
         {
             label: 'Damage Dealt (At Least)',
@@ -60,27 +82,31 @@ export function renderChart(damageDistribution, killedDistribution, totalRuns, i
             borderColor: theme.chartColors[0],
             backgroundColor: theme.chartColors[0] + '70',
             fill: true,
-            borderWidth: 3, tension: 0.1, pointRadius: 0, pointHoverRadius: 5, cubicInterpolationMode: 'monotone'
+            borderWidth: 3,
+            tension: 0.1,
+            pointRadius: 0,
+            pointHoverRadius: 5,
+            cubicInterpolationMode: 'monotone'
         }
     ];
 
-    //sort by y axis sum to order chart drawing order
+    // calculate area sum to determine drawing order
     for (const item of datasets) {
         item.areaSum = item.data.reduce((accum, value) => accum + value, 0);
     }
 
+    // sort so smaller areas draw on top of larger ones
     datasets.sort((a, b) => {
         return a.areaSum - b.areaSum;
-
     });
 
-
-
+    // chartjs instance creation
     damageChartInstance = new Chart(ctx, {
         type: 'line',
         data: { labels: chartLabels, datasets: datasets },
         options: {
-            responsive: true, maintainAspectRatio: false,
+            responsive: true,
+            maintainAspectRatio: false,
             interaction: { mode: 'nearest', intersect: false },
             scales: {
                 x: {
@@ -100,7 +126,6 @@ export function renderChart(damageDistribution, killedDistribution, totalRuns, i
                 legend: {
                     display: true,
                     labels: { color: '#fff' },
-                    // cursor to pointer on hover
                     onHover: function (event, legendItem, legend) {
                         event.native.target.style.cursor = 'pointer';
                     },
@@ -122,10 +147,7 @@ export function renderChart(damageDistribution, killedDistribution, totalRuns, i
                         return theme.chartColors[2];
                     },
                     callbacks: {
-
                         title: function () { return null; },
-
-
                         label: function (context) {
                             const xValue = context.label;
                             const labelText = context.dataset.label;
@@ -144,22 +166,29 @@ export function renderChart(damageDistribution, killedDistribution, totalRuns, i
     });
 }
 
+// renders specific delta analysis line charts
 export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns, allowedMods, isSingleTarget = false) {
     const ctx = canvasElement.getContext('2d');
     const theme = getCurrentTheme();
+
     const categoryRows = sqlRows.filter(r => r[2] === category && allowedMods.includes(r[0]));
 
     let minVal = 0, maxVal = 0;
+
     categoryRows.forEach(r => {
         if (r[1] > maxVal) maxVal = r[1];
     });
 
+    // handle edgecase where event mathematically cannot occur
     if (maxVal === 0) {
         maxVal = 1;
         let warningText = category === "ModelsKilled" ? (isSingleTarget ? "(ZERO PROBABILITY)" : "(ZERO MODELS KILLED)") : "(ZERO IMPACT)";
+
         const card = canvasElement.closest('.report-card');
+
         if (card) {
             const titleElement = card.querySelector('h4');
+
             if (titleElement && !titleElement.innerHTML.includes(warningText)) {
                 titleElement.innerHTML += ` <span style="color: ${theme.chartColors[1]}; font-size: 0.55rem;">${warningText}</span>`;
             }
@@ -167,10 +196,14 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
     }
 
     const chartLabels = [];
-    for (let i = minVal; i <= maxVal; i++) chartLabels.push(i);
+
+    for (let i = minVal; i <= maxVal; i++) {
+        chartLabels.push(i);
+    }
 
     const datasets = allowedMods.map((modName, index) => {
         const modRows = categoryRows.filter(r => r[0] === modName);
+
         const dataArray = chartLabels.map(label => {
             const row = modRows.find(r => r[1] === label);
             return row ? (row[3] / totalRuns) * 100 : 0;
@@ -178,6 +211,8 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
 
         const cumulativeArray = [];
         let runningTotal = 0;
+
+        // convert to cumulative at least probabilities
         for (let i = dataArray.length - 1; i >= 0; i--) {
             runningTotal += dataArray[i];
             cumulativeArray[i] = runningTotal;
@@ -186,6 +221,7 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
         const count = cumulativeArray.reduce((accum, value) => accum + value, 0);
 
         let displayLabel = ModLabels[modName] || modName;
+
         if (modName === "Base" && category !== "Save") displayLabel = "Base Profile";
 
         const assignedColor = theme.chartColors[index % theme.chartColors.length];
@@ -213,32 +249,29 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
 
     const visibleDatasets = new Set();
 
-    // always keep base profile visible
+    // always keep base profile visible by default
     const baseDataset = datasets.find(d => d.label === "Base Profile");
     if (baseDataset) visibleDatasets.add(baseDataset);
 
-    // keep the top performing datasets visible up to 3 total
+    // keep top performing datasets visible up to 3
     for (let i = datasets.length - 1; i >= 0; i--) {
         if (visibleDatasets.size >= 3) break;
         visibleDatasets.add(datasets[i]);
     }
 
-    // set hidden property for all other datasets
     datasets.forEach(d => {
         if (!visibleDatasets.has(d)) {
             d.hidden = true;
         }
     });
 
-
-
-
-
+    // chartjs instance creation
     new Chart(ctx, {
         type: 'line',
         data: { labels: chartLabels, datasets: datasets },
         options: {
-            responsive: true, maintainAspectRatio: false,
+            responsive: true,
+            maintainAspectRatio: false,
             interaction: { mode: 'nearest', intersect: false },
             scales: {
                 x: {
@@ -258,7 +291,6 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
                 legend: {
                     display: true,
                     labels: { color: '#fff' },
-                    // Change cursor to pointer (hand) on hover
                     onHover: function (event, legendItem, legend) {
                         event.native.target.style.cursor = 'pointer';
                     },
@@ -280,24 +312,17 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
                         return theme.chartColors[2];
                     },
                     callbacks: {
-
                         title: function () { return null; },
-
-
                         label: function (context) {
                             const xValue = context.label;
                             const labelText = context.dataset.label;
                             const percentage = context.raw.toFixed(2);
 
                             if (context.dataset.exactData[context.dataIndex] === 0) {
-
                                 return `${xValue} ${category}s (${labelText}: N/A)`;
                             } else {
-
                                 return `${xValue} ${category}s (${labelText}: ${percentage}%)`;
                             }
-
-
                         }
                     }
                 }
@@ -305,3 +330,5 @@ export function renderAdvancedChart(canvasElement, category, sqlRows, totalRuns,
         }
     });
 }
+
+//#endregion

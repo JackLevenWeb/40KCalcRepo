@@ -1,12 +1,18 @@
-// contains the core math, dice rolling formulas, and simulation rules.
+//#region imports >>>>>>>>>>>>>>>>>>>>>>>
 
+// Dice from Dice.js
 import { Dice } from './classes/Dice.js';
 
+//#endregion
+
+//#region core simulation logic >>>>>>>>>>>>>>>>>>>>>>>
+
+// executes main monte carlo simulation loops
 export function runSimulation(iterationsTotal, weaponsArray, unit) {
     let sumTotalDamage = 0, sumModelsKilled = 0, sumWastedDamage = 0;
     const allTotalDamage = [], allModelsKilled = [], allWastedDamage = [];
 
-    // we need distributions for our advanced graphs
+    // distributions for advanced graphs
     const hitDistribution = {};
     const woundDistribution = {};
     const saveDistribution = {};
@@ -17,14 +23,14 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
 
     let highestDamage = 0;
     let highestKills = 0;
-    let lowestDamage = Infinity; // starts infinitely high
+    let lowestDamage = Infinity;
     let lowestKilled = Infinity;
 
     for (let i = 0; i < iterationsTotal; i++) {
         let currentTargetHealth = unit.wounds;
         let runTotalDamage = 0, runModelsKilled = 0, runWastedDamage = 0;
 
-        // track totals for THIS specific run
+        // track totals for this specific run
         let runTotalHits = 0, runTotalWounds = 0, runTotalSaves = 0;
 
         for (const weapon of weaponsArray) {
@@ -39,22 +45,21 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
             sumHits.rawSuccesses += hurtSystem.hits.rawSuccesses;
             sumHits.bonusHits += hurtSystem.hits.bonusHits;
             sumHits.autoWounds += hurtSystem.hits.autoWounds;
+
             sumWounds.rawSuccesses += hurtSystem.wounds.rawSuccesses;
             sumWounds.devWounds += hurtSystem.wounds.devWounds;
             sumWounds.normalWounds += hurtSystem.wounds.normalWounds;
+
             sumSaves.failedSavesCount += hurtSystem.saves.failedSavesCount;
             sumSaves.passedSavesCount += (hurtSystem.wounds.normalWounds - hurtSystem.saves.failedSavesCount);
 
-            // X-Axis Data collection for this specific iteration
-            // hits: normal hits + sustained bonus + lethal 6s
+            // x-axis data collection for this iteration
             runTotalHits += (hurtSystem.hits.rawSuccesses + hurtSystem.hits.bonusHits + hurtSystem.hits.autoWounds);
-            // wounds: normal wounds + devastating 6s + lethal 6s that bypassed the roll
             runTotalWounds += (hurtSystem.wounds.rawSuccesses + hurtSystem.wounds.devWounds + hurtSystem.hits.autoWounds);
-            // saves: normal wounds done - failed saves gives you successful saves
             runTotalSaves += (hurtSystem.wounds.normalWounds - hurtSystem.saves.failedSavesCount);
         }
 
-        // Build the bell curves
+        // build bell curves
         hitDistribution[runTotalHits] = (hitDistribution[runTotalHits] || 0) + 1;
         woundDistribution[runTotalWounds] = (woundDistribution[runTotalWounds] || 0) + 1;
         saveDistribution[runTotalSaves] = (saveDistribution[runTotalSaves] || 0) + 1;
@@ -78,10 +83,13 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
     const avgWastedDamage = sumWastedDamage / iterationsTotal;
 
     const damageDistribution = {};
+
     for (const dmg of allTotalDamage) {
         damageDistribution[dmg] = (damageDistribution[dmg] || 0) + 1;
     }
+
     const killedDistribution = {};
+
     for (const killed of allModelsKilled) {
         killedDistribution[killed] = (killedDistribution[killed] || 0) + 1;
     }
@@ -114,19 +122,22 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
         },
         damageDistribution: damageDistribution,
         killedDistribution: killedDistribution
-
     };
 }
 
+//#endregion
+
+//#region phase execution >>>>>>>>>>>>>>>>>>>>>>>
+
+// executes hit wound save and damage phases
 export function runHurtSystem(weapon, unit, startingHealth) {
     const totalAttacks = calculateAttacks(weapon, unit);
-
 
     let autoWounds = 0;
     let successfulHits = 0;
     let hitData = { successes: 0, bonus: 0 };
 
-    // Hit Phase
+    // hit phase
     if (weapon.modifiers.torrent || weapon.BsWs === "NA") {
         successfulHits = totalAttacks;
     } else {
@@ -134,10 +145,12 @@ export function runHurtSystem(weapon, unit, startingHealth) {
         const finalHitMod = Math.max(-1, Math.min(1, rawHitMod));
 
         let activeBsWs = parseInt(weapon.BsWs, 10);
+
         if (unit.modifiers.cover && activeBsWs !== "NA") {
             activeBsWs += 1;
         }
 
+        // rollPool from Dice.js
         hitData = Dice.rollPool({
             poolSize: totalAttacks,
             target: activeBsWs,
@@ -165,12 +178,15 @@ export function runHurtSystem(weapon, unit, startingHealth) {
         };
     }
 
-    // Wound Phase
+    // wound phase
     const baseWoundTarget = calculateWoundTarget(weapon.strength, unit.toughness);
 
     let targetWoundMod = unit.modifiers.minusOneWound ? -1 : 0;
+
     if (unit.modifiers.minusOneWoundHighStr && weapon.strength > unit.toughness) targetWoundMod -= 1;
+
     let rawWoundMod = weapon.modifiers.woundMod + targetWoundMod;
+
     if (weapon.modifiers.lance) rawWoundMod += 1;
 
     const finalWoundMod = Math.max(-1, Math.min(1, rawWoundMod));
@@ -192,7 +208,7 @@ export function runHurtSystem(weapon, unit, startingHealth) {
     const normalWounds = woundData.successes + autoWounds;
     const devWounds = woundData.autos;
 
-    //early return
+    // early return
     if (normalWounds === 0 && devWounds === 0) {
         return {
             hits: { rawSuccesses: hitData.successes, bonusHits: hitData.bonus, autoWounds: autoWounds },
@@ -203,20 +219,24 @@ export function runHurtSystem(weapon, unit, startingHealth) {
         };
     }
 
-    // Save Phase
+    // save phase
     let failedSavesCount = 0;
+
     if (normalWounds > 0) {
         const apApplied = unit.save - weapon.Ap - (unit.modifiers.plusOneSave ? 1 : 0);
         const bestSave = unit.inVul ? Math.min(apApplied, unit.inVul) : apApplied;
 
+        // rollRaw from Dice.js
         const saveRolls = Dice.rollRaw(normalWounds);
+
         for (const die of saveRolls) {
             if (die === 1 || die < bestSave) failedSavesCount++;
         }
     }
 
-    //early return
+    // early return
     const totalDamageEvents = failedSavesCount + devWounds;
+
     if (totalDamageEvents === 0) {
         return {
             hits: { rawSuccesses: hitData.successes, bonusHits: hitData.bonus, autoWounds: autoWounds },
@@ -227,7 +247,7 @@ export function runHurtSystem(weapon, unit, startingHealth) {
         };
     }
 
-    // Damage Phase
+    // damage phase
     const damageDone = modelsKill(totalDamageEvents, weapon, unit, startingHealth);
 
     return {
@@ -252,65 +272,83 @@ export function runHurtSystem(weapon, unit, startingHealth) {
     };
 }
 
-// helper functions>>>>>>>
+//#endregion
+
+//#region helper functions >>>>>>>>>>>>>>>>>>>>>>>
+
+// calculates total attacks including blast rapid fire etc
 function calculateAttacks(weapon, unit) {
-    let baseAttacks = resolveDamage(weapon.attack); //reusing function for variable damage here
+    let baseAttacks = resolveDamage(weapon.attack);
+
     if (weapon.modifiers.blast || weapon.modifiers.cleave) {
         baseAttacks += Math.floor(unit.modelCount / 5);
     } else if (weapon.modifiers.rapidFire) {
         baseAttacks += weapon.modifiers.rapidFire;
     }
+
     return baseAttacks * weapon.modelCount * weapon.unitCount;
 }
 
+// maps strength vs toughness chart
 function calculateWoundTarget(strength, toughness) {
     if (strength >= toughness * 2) return 2;
     if (strength > toughness) return 3;
     if (strength === toughness) return 4;
     if (strength <= toughness / 2) return 6;
+
     return 5;
 }
 
-// variable damage like "D3", "D6+2", "2D6"
+// parses and rolls variable values
 function resolveDamage(damageString, shouldReroll = false, singleRerollState = { available: false }) {
     let str = String(damageString).toUpperCase().replace(/\s/g, '');
+
     if (/^\d+$/.test(str)) return parseInt(str, 10);
+
     let total = 0;
     const diceRegex = /(\d*)D(\d+)/g;
     let match;
+
     while ((match = diceRegex.exec(str)) !== null) {
         let numDice = match[1] === "" ? 1 : parseInt(match[1], 10);
         let sides = parseInt(match[2], 10);
+
         for (let i = 0; i < numDice; i++) {
             let roll = Math.floor(Math.random() * sides) + 1;
 
             if (shouldReroll && (roll === 1 || roll === 2)) {
                 roll = Math.floor(Math.random() * sides) + 1;
             } else if (!shouldReroll && singleRerollState.available && roll <= Math.floor(sides / 2)) {
-                // Single Reroll: Triggers if you roll below the mathematical average (e.g., 1-3 on a D6)
+                // triggers if you roll below mathematical average
                 roll = Math.floor(Math.random() * sides) + 1;
-                singleRerollState.available = false; // Turn off immediately after use
+
+                // turn off immediately after use
+                singleRerollState.available = false;
             }
 
             total += roll;
         }
     }
+
     let flatModsStr = str.replace(/(\d*)D(\d+)/g, '');
     const flatRegex = /([+-]\d+)/g;
     let flatMatch;
+
     while ((flatMatch = flatRegex.exec(flatModsStr)) !== null) {
         total += parseInt(flatMatch[1], 10);
     }
+
     return Math.max(1, total);
 }
 
+// calculates kills and wasted damage per attack
 function modelsKill(damageEvents, weapon, unit, startingHealth) {
     let modelsKilledCount = 0;
     let wastedDamage = 0;
     let currentHealth = startingHealth;
     let totalActualDamageTaken = 0;
 
-    // Create the persistent tracker for the damage events loop
+    // persistent tracker for damage rerolls
     let singleDamageRerollState = { available: weapon.modifiers.rerollOneDamage };
 
     for (let i = 0; i < damageEvents; i++) {
@@ -325,9 +363,11 @@ function modelsKill(damageEvents, weapon, unit, startingHealth) {
         if (unit.fnp && unit.fnp > 1) {
             let unpreventedDamage = 0;
             const fnpRolls = Dice.rollRaw(dmgInstance);
+
             for (const die of fnpRolls) {
                 if (die < unit.fnp) unpreventedDamage++;
             }
+
             dmgInstance = unpreventedDamage;
         }
 
@@ -345,3 +385,5 @@ function modelsKill(damageEvents, weapon, unit, startingHealth) {
 
     return { totalDamage: totalActualDamageTaken, modelsKilled: modelsKilledCount, wastedDamage, currentHealth };
 }
+
+//#endregion

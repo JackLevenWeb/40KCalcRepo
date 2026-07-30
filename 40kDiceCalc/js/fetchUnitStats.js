@@ -1,4 +1,11 @@
+//#region imports >>>>>>>>>>>>>>>>>>>>>>>
+
+// buildRosterFromJSON from ui-manager.js
 import { buildRosterFromJSON } from './ui-manager.js';
+
+//#endregion
+
+//#region global state >>>>>>>>>>>>>>>>>>>>>>>
 
 const BASE = "https://openhammer-api-production.up.railway.app";
 const edition = "11e";
@@ -10,14 +17,12 @@ const searchDropdown = document.getElementById('search-results-dropdown');
 const importAttackerBtn = document.getElementById('import-attacker-btn');
 const importTargetBtn = document.getElementById('import-target-btn');
 
+// implements paginated api fetching and local client-side caching
+// safely interacts with databases without overloading main thread
 
-/**
- * architecture note:
- * This module implements paginated API fetching and local client-side caching. 
- * While the current target dataset is relatively small, this methodology simulates 
- * enterprise-grade data engineering patterns. It demonstrates how to safely interact 
- * with massive databases without overloading the main thread or hitting API rate limits.
- */
+//#endregion
+
+//#region search logic >>>>>>>>>>>>>>>>>>>>>>>
 
 searchInput.addEventListener('input', function (event) {
     const currentText = event.target.value.toLowerCase();
@@ -45,6 +50,7 @@ searchInput.addEventListener('input', function (event) {
     });
 
     const topResults = filteredUnits.slice(0, 50);
+
     searchDropdown.innerHTML = '';
 
     if (topResults.length === 0) {
@@ -52,6 +58,7 @@ searchInput.addEventListener('input', function (event) {
     } else {
         topResults.forEach(function (unitName) {
             const listItem = document.createElement('li');
+
             listItem.textContent = unitName;
             listItem.style.padding = '10px';
             listItem.style.borderBottom = '1px solid var(--border-color)';
@@ -61,7 +68,6 @@ searchInput.addEventListener('input', function (event) {
             listItem.addEventListener('mouseenter', () => listItem.style.backgroundColor = 'var(--surface-hover)');
             listItem.addEventListener('mouseleave', () => listItem.style.backgroundColor = 'transparent');
 
-
             listItem.addEventListener('click', function () {
                 searchInput.value = unitName;
                 searchDropdown.style.display = 'none';
@@ -70,24 +76,29 @@ searchInput.addEventListener('input', function (event) {
             searchDropdown.appendChild(listItem);
         });
     }
+
     searchDropdown.style.display = 'block';
 });
 
 function handleImportClick(importType) {
     const unitName = searchInput.value.trim();
+
     if (!unitName) {
         alert("Please select a unit to import.");
         return;
     }
+
     fetchUnitDetails(unitName, importType);
 }
 
 if (importAttackerBtn) importAttackerBtn.addEventListener('click', () => handleImportClick('attacker'));
 if (importTargetBtn) importTargetBtn.addEventListener('click', () => handleImportClick('target'));
 
+//#endregion
 
+//#region api fetching >>>>>>>>>>>>>>>>>>>>>>>
 
-//fetch unit names and ids
+// fetches unit names and ids
 async function fetchUnitName() {
     try {
         let offSet = 0;
@@ -95,10 +106,12 @@ async function fetchUnitName() {
 
         while (fetching) {
             const response = await fetch(`${BASE}/v1/${edition}/units?limit=500&offset=${offSet}`);
+
             if (!response.ok) {
                 const text = await response.text();
                 throw new Error(`HTTP ${response.status}: ${text}`);
             }
+
             const units = await response.json();
 
             if (units.length === 0) {
@@ -108,37 +121,41 @@ async function fetchUnitName() {
                     globalUnitIndex.set(unit.name, unit.id);
                     unitNames.push(unit.name);
                 }
-                //api limited to 500 per call
+
+                // api limited to 500 per call
                 offSet += 500;
             }
         }
+
         console.log(`Successfully loaded ${unitNames.length} units.`);
     } catch (err) {
         console.error("Failed to fetch unit names", err);
     }
 }
 
-
 fetchUnitName();
-
 
 async function fetchUnitDetails(unitName, importType) {
     try {
         const id = globalUnitIndex.get(unitName);
+
         if (!id) {
             alert(`Could not find the ID for ${unitName}. Please select it from the dropdown list.`);
             return;
         }
 
         const activeBtn = importType === 'attacker' ? importAttackerBtn : importTargetBtn;
+
         activeBtn.textContent = "Importing...";
         activeBtn.disabled = true;
 
         const response = await fetch(`${BASE}/v1/${edition}/units/${id}`);
+
         if (!response.ok) {
             const text = await response.text();
             throw new Error(`HTTP ${response.status}: ${text}`);
         }
+
         const apiUnit = await response.json();
 
         console.log(apiUnit);
@@ -159,11 +176,11 @@ async function fetchUnitDetails(unitName, importType) {
 
             const formattedRoster = apiWeaponsArray.map(apiWeapon => formatWeaponData(apiWeapon, apiUnit, isRanged));
             const rosterContainer = document.getElementById('attacker-roster');
+
             buildRosterFromJSON(rosterContainer, formattedRoster, false);
 
             activeBtn.textContent = "Import Attacker";
-        }
-        else if (importType === 'target') {
+        } else if (importType === 'target') {
             populateTargetProfile(apiUnit);
             activeBtn.textContent = "Import Target";
         }
@@ -174,10 +191,12 @@ async function fetchUnitDetails(unitName, importType) {
 
     } catch (err) {
         console.error("Failed to fetch unit details", err);
+
         if (importAttackerBtn) {
             importAttackerBtn.textContent = "Import Attacker";
             importAttackerBtn.disabled = false;
         }
+
         if (importTargetBtn) {
             importTargetBtn.textContent = "Import Target";
             importTargetBtn.disabled = false;
@@ -185,14 +204,14 @@ async function fetchUnitDetails(unitName, importType) {
     }
 }
 
+//#endregion
 
+//#region data formatting >>>>>>>>>>>>>>>>>>>>>>>
 
-
-
-//attacker unit
+// formats attacker unit payload
 function formatWeaponData(apiWeapon, apiUnit, isRanged) {
 
-    //determine if we should use bs or ws
+    // determines bs or ws usage
     const activeBsWs = isRanged ? apiWeapon.BS : apiWeapon.WS;
 
     const keywordStr = apiWeapon.Keywords ? apiWeapon.Keywords.toLowerCase() : "";
@@ -202,8 +221,7 @@ function formatWeaponData(apiWeapon, apiUnit, isRanged) {
         return match ? parseInt(match[1], 10) : 0;
     };
 
-
-    // map api payload to Weapon class format
+    // maps api payload to weapon class format
     return {
         unitName: `${apiUnit.name} (${apiWeapon.name})`,
         attack: apiWeapon.A || "1",
@@ -217,7 +235,6 @@ function formatWeaponData(apiWeapon, apiUnit, isRanged) {
         attachTarget: null,
         grantedKeyword: "none",
 
-
         modifiers: {
             lethal: keywordStr.includes("lethal hits"),
             devastating: keywordStr.includes("devastating wounds"),
@@ -227,12 +244,10 @@ function formatWeaponData(apiWeapon, apiUnit, isRanged) {
             cleave: keywordStr.includes("cleave"),
             lance: keywordStr.includes("lance"),
 
-
             sustained: extractNumber(/sustained hits (\d+)/),
             melta: extractNumber(/melta (\d+)/),
             rapidFire: extractNumber(/rapid fire (\d+)/),
             anti: extractNumber(/anti-.*?(\d+)/),
-
 
             hitMod: 0,
             woundMod: 0,
@@ -244,10 +259,10 @@ function formatWeaponData(apiWeapon, apiUnit, isRanged) {
     };
 }
 
-
-//target unit - inconsitent api objet keys
+// formats target unit payload dealing with inconsistent api keys
 function populateTargetProfile(apiUnit) {
     let profile = apiUnit.stats ? (Array.isArray(apiUnit.stats) ? apiUnit.stats[0] : apiUnit.stats) : null;
+
     if (!profile) profile = apiUnit.profiles ? (Array.isArray(apiUnit.profiles) ? apiUnit.profiles[0] : apiUnit.profiles) : null;
 
     if (profile) {
@@ -255,9 +270,11 @@ function populateTargetProfile(apiUnit) {
         if (profile.W || profile.w) document.getElementById('wounds').value = parseInt(profile.W || profile.w, 10);
 
         const sv = profile.SV || profile.Sv || profile.sv;
+
         if (sv) document.getElementById('save').value = parseInt(String(sv).replace('+', ''), 10);
 
         const inv = apiUnit.invuln_save || (profile.Inv || profile.inv);
+
         if (inv && inv !== "-") {
             document.getElementById('inVul').value = parseInt(String(inv).replace('+', ''), 10);
         } else {
@@ -276,6 +293,7 @@ function populateTargetProfile(apiUnit) {
         "def-cover",
         "def-plus-one-save"
     ];
+
     defMods.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.checked = false;
@@ -287,3 +305,5 @@ function populateTargetProfile(apiUnit) {
     const fnpDrop = document.getElementById("def-fnp");
     if (fnpDrop) fnpDrop.value = "0";
 }
+
+//#endregion
