@@ -39,6 +39,11 @@ QA for code:
 all the things we're generating should be dynamic - after adding in reroll 1 die function I see lots of hard coded stuff, this should all be dynamic
 double check all maths is correct (eg rerolling if its a miss etc)
 
+also todo:
+some combi UI elements are not being affected by their themes
+does fish for crits work correctly in the combi stuff?
+auto save must also save include in combi toggle state and the entire combi page
+
 
 
 

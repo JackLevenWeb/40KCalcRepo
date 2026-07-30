@@ -522,37 +522,96 @@ export function initCombinatorialPool() {
 }
 
 
-
 export function renderCombiMirror(weaponsArray, targetUnit) {
     const container = document.getElementById("combi-mirror-container");
     if (!container) return;
 
     const targetName = targetUnit.name || "Defending Target";
 
-    let html = `
-    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <div style="flex: 1; min-width: 180px; background: rgba(0,0,0,0.4); padding: 8px 12px; border-radius: 4px; border-left: 4px solid var(--theme-btn-standard); display: flex; justify-content: space-between; align-items: center;">
-            <span style="color: var(--theme-text-muted); font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Target: ${targetName}</span>
-            <span style="font-size: 0.85rem; color: #fff; font-weight: bold;">T${targetUnit.toughness} | W${targetUnit.wounds} | SV${targetUnit.save}+</span>
+    let html = `<div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: stretch;">`;
+
+    // 1. Build the Target Profile Card
+    let targetMods = [];
+    if (targetUnit.modifiers.minusOneHit) targetMods.push("-1 Hit");
+    if (targetUnit.modifiers.minusOneWound) targetMods.push("-1 Wnd");
+    if (targetUnit.modifiers.minusOneWoundHighStr) targetMods.push("S>T -1 Wnd");
+    if (targetUnit.modifiers.cover) targetMods.push("Cover");
+    if (targetUnit.modifiers.halfDamage) targetMods.push("1/2 Dmg");
+    if (targetUnit.modifiers.minusOneDamage) targetMods.push("-1 Dmg");
+    if (targetUnit.modifiers.plusOneSave) targetMods.push("+1 Save");
+    if (targetUnit.fnp && targetUnit.fnp > 1) targetMods.push(`FNP ${targetUnit.fnp}+`);
+    let targetModsStr = targetMods.length > 0 ? targetMods.join(' | ') : "No Defensive Mods";
+
+    html += `
+    <div style="flex: 1; min-width: 250px; background: var(--surface-color); border: 1px solid var(--border-color); border-top: 4px solid var(--theme-btn-standard); border-radius: 6px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.4); display: flex; flex-direction: column; gap: 8px;">
+        <div style="color: var(--theme-text-muted); font-size: 0.75rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Target Profile</div>
+        <div style="font-size: 1.2rem; color: var(--theme-text-light); font-weight: bold;">${targetName}</div>
+        <div style="display: flex; gap: 10px; font-size: 0.95rem; color: #fff; font-weight: bold; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px;">
+            <span>T${targetUnit.toughness}</span>|<span>W${targetUnit.wounds}</span>|<span>SV${targetUnit.save}+</span>${targetUnit.inVul ? `|<span>INV${targetUnit.inVul}++</span>` : ''}
         </div>
+        <div style="color: var(--theme-btn-standard); font-size: 0.8rem; font-weight: bold;">${targetModsStr}</div>
+    </div>
     `;
 
 
+    const groups = [];
+    const processed = new Set();
+    weaponsArray.forEach(w => {
+        if (!w.isLeader) {
+            const leaders = weaponsArray.filter(lw => lw.isLeader && lw.attachTarget === w.unitName);
+            leaders.forEach(l => processed.add(l.unitName));
+            groups.push({ base: w, leaders: leaders });
+        }
+    });
+    weaponsArray.forEach(w => {
+        if (w.isLeader && !processed.has(w.unitName)) {
+            groups.push({ base: null, leaders: [w] });
+        }
+    });
 
-    weaponsArray.slice(0, 4).forEach(w => {
-        const typeLabel = w.isLeader ? "Leader" : "Unit";
-        html += `
-        <div style="flex: 1; min-width: 180px; background: rgba(0,0,0,0.4); padding: 8px 12px; border-radius: 4px; border-left: 4px solid var(--theme-accent); display: flex; justify-content: space-between; align-items: center;">
-            <span style="color: var(--theme-text-muted); font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">${typeLabel}: ${w.unitName}</span>
-            <span style="font-size: 0.85rem; color: #fff; font-weight: bold;">${w.attack}A | S${w.strength} | AP${w.Ap} | D${w.damage}</span>
-        </div>
-        `;
+
+    groups.forEach(g => {
+        html += `<div style="flex: 1; min-width: 280px; background: var(--surface-color); border: 1px solid var(--border-color); border-top: 4px solid var(--theme-accent); border-radius: 6px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.4); display: flex; flex-direction: column; gap: 10px;">`;
+
+
+        if (g.leaders.length > 0) {
+            html += `<div style="display: flex; flex-direction: column; gap: 5px;">`;
+            g.leaders.forEach(l => {
+                html += `
+                <div style="background: rgba(196, 130, 53, 0.08); border: 1px solid var(--theme-accent); border-radius: 4px; padding: 10px;">
+                    <div style="color: var(--theme-accent); font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Leader</div>
+                    <div style="font-size: 1.05rem; color: #fff; font-weight: bold;">${l.unitName}</div>
+                    <div style="font-size: 0.85rem; color: var(--theme-text-light); margin-top: 4px;">
+                        ${l.attack}A | BS/WS ${l.BsWs}+ | S${l.strength} | AP${l.Ap} | D${l.damage}
+                    </div>
+                </div>`;
+            });
+            html += `</div>`;
+
+
+            if (g.base) {
+                html += `<div style="text-align: center; color: var(--theme-text-muted); font-size: 0.75rem; font-weight: bold; letter-spacing: 1px;">▼ LEADING ▼</div>`;
+            }
+        }
+
+
+        if (g.base) {
+            html += `
+            <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 4px; padding: 10px;">
+                <div style="color: var(--theme-text-muted); font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Bodyguard Unit</div>
+                <div style="font-size: 1.05rem; color: #fff; font-weight: bold;">${g.base.unitName}</div>
+                <div style="font-size: 0.85rem; color: var(--theme-text-light); margin-top: 4px;">
+                    ${g.base.unitCount * g.base.modelCount}M | ${g.base.attack}A | BS/WS ${g.base.BsWs}+ | S${g.base.strength} | AP${g.base.Ap} | D${g.base.damage}
+                </div>
+            </div>`;
+        }
+
+        html += `</div>`;
     });
 
     html += `</div>`;
     container.innerHTML = html;
 }
-
 export function renderCombinatorialLeaderboard(leaderboardData, totalSims = 0, bucketState = null) {
     const container = document.getElementById("combinatorial-results-container");
     if (!container) return;

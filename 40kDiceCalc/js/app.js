@@ -47,17 +47,14 @@ initDataBase();
 initCombinatorialPool();
 setupDragAndDrop();
 
-
-function createWeaponsArray() {
+function createWeaponsArray(stripBadges = false) {
     const modules = document.querySelectorAll('.attacker-module');
     const weaponsArray = [];
 
     modules.forEach(module => {
-
-        // extract name and swap apostrophes for backticks to prevent SQL crashes
+        //  name and swap apostrophes for backticks to prevent SQL crashes
         const rawUnitName = module.querySelector(".in-unit-name").value.trim();
         const unitName = rawUnitName.replace(/'/g, "`");
-
 
         const attack = module.querySelector(".in-attacks").value.trim().toUpperCase() || "1";
         const damage = module.querySelector(".in-dam").value.trim().toUpperCase() || "1";
@@ -68,10 +65,14 @@ function createWeaponsArray() {
         const unitCount = parseInt(module.querySelector(".in-units").value, 10);
         const isLeader = module.querySelector('.is-leader').checked;
         const attachTarget = module.querySelector('.attach-to').value || null;
-        const grantedKeyword = module.querySelector('.grant-keyword').value;
 
-        const hasMod = (key) => module.querySelector(`.mod-badge[data-key="${key}"]`) !== null;
+
+        const grantedKeyword = stripBadges ? "none" : module.querySelector('.grant-keyword').value;
+
+
+        const hasMod = (key) => stripBadges ? false : module.querySelector(`.mod-badge[data-key="${key}"]`) !== null;
         const getModVal = (key) => {
+            if (stripBadges) return 0;
             const badge = module.querySelector(`.mod-badge[data-key="${key}"]`);
             return badge ? parseInt(badge.querySelector(".badge-val").value, 10) : 0;
         };
@@ -826,17 +827,20 @@ if (ClearBtn) {
 }
 
 const SyncCombiBtn = document.getElementById("sync-combi-roster-btn");
+
 if (SyncCombiBtn) {
     SyncCombiBtn.addEventListener("click", () => {
-        const allWeapons = createWeaponsArray();
-        activeCombiTarget = createUnit();
-        activeCombiWeapons = [];
 
+        const allCleanWeapons = createWeaponsArray(true);
+        activeCombiTarget = createUnit();
+
+        activeCombiWeapons = [];
         const modules = document.querySelectorAll('.attacker-module');
+
         modules.forEach((mod, index) => {
             const toggle = mod.querySelector('.in-combi-roster');
-            if (toggle && toggle.checked && allWeapons[index]) {
-                activeCombiWeapons.push(allWeapons[index]);
+            if (toggle && toggle.checked && allCleanWeapons[index]) {
+                activeCombiWeapons.push(allCleanWeapons[index]);
             }
         });
 
@@ -914,13 +918,30 @@ if (combiButton) {
                 if (!w.isLeader) {
                     const group = [w];
                     processedNames.add(w.unitName);
+
+                    const leaderNames = []; // Array to track specific leaders
+
                     activeCombiWeapons.forEach(lw => {
                         if (lw.isLeader && lw.attachTarget === w.unitName) {
                             group.push(lw);
+                            leaderNames.push(lw.unitName);
                             processedNames.add(lw.unitName);
                         }
                     });
-                    attackGroups.push({ groupName: w.unitName + (group.length > 1 ? " & Attached Leaders" : ""), weapons: group });
+
+
+                    let groupTitle = w.unitName;
+                    if (leaderNames.length > 0) {
+                        groupTitle = `${leaderNames.join(", ")} leading: ${w.unitName}`;
+                    }
+
+                    attackGroups.push({ groupName: groupTitle, weapons: group });
+                }
+            });
+
+            activeCombiWeapons.forEach(w => {
+                if (w.isLeader && !processedNames.has(w.unitName)) {
+                    attackGroups.push({ groupName: w.unitName + " (Solo)", weapons: [w] });
                 }
             });
 
@@ -946,10 +967,30 @@ if (combiButton) {
 
                 for (const mod of comboYield) {
                     let moddedWeapons = JSON.parse(JSON.stringify(attackGroup.weapons));
+                    let isInvalidCombo = false;
 
                     for (const modKey of mod) {
                         moddedWeapons.forEach(mw => applyModifierToWeapon(mw, modKey));
                     }
+
+                    // --- NEW: Prune illogical combinations to save processing time ---
+                    moddedWeapons.forEach(mw => {
+                        // 1. Check if fishing for crits is possible in the Hit phase
+                        const canFishHits = (mw.modifiers.lethal || mw.modifiers.sustained > 0) &&
+                            (mw.modifiers.rerollHits !== "none");
+
+                        // 2. Check if fishing for crits is possible in the Wound phase
+                        const canFishWounds = mw.modifiers.devastating &&
+                            (mw.modifiers.rerollWounds !== "none" || mw.modifiers.twinLinked);
+
+                        // If trying to fish for crits, but mathematically cannot do it in EITHER phase, the combo is useless
+                        if (mw.modifiers.fishForCrits && !canFishHits && !canFishWounds) {
+                            isInvalidCombo = true;
+                        }
+                    });
+
+                    if (isInvalidCombo) continue; // Skip simulating this combination entirely!
+                    // -----------------------------------------------------------------
 
                     const payload = {
                         targetUnit: activeCombiTarget,
@@ -971,7 +1012,20 @@ if (combiButton) {
 
                 worker.terminate();
 
-                masterCompArray.sort((a, b) => b[1].averages.killed - a[1].averages.killed);
+
+                masterCompArray.sort((a, b) => {
+
+                    if (b[1].averages.killed !== a[1].averages.killed) {
+                        return b[1].averages.killed - a[1].averages.killed;
+                    }
+
+                    if (b[1].averages.damage !== a[1].averages.damage) {
+                        return b[1].averages.damage - a[1].averages.damage;
+                    }
+
+                    return a[0].length - b[0].length;
+                });
+
                 const topThree = masterCompArray.slice(0, 10);
 
                 const baseCombo = masterCompArray.find(c => c[0].length === 0);
