@@ -295,6 +295,12 @@ export function buildRosterFromJSON(containerElement, jsonData, clearRoster = tr
         newModule.querySelector(".in-models").value = unitData.modelCount || 5;
         newModule.querySelector(".in-units").value = unitData.unitCount || 1;
 
+        // Restore the Combi Roster toggle state
+        if (unitData.includeInCombi) {
+            const toggle = newModule.querySelector('.in-combi-roster');
+            if (toggle) toggle.checked = true;
+        }
+
 
         if (unitData.modifiers) {
             if (unitData.modifiers.critHitThreshold) {
@@ -569,14 +575,42 @@ export function renderCombiMirror(weaponsArray, targetUnit) {
         }
     });
 
+    // Helper to format active modifiers for the datacards
+    const getModsString = (w) => {
+        let activeMods = [];
+        if (w.modifiers.lethal) activeMods.push("Lethal");
+        if (w.modifiers.devastating) activeMods.push("Dev Wounds");
+        if (w.modifiers.sustained > 0) activeMods.push(`Sus ${w.modifiers.sustained}`);
+        if (w.modifiers.rerollHits !== "none") activeMods.push(`RR Hits`);
+        if (w.modifiers.rerollWounds !== "none") activeMods.push(`RR Wounds`);
+        if (w.modifiers.anti > 0) activeMods.push(`Anti-${w.modifiers.anti}+`);
+        if (w.modifiers.lance) activeMods.push("Lance");
+        if (w.modifiers.rapidFire > 0) activeMods.push(`RF ${w.modifiers.rapidFire}`);
+        if (w.modifiers.melta > 0) activeMods.push(`Melta ${w.modifiers.melta}`);
+        if (w.modifiers.torrent) activeMods.push("Torrent");
+        if (w.modifiers.twinLinked) activeMods.push("Twin-Linked");
+        if (w.modifiers.blast) activeMods.push("Blast");
+        if (w.modifiers.cleave) activeMods.push("Cleave");
+        if (w.modifiers.hitMod > 0) activeMods.push(`+${w.modifiers.hitMod} Hit`);
+        if (w.modifiers.hitMod < 0) activeMods.push(`${w.modifiers.hitMod} Hit`);
+        if (w.modifiers.woundMod > 0) activeMods.push(`+${w.modifiers.woundMod} Wound`);
+        if (w.modifiers.woundMod < 0) activeMods.push(`${w.modifiers.woundMod} Wound`);
+        if (w.modifiers.rerollDamage) activeMods.push(`RR Damage`);
+        if (w.modifiers.rerollOneHit) activeMods.push("RR 1 Hit");
+        if (w.modifiers.rerollOneWound) activeMods.push("RR 1 Wound");
+        if (w.modifiers.rerollOneDamage) activeMods.push("RR 1 Dmg");
+        return activeMods.length > 0 ? `[${activeMods.join(', ')}]` : "";
+    };
 
+    // 3. Build the Grouped Attacker Cards
     groups.forEach(g => {
         html += `<div style="flex: 1; min-width: 280px; background: var(--surface-color); border: 1px solid var(--border-color); border-top: 4px solid var(--theme-accent); border-radius: 6px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.4); display: flex; flex-direction: column; gap: 10px;">`;
 
-
+        // Draw the Leader Box(es)
         if (g.leaders.length > 0) {
             html += `<div style="display: flex; flex-direction: column; gap: 5px;">`;
             g.leaders.forEach(l => {
+                const modsDisplay = getModsString(l);
                 html += `
                 <div style="background: rgba(196, 130, 53, 0.08); border: 1px solid var(--theme-accent); border-radius: 4px; padding: 10px;">
                     <div style="color: var(--theme-accent); font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Leader</div>
@@ -584,25 +618,29 @@ export function renderCombiMirror(weaponsArray, targetUnit) {
                     <div style="font-size: 0.85rem; color: var(--theme-text-light); margin-top: 4px;">
                         ${l.attack}A | BS/WS ${l.BsWs}+ | S${l.strength} | AP${l.Ap} | D${l.damage}
                     </div>
+                    ${modsDisplay ? `<div style="color: var(--theme-accent); font-size: 0.75rem; font-weight: bold; margin-top: 4px;">${modsDisplay}</div>` : ''}
                 </div>`;
             });
             html += `</div>`;
-
 
             if (g.base) {
                 html += `<div style="text-align: center; color: var(--theme-text-muted); font-size: 0.75rem; font-weight: bold; letter-spacing: 1px;">▼ LEADING ▼</div>`;
             }
         }
 
-
+        // Draw the Base Bodyguard Unit Box
         if (g.base) {
+            const unitLabel = g.leaders.length > 0 ? "Bodyguard Unit" : "Unit";
+            const modsDisplay = getModsString(g.base);
+
             html += `
             <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 4px; padding: 10px;">
-                <div style="color: var(--theme-text-muted); font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Bodyguard Unit</div>
+                <div style="color: var(--theme-text-muted); font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">${unitLabel}</div>
                 <div style="font-size: 1.05rem; color: #fff; font-weight: bold;">${g.base.unitName}</div>
                 <div style="font-size: 0.85rem; color: var(--theme-text-light); margin-top: 4px;">
                     ${g.base.unitCount * g.base.modelCount}M | ${g.base.attack}A | BS/WS ${g.base.BsWs}+ | S${g.base.strength} | AP${g.base.Ap} | D${g.base.damage}
                 </div>
+                ${modsDisplay ? `<div style="color: var(--theme-accent); font-size: 0.75rem; font-weight: bold; margin-top: 4px;">${modsDisplay}</div>` : ''}
             </div>`;
         }
 
@@ -612,6 +650,8 @@ export function renderCombiMirror(weaponsArray, targetUnit) {
     html += `</div>`;
     container.innerHTML = html;
 }
+
+
 export function renderCombinatorialLeaderboard(leaderboardData, totalSims = 0, bucketState = null) {
     const container = document.getElementById("combinatorial-results-container");
     if (!container) return;
@@ -629,7 +669,7 @@ export function renderCombinatorialLeaderboard(leaderboardData, totalSims = 0, b
             if (bucketState.mutExclusiveA.includes(mod) || bucketState.mutExclusiveB.includes(mod) || bucketState.mutExclusiveC.includes(mod)) {
                 color = "var(--theme-accent)";
             } else if (bucketState.inclusiveA.includes(mod) || bucketState.inclusiveB.includes(mod) || bucketState.inclusiveC.includes(mod)) {
-                color = "#8FE07F";
+                color = "var(--theme-inclusive)"; // <-- Updated
             }
         }
         const formattedName = mod.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());

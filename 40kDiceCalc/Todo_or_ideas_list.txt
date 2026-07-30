@@ -19,7 +19,7 @@ smaller features:
 * view that will show you what modifiers statistically will be best in certain situations >> eg low attack high strength high ap attacks vs different targets or high attack low strength low ap vs targets? (idea from, better to shoot at termies with same strength/toughness weapons with high damage or better to shoot at termies with lots of crap but lethal shots)//done
 
 
-adv graph failed on this profile >> Fire Dragons (Exarch's Dragon Fusion Gun) >> vs upgraded wolf guard termies????
+adv graph failed on this profile >> Fire Dragons (Exarch's Dragon Fusion Gun) >> vs upgraded wolf guard termies????//done
 
 
 fixes / improvements:
@@ -43,7 +43,7 @@ also todo:
 some combi UI elements are not being affected by their themes
 does fish for crits work correctly in the combi stuff?
 auto save must also save include in combi toggle state and the entire combi page
-
+WE NEED TO BE ABLE TO HAVE ! UNIT LEAD MULTIPLE OTHER UNTIS - eg wolf guard termie with arjac
 
 
 

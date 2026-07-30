@@ -19,12 +19,14 @@ export function initializeWatchers() {
     if (TabStandard) {
         TabStandard.addEventListener("click", () => {
             switchDashboardView("tab-standard", "view-standard");
+            triggerSave();
         });
     }
 
     if (TabCombinatorial) {
         TabCombinatorial.addEventListener("click", () => {
             switchDashboardView("tab-combinatorial", "view-combinatorial");
+            triggerSave();
         });
     }
 
@@ -201,6 +203,11 @@ export function initializeWatchers() {
                 tutBody.innerHTML = `
                     <p>This panel displays the specific attacking units and attached leaders you have synced from the Standard Analytics tab for testing.</p>
                     <p style="margin-top: 10px;">The engine will automatically detect Leaders and group them with their attached units to execute combined-arms simulations.</p>
+                    <div style="margin-top: 15px; padding: 10px; border-left: 3px solid var(--theme-accent); background: rgba(0,0,0,0.2);">
+                        <strong style="color: #fff;">Important Note on Syncing:</strong>
+                        <p style="margin-top: 5px;">Any rules that exist in the testing buckets (like Rerolls, Lethal Hits, or +1 to Hit), as well as functional aliases like <em>Lance</em> (+1 to Wound) or <em>Twin-Linked</em> (Reroll All Wounds), are <strong>stripped</strong> upon syncing.</p>
+                        <p style="margin-top: 5px;">You must drag their equivalent tiles into the testing buckets to simulate them! Native mechanics like Anti-X, Rapid Fire, or Melta are kept and will display on the unit cards.</p>
+                    </div>
                 `;
             } else if (tutType === "combi_run") {
                 tutTitle.textContent = "Calculation Methodology";
@@ -322,7 +329,8 @@ export function setupDragAndDrop() {
         draggable.addEventListener('dragend', () => {
             draggable.classList.remove('dragging');
             draggable.style.opacity = '1';
-            document.dispatchEvent(new CustomEvent("App:AutoSave"));
+            // Added 50ms delay to ensure the DOM is fully updated before saving
+            setTimeout(() => document.dispatchEvent(new CustomEvent("App:AutoSave")), 50);
         });
     });
 

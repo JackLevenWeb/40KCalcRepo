@@ -14,6 +14,7 @@
   --theme-btn-standard-hover: #7A1A1E;
   --theme-accent: #C48235; 
   --theme-accent-glow: rgba(196, 130, 53, 0.4);
+  --theme-inclusive: #7EB09B;
 }
 
 * {

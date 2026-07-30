@@ -3,7 +3,7 @@
 import { Unit } from './classes/Unit.js';
 import { Weapon } from './classes/Weapon.js';
 import { runSimulation } from './logic.js';
-import { addAttackerModule, syncAppUI, buildRosterFromJSON, spawnReportCard, addBadgeToModule, spawnLeaderboard, renderCombiMirror, renderCombinatorialLeaderboard, initCombinatorialPool } from './ui-manager.js';
+import { addAttackerModule, syncAppUI, buildRosterFromJSON, spawnReportCard, addBadgeToModule, spawnLeaderboard, renderCombiMirror, renderCombinatorialLeaderboard, initCombinatorialPool, switchDashboardView } from './ui-manager.js';
 import { initDataBase, loadDataIntoSQL, queryComparisonData, clearDataBase, ModLabels, loadAveragesIntoSQL, queryAveragesData } from './db-manager.js';
 import { renderChart, renderAdvancedChart } from './chart-manager.js';
 import { initializeWatchers, setupDragAndDrop } from './event-manager.js';
@@ -70,9 +70,22 @@ function createWeaponsArray(stripBadges = false) {
         const grantedKeyword = stripBadges ? "none" : module.querySelector('.grant-keyword').value;
 
 
-        const hasMod = (key) => stripBadges ? false : module.querySelector(`.mod-badge[data-key="${key}"]`) !== null;
+
+        const badgesToStrip = [
+            "lethal", "devastating", "sustained", "hit_plus_1", "hit_minus_1", "wound_plus_1", "wound_minus_1",
+            "reroll_hits_1", "reroll_hits_all", "reroll_wounds_1", "reroll_wounds_all",
+            "fish_crits", "reroll_damage", "reroll_one_hit", "reroll_one_wound", "reroll_one_damage",
+            "lance", "twinlinked"
+        ];
+
+
+        const hasMod = (key) => {
+            if (stripBadges && badgesToStrip.includes(key)) return false;
+            return module.querySelector(`.mod-badge[data-key="${key}"]`) !== null;
+        };
+
         const getModVal = (key) => {
-            if (stripBadges) return 0;
+            if (stripBadges && badgesToStrip.includes(key)) return 0;
             const badge = module.querySelector(`.mod-badge[data-key="${key}"]`);
             return badge ? parseInt(badge.querySelector(".badge-val").value, 10) : 0;
         };
@@ -123,6 +136,9 @@ function createWeaponsArray(stripBadges = false) {
         newWeapon.attachTarget = attachTarget;
         newWeapon.grantedKeyword = grantedKeyword;
 
+        // Capture the Combi Roster toggle state
+        newWeapon.includeInCombi = module.querySelector('.in-combi-roster') ? module.querySelector('.in-combi-roster').checked : false;
+
         weaponsArray.push(newWeapon);
     });
 
@@ -154,6 +170,45 @@ function createUnit() {
     const unit = new Unit(toughness, wounds, save, inVul, fnp, modelCount, modifiers);
     unit.name = targetName;
     return unit;
+}
+
+// Maps saved target data back into the UI
+function loadTargetProfile(targetData) {
+    if (!targetData) return;
+
+    const nameInput = document.getElementById("target-name");
+    if (nameInput && targetData.name) nameInput.value = targetData.name;
+
+    document.getElementById("toughness").value = targetData.toughness || 4;
+    document.getElementById("wounds").value = targetData.wounds || 2;
+    document.getElementById("save").value = targetData.save || 3;
+    document.getElementById("inVul").value = targetData.inVul || "";
+    document.getElementById("target-models").value = targetData.modelCount || 5;
+    document.getElementById("def-fnp").value = targetData.fnp || "0";
+
+    if (targetData.modifiers) {
+        const hitMinus = document.getElementById("def-minus-hit");
+        if (hitMinus) hitMinus.checked = targetData.modifiers.minusOneHit || false;
+
+        const woundMinus = document.getElementById("def-minus-wound");
+        if (woundMinus) woundMinus.checked = targetData.modifiers.minusOneWound || false;
+
+        const woundMinusStr = document.getElementById("def-minus-wound-str");
+        if (woundMinusStr) woundMinusStr.checked = targetData.modifiers.minusOneWoundHighStr || false;
+
+        const cover = document.getElementById("def-cover");
+        if (cover) cover.checked = targetData.modifiers.cover || false;
+
+        const plusSave = document.getElementById("def-plus-one-save");
+        if (plusSave) plusSave.checked = targetData.modifiers.plusOneSave || false;
+
+        const reduceDam = document.getElementById("def-reduce-dam");
+        if (reduceDam) {
+            if (targetData.modifiers.halfDamage) reduceDam.value = "half";
+            else if (targetData.modifiers.minusOneDamage) reduceDam.value = "minus1";
+            else reduceDam.value = "none";
+        }
+    }
 }
 
 function runWorkerSimulation(iterations, weaponsArray, targetUnit) {
@@ -722,13 +777,21 @@ function handleImport(file) {
 function autoSave() {
     try {
         const globalDrop = document.getElementById("global-mod-dropdown");
+
+        // Determine which tab the user is actively viewing
+        let currentTab = "tab-standard";
+        if (document.getElementById("view-combinatorial") && document.getElementById("view-combinatorial").style.display === "block") {
+            currentTab = "tab-combinatorial";
+        }
+
         const rosterState = {
             roster: createWeaponsArray(),
             target: createUnit(),
             globalRule: globalDrop ? globalDrop.value : "none",
             combiBuckets: typeof scrapeCombinatorialSelections === "function" ? scrapeCombinatorialSelections() : null,
             combiRoster: activeCombiWeapons,
-            combiTarget: activeCombiTarget
+            combiTarget: activeCombiTarget,
+            activeTab: currentTab // Inject the active tab string
         };
         localStorage.setItem("40kRoster", JSON.stringify(rosterState, null, 2));
     } catch (error) {
@@ -773,6 +836,18 @@ if (localStorage.getItem("40kRoster")) {
                 renderCombiMirror(activeCombiWeapons, activeCombiTarget);
             }
         }
+
+        // Automatically return the user to the tab they were on safely
+        if (jsonData.activeTab) {
+            if (jsonData.activeTab === "tab-combinatorial") {
+                switchDashboardView("tab-combinatorial", "view-combinatorial");
+            } else if (jsonData.activeTab === "tab-dataloom") {
+                switchDashboardView("tab-dataloom", "view-dataloom");
+            } else {
+                switchDashboardView("tab-standard", "view-standard");
+            }
+        }
+
         if (ImportInput) ImportInput.value = "";
     } catch (error) {
         console.error("Save Data Crashed. Error details:", error);
@@ -854,6 +929,9 @@ if (SyncCombiBtn) {
         }
 
         renderCombiMirror(activeCombiWeapons, activeCombiTarget);
+
+
+        document.dispatchEvent(new CustomEvent("App:AutoSave"));
     });
 }
 
@@ -973,24 +1051,24 @@ if (combiButton) {
                         moddedWeapons.forEach(mw => applyModifierToWeapon(mw, modKey));
                     }
 
-                    // --- NEW: Prune illogical combinations to save processing time ---
+
                     moddedWeapons.forEach(mw => {
-                        // 1. Check if fishing for crits is possible in the Hit phase
+
                         const canFishHits = (mw.modifiers.lethal || mw.modifiers.sustained > 0) &&
                             (mw.modifiers.rerollHits !== "none");
 
-                        // 2. Check if fishing for crits is possible in the Wound phase
+
                         const canFishWounds = mw.modifiers.devastating &&
                             (mw.modifiers.rerollWounds !== "none" || mw.modifiers.twinLinked);
 
-                        // If trying to fish for crits, but mathematically cannot do it in EITHER phase, the combo is useless
+
                         if (mw.modifiers.fishForCrits && !canFishHits && !canFishWounds) {
                             isInvalidCombo = true;
                         }
                     });
 
-                    if (isInvalidCombo) continue; // Skip simulating this combination entirely!
-                    // -----------------------------------------------------------------
+                    if (isInvalidCombo) continue;
+
 
                     const payload = {
                         targetUnit: activeCombiTarget,
