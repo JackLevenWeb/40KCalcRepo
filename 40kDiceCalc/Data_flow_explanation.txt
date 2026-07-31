@@ -10,10 +10,10 @@ This document outlines the high-level Extract, Transform, Load (ETL) pipeline us
 [Event Manager or Fetch Router]       * Intercepts inputs, fetches API data, and broadcasts global events
       |
       v
-[Extract State]                       * Parses DOM for Weapon/Unit profiles or translates API payloads
+[State Extraction]                    * Parses DOM for Weapon/Unit profiles, or generates permutations via the Combinatorial Engine
       |
       v
-[Web Worker]                          * Background Thread: Runs 100,000 waterfall iterations per profile
+[Web Worker]                          * Background Thread: Runs 250,000 waterfall iterations per profile
       |
       v
 [Logic Engine]                        * Executes pure JS math sequentially (Hits > Wounds > Saves > Damage); Returns structured JSON distributions
@@ -42,7 +42,7 @@ This document outlines the high-level Extract, Transform, Load (ETL) pipeline us
 [webWorker.js]
       |
       * Imports runSimulation()
-      * Executes waterfall loop (resolving hits, passing successes directly to wounds)
+      * Executes waterfall loop (resolving the entire sequence of Hits, Wounds, Saves, and Damage in a single, unified iteration)
       |
       * postMessage(results)
       v
