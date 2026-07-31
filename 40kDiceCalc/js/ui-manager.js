@@ -709,14 +709,14 @@ export function renderCombinatorialLeaderboard(leaderboardData, totalSims = 0, b
                 ? modsUsed.map(formatMod).join(' <span style="color: var(--theme-text-muted);">+</span> ')
                 : "Base Profile Only";
 
-            const kills = stats.averages.killed.toFixed(2);
-            const damage = stats.averages.damage.toFixed(2);
+            const kills = stats.averages.killed.toFixed(3);
+            const damage = stats.averages.damage.toFixed(3);
 
             let deltaHTML = "";
 
             if (baseStats) {
-                const deltaKills = (stats.averages.killed - baseStats.averages.killed).toFixed(2);
-                const deltaDmg = (stats.averages.damage - baseStats.averages.damage).toFixed(2);
+                const deltaKills = (stats.averages.killed - baseStats.averages.killed).toFixed(3);
+                const deltaDmg = (stats.averages.damage - baseStats.averages.damage).toFixed(3);
                 const killColor = deltaKills >= 0 ? "#8FE07F" : "var(--danger-red)";
                 const dmgColor = deltaDmg >= 0 ? "#8FE07F" : "var(--danger-red)";
                 const killSign = deltaKills >= 0 ? "+" : "";

@@ -2,7 +2,7 @@
 
 //#region database initialization >>>>>>>>>>>>>>>>>>>>>>>
 
-const SIMULATION_ITERATIONS = 200000;
+const SIMULATION_ITERATIONS = 250000;
 
 // in-memory sqlite database via webassembly
 let db;

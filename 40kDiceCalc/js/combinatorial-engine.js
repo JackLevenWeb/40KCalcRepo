@@ -8,7 +8,7 @@ export function scrapeCombinatorialSelections() {
         return Array.from(items).map(item => item.getAttribute('data-mod'));
     };
 
-    return {
+    const selections = {
         independent: getValues('bucket-independent'),
         mutExclusiveA: getValues('bucket-exclusive-a'),
         mutExclusiveB: getValues('bucket-exclusive-b'),
@@ -17,6 +17,27 @@ export function scrapeCombinatorialSelections() {
         inclusiveB: getValues('bucket-inclusive-b'),
         inclusiveC: getValues('bucket-inclusive-c')
     };
+
+    // define rules where the dominant modifier makes the redundant one obsolete
+    const overrideRules = [
+        { dominant: "reroll_hits_all", redundant: "reroll_hits_1" },
+        { dominant: "reroll_hits_all", redundant: "reroll_one_hit" },
+        { dominant: "reroll_wounds_all", redundant: "reroll_wounds_1" },
+        { dominant: "reroll_wounds_all", redundant: "reroll_one_wound" }
+    ];
+
+    // if a dominant rule is present anywhere purge the redundant one entirely
+    for (const rule of overrideRules) {
+        const hasDominant = Object.values(selections).some(bucket => bucket.includes(rule.dominant));
+
+        if (hasDominant) {
+            for (const key in selections) {
+                selections[key] = selections[key].filter(mod => mod !== rule.redundant);
+            }
+        }
+    }
+
+    return selections;
 }
 
 //#endregion
@@ -32,13 +53,11 @@ export function* generateCombinations(independent, mutExclA, mutExclB, mutExclC,
 
     for (let i = 0; i < indTotal; i++) {
         const combo = [];
-
         for (let j = 0; j < independent.length; j++) {
             if (i & (1 << j)) {
                 combo.push(independent[j]);
             }
         }
-
         indCombinations.push(combo);
     }
 
@@ -62,10 +81,10 @@ export function* generateCombinations(independent, mutExclA, mutExclB, mutExclC,
     const incCCombinations = [[]];
     if (incC.length > 0) incCCombinations.push(incC);
 
-    // define hardcoded conflict rules
-    const exclusivePairs = [
-        ["reroll_hits_all", "reroll_hits_1"],
-        ["reroll_wounds_all", "reroll_wounds_1"]
+    // define rules that can be tested separately but never simultaneously 
+    const mutuallyExclusivePairs = [
+        ["reroll_hits_1", "reroll_one_hit"],
+        ["reroll_wounds_1", "reroll_one_wound"]
     ];
 
     // group all generated states into master array
@@ -75,22 +94,35 @@ export function* generateCombinations(independent, mutExclA, mutExclB, mutExclC,
         incACombinations, incBCombinations, incCCombinations
     ];
 
+    // tracks unique combinations to prevent duplicate simulations
+    const yieldedCombos = new Set();
+
     // recursive helper function for cartesian product
     function* cartesianProduct(bucketIndex, currentCombo) {
 
         // base condition to validate and yield result
         if (bucketIndex === allBuckets.length) {
-            let isValid = true;
+            let finalCombo = [...currentCombo];
 
-            for (const [modA, modB] of exclusivePairs) {
-                if (currentCombo.includes(modA) && currentCombo.includes(modB)) {
-                    isValid = false;
+            // check for forbidden overlapping rules
+            let hasConflict = false;
+            for (const [modA, modB] of mutuallyExclusivePairs) {
+                if (finalCombo.includes(modA) && finalCombo.includes(modB)) {
+                    hasConflict = true;
                     break;
                 }
             }
 
-            if (isValid) {
-                yield currentCombo;
+            // if both conflicting rules are present, skip this combination entirely
+            if (hasConflict) return;
+
+            // sort and stringify to check for duplicates
+            finalCombo.sort();
+            const comboKey = finalCombo.join(",");
+
+            if (!yieldedCombos.has(comboKey)) {
+                yieldedCombos.add(comboKey);
+                yield finalCombo;
             }
 
             return;

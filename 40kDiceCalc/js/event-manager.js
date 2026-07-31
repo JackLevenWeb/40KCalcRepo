@@ -74,7 +74,7 @@ export function initializeWatchers() {
                 tutTitle.textContent = "How to use this website";
                 tutBody.innerHTML = `
                     <p>Welcome to the Munitorum Auspex(WIP), a probability calculator for Warhammer 40,000.</p>
-                    <p style="margin-top: 10px;">This tool calculates exact probabilities for each phase of the game between attacking and defending units. To ensure pinpoint accuracy, this engine runs <strong>100,000 Monte Carlo simulations</strong> per unit, per modifier, per phase.</p>
+                    <p style="margin-top: 10px;">This tool calculates exact probabilities for attacking and defending units. This engine runs <strong>250,000 Monte Carlo simulations</strong> per unit and per modifier to generate the final distribution curves.</p>
                     <p style="margin-top: 10px;">Look for the <strong>?</strong> icons throughout the app to learn how each specific section functions.</p><br>
                     <p style="margin-top: 10px;">This app is a personal project created for learning and experimentation in 40K. It’s inspired by tools like Tactical Cogitator, but it’s not commercial. I built it as a portfolio piece to showcase my work on GitHub. <a href="https://github.com/JackLevenWeb" target="_blank" style="color: var(--theme-accent);">https://github.com/JackLevenWeb</a></p>
                     <div style="margin-top: 20px; font-size: 0.8rem; border-top: 1px solid var(--border-color); padding-top: 10px;">
@@ -130,7 +130,7 @@ export function initializeWatchers() {
             } else if (tutType === "base") {
                 tutTitle.textContent = "Base Profile Report";
                 tutBody.innerHTML = `
-                    <p><strong>Mathematical Average (Mean):</strong> The numbers on the left show the flat average of all 200,000 simulations. For example, if you roll terribly in many runs and kill 0 models, those zeroes drag down your 'Expected Models Killed' average.</p>
+                    <p><strong>Mathematical Average (Mean):</strong> The numbers on the left show the flat average of all 250,000 simulations. For example, if you roll terribly in many runs and kill 0 models, those zeroes drag down your 'Expected Models Killed' average.</p>
                     <p style="margin-top: 10px;"><strong>Cumulative Probability Threshold:</strong> The graph plots the % probability (Y-Axis) of achieving <em>at least</em> a specific total of Damage or Kills (X-Axis). It shows your practical chance of success during a game. Because it measures "at least", the breakpoints here often appear higher than your flat average!</p>
                     <div style="margin-top: 15px; padding: 10px; border-left: 3px solid var(--theme-accent); background: rgba(0,0,0,0.2);">
                         <p><strong>Why use both metrics?</strong></p>

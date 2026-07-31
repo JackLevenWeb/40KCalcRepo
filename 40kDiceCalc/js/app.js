@@ -15,7 +15,7 @@ import './fetchUnitStats.js'
 
 //#region initialization and state >>>>>>>>>>>>>>>>>>>>>>>
 
-const SIMULATION_ITERATIONS = 200000;
+const SIMULATION_ITERATIONS = 250000;
 
 // initializeWatchers from event-manager.js
 initializeWatchers();
