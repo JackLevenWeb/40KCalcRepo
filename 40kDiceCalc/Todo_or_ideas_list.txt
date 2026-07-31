@@ -44,6 +44,7 @@ some combi UI elements are not being affected by their themes
 does fish for crits work correctly in the combi stuff?
 auto save must also save include in combi toggle state and the entire combi page
 WE NEED TO BE ABLE TO HAVE ! UNIT LEAD MULTIPLE OTHER UNTIS - eg wolf guard termie with arjac
+*add dice chances tab - simple tab to show likely how of rolling 4 or 5 or 6 on 1 d6 and scaling that up.
 
 
 

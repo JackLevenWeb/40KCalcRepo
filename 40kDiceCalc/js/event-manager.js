@@ -130,12 +130,16 @@ export function initializeWatchers() {
             } else if (tutType === "base") {
                 tutTitle.textContent = "Base Profile Report";
                 tutBody.innerHTML = `
-                    <p>The numbers on the left show the mathematical average of your simulation.</p>
-                    <p style="margin-top: 10px;"><strong>Overkill (Wasted Damage):</strong> The amount of damage dealt that exceeded a model's remaining wounds (e.g., dealing 3 damage to a 1-wound model results in 2 wasted damage).</p>
-                    <p style="margin-top: 10px;">The graph plots the % probability (Y-Axis) of achieving at least a specific total of Damage or Kills (X-Axis).</p>
+                    <p><strong>Mathematical Average (Mean):</strong> The numbers on the left show the flat average of all 200,000 simulations. For example, if you roll terribly in many runs and kill 0 models, those zeroes drag down your 'Expected Models Killed' average.</p>
+                    <p style="margin-top: 10px;"><strong>Cumulative Probability Threshold:</strong> The graph plots the % probability (Y-Axis) of achieving <em>at least</em> a specific total of Damage or Kills (X-Axis). It shows your practical chance of success during a game. Because it measures "at least", the breakpoints here often appear higher than your flat average!</p>
+                    <div style="margin-top: 15px; padding: 10px; border-left: 3px solid var(--theme-accent); background: rgba(0,0,0,0.2);">
+                        <p><strong>Why use both metrics?</strong></p>
+                        <p style="margin-top: 5px;">The mathematical average tells you how efficient a weapon is over the course of a many simulations, while the cumulative probability graph tells you what is actually likely to happen when you roll your dice once.</p>
+                    </div>
+                    <p style="margin-top: 15px;"><strong>Overkill (Wasted Damage):</strong> The amount of damage dealt that exceeded a model's remaining wounds (e.g., dealing 3 damage to a 1-wound model results in 2 wasted damage).</p>
                     <ul style="margin-top: 10px; margin-left: 20px; padding-left: 10px;">
-                        <li><strong>Hover</strong> over a line to see the exact probability at that specific threshold.</li>
-                        <li><strong>Click</strong> items in the legend at the top to hide or show their respective lines on the graph.</li>
+                        <li style="margin-bottom: 6px;"><strong>Hover</strong> over a line to see the exact probability at that specific threshold.</li>
+                        <li style="margin-bottom: 6px;"><strong>Click</strong> items in the legend at the top to hide or show their respective lines on the graph.</li>
                     </ul>
                 `;
             } else if (tutType === "scenario") {
