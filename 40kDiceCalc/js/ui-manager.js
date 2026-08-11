@@ -50,9 +50,46 @@ export function addAttackerModule(containerElement) {
       <div class="attacker-module" style="background: var(--surface-color); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px;">
             
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-                <div class="input-field" style="flex-grow: 1; margin-right: 15px;">
+               <div class="input-field" style="flex-grow: 1; margin-right: 15px;">
                    <input type="text" class="in-unit-name" value="Attacker Unit" style="font-weight: bold; font-size: 1.2rem; color: var(--theme-accent); border: none; border-bottom: 1px solid var(--border-color); border-radius: 0; padding: 5px 0; background: transparent; box-shadow: none;" />
-                    <div class="attached-leaders-display" style="color: var(--theme-text-light); font-size: 0.85rem; font-weight: bold; margin-top: 5px;"></div>
+                   <select class="in-faction" style="margin-top: 5px; width: 100%; background: var(--surface-hover); color: var(--theme-text-light); border: 1px solid var(--border-color); border-radius: 4px; padding: 4px;">
+                        <option value="Unknown">Select Faction</option>
+                        <optgroup label="Imperium">
+                            <option value="Space Marines">Space Marines</option>
+                            <option value="Space Wolves">Space Wolves</option>
+                            <option value="Blood Angels">Blood Angels</option>
+                            <option value="Dark Angels">Dark Angels</option>
+                            <option value="Black Templars">Black Templars</option>
+                            <option value="Deathwatch">Deathwatch</option>
+                            <option value="Grey Knights">Grey Knights</option>
+                            <option value="Astra Militarum">Astra Militarum</option>
+                            <option value="Adeptus Custodes">Adeptus Custodes</option>
+                            <option value="Adepta Sororitas">Adepta Sororitas</option>
+                            <option value="Adeptus Mechanicus">Adeptus Mechanicus</option>
+                            <option value="Imperial Knights">Imperial Knights</option>
+                            <option value="Agents of the Imperium">Agents of the Imperium</option>
+                        </optgroup>
+                        <optgroup label="Chaos">
+                            <option value="Chaos Space Marines">Chaos Space Marines</option>
+                            <option value="Death Guard">Death Guard</option>
+                            <option value="Thousand Sons">Thousand Sons</option>
+                            <option value="World Eaters">World Eaters</option>
+                            <option value="Chaos Daemons">Chaos Daemons</option>
+                            <option value="Chaos Knights">Chaos Knights</option>
+                        </optgroup>
+                        <optgroup label="Xenos">
+                            <option value="Aeldari">Aeldari</option>
+                            <option value="Tyranids">Tyranids</option>
+                            <option value="Orks">Orks</option>
+                            <option value="Necrons">Necrons</option>
+                            <option value="T'au Empire">T'au Empire</option>
+                            <option value="Leagues of Votann">Leagues of Votann</option>
+                            <option value="Drukhari">Drukhari</option>
+                            <option value="Genestealer Cults">Genestealer Cults</option>
+                        </optgroup>
+                   </select>
+
+                   <div class="attached-leaders-display" style="color: var(--theme-text-light); font-size: 0.85rem; font-weight: bold; margin-top: 5px;"></div>
                 </div>
                 <button class="remove-btn" style="background: var(--theme-text-light); color: var(--bg-color); border: none; border-radius: 4px; padding: 5px 10px; font-weight: bold;">X</button>
             </div>

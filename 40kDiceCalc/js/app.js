@@ -10,10 +10,18 @@ import { initializeWatchers, setupDragAndDrop } from './event-manager.js';
 import { applyTheme, getCurrentTheme } from './theme-manager.js';
 import { scrapeCombinatorialSelections, generateCombinations } from './combinatorial-engine.js';
 import './fetchUnitStats.js'
+import { initializeTelemetry } from './telemetry-manager.js';
 
 //#endregion
 
 //#region initialization and state >>>>>>>>>>>>>>>>>>>>>>>
+
+// Placeholder Authentication State (To be replaced by IDaaS later)
+export const AuthState = {
+    userId: "guest_user_12345",
+    authToken: null,
+    appVersion: "1.0.0-OpenHammer"
+};
 
 const SIMULATION_ITERATIONS = 250000;
 
@@ -60,6 +68,9 @@ initCombinatorialPool();
 // setupDragAndDrop from event-manager.js
 setupDragAndDrop();
 
+// activates telemetry listener from telemetry-manager.js
+initializeTelemetry();
+
 //#endregion
 
 //#region core data builders >>>>>>>>>>>>>>>>>>>>>>>
@@ -72,6 +83,9 @@ function createWeaponsArray(stripBadges = false) {
     modules.forEach(module => {
         const rawUnitName = module.querySelector(".in-unit-name").value.trim();
         const unitName = rawUnitName.replace(/'/g, "`");
+
+        //grab the faction
+        const faction = module.querySelector(".in-faction") ? module.querySelector(".in-faction").value : "Unknown";
 
         const attack = module.querySelector(".in-attacks").value.trim().toUpperCase() || "1";
         const damage = module.querySelector(".in-dam").value.trim().toUpperCase() || "1";
@@ -151,6 +165,7 @@ function createWeaponsArray(stripBadges = false) {
         // Weapon from Weapon.js
         const newWeapon = new Weapon(unitName, attack, bsws, strength, ap, damage, modelCount, unitCount, modifiers);
 
+        newWeapon.faction = faction;
         newWeapon.isLeader = isLeader;
         newWeapon.attachTarget = attachTarget;
         newWeapon.grantedKeyword = grantedKeyword;
@@ -166,6 +181,10 @@ function createWeaponsArray(stripBadges = false) {
 function createUnit() {
     const nameInput = document.getElementById("target-name");
     const targetName = nameInput ? nameInput.value.trim() : "Target Unit";
+
+    //grab the faction
+    const factionDrop = document.getElementById("target-faction");
+    const targetFaction = factionDrop ? factionDrop.value : "Unknown";
 
     const toughness = parseInt(document.getElementById("toughness").value, 10);
     const wounds = parseInt(document.getElementById("wounds").value, 10);
@@ -187,8 +206,8 @@ function createUnit() {
 
     // Unit from Unit.js
     const unit = new Unit(toughness, wounds, save, inVul, fnp, modelCount, modifiers);
-
     unit.name = targetName;
+    unit.faction = targetFaction;
 
     return unit;
 }
@@ -442,6 +461,9 @@ if (CalcBtn) {
             // getCurrentTheme from theme-manager.js
             CalcBtn.textContent = getCurrentTheme().btnStandardText;
             CalcBtn.disabled = false;
+
+            // simulation data to telemetry pipeline
+            document.dispatchEvent(new CustomEvent("App:ExportTelemetry", { detail: results }));
 
             worker.terminate();
         });

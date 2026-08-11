@@ -179,6 +179,14 @@ async function fetchUnitDetails(unitName, importType) {
 
             buildRosterFromJSON(rosterContainer, formattedRoster, false);
 
+            // sets the faction dropdown for imported attacker modules
+            if (apiUnit.faction) {
+                const factionDrops = rosterContainer.querySelectorAll(".in-faction");
+                factionDrops.forEach(drop => {
+                    drop.value = apiUnit.faction;
+                });
+            }
+
             activeBtn.textContent = "Import Attacker";
         } else if (importType === 'target') {
             populateTargetProfile(apiUnit);
@@ -224,6 +232,7 @@ function formatWeaponData(apiWeapon, apiUnit, isRanged) {
     // maps api payload to weapon class format
     return {
         unitName: `${apiUnit.name} (${apiWeapon.name})`,
+        faction: apiUnit.faction || "Unknown",
         attack: apiWeapon.A || "1",
         BsWs: activeBsWs ? activeBsWs.replace('+', '') : "NA",
         strength: apiWeapon.S ? parseInt(apiWeapon.S, 10) : 0,
@@ -304,6 +313,12 @@ function populateTargetProfile(apiUnit) {
 
     const fnpDrop = document.getElementById("def-fnp");
     if (fnpDrop) fnpDrop.value = "0";
+
+    // sets the target faction dropdown
+    const factionDrop = document.getElementById("target-faction");
+    if (factionDrop && apiUnit.faction) {
+        factionDrop.value = apiUnit.faction;
+    }
 }
 
 //#endregion
