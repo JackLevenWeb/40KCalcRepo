@@ -10,8 +10,7 @@ import { initializeWatchers, setupDragAndDrop } from './event-manager.js';
 import { applyTheme, getCurrentTheme } from './theme-manager.js';
 import { scrapeCombinatorialSelections, generateCombinations } from './combinatorial-engine.js';
 import './fetchUnitStats.js'
-import { initializeTelemetry } from './telemetry-manager.js';
-
+import { initializeTelemetry, startTelemetryTimer, dispatchTelemetryEvent, generateId } from './telemetry-manager.js';
 //#endregion
 
 //#region initialization and state >>>>>>>>>>>>>>>>>>>>>>>
@@ -462,11 +461,16 @@ if (CalcBtn) {
             CalcBtn.textContent = getCurrentTheme().btnStandardText;
             CalcBtn.disabled = false;
 
-            // simulation data to telemetry pipeline
-            document.dispatchEvent(new CustomEvent("App:ExportTelemetry", { detail: results }));
+            const batchId = generateId();
+
+            // dispatches the telemetry event
+            dispatchTelemetryEvent(startTime, results, attackerWeapons, targetUnit, AuthState, "base_profile", batchId);
 
             worker.terminate();
         });
+
+        // start timer
+        const startTime = startTelemetryTimer();
 
         worker.postMessage({ iterations: SIMULATION_ITERATIONS, weaponsArray: attackerWeapons, targetUnit: targetUnit });
     });
@@ -479,6 +483,10 @@ if (advAnalyticsBtn) {
 
         advAnalyticsBtn.textContent = "Running Pipeline...";
         advAnalyticsBtn.disabled = true;
+
+        // start timer
+        const startTime = startTelemetryTimer();
+        const batchId = generateId();
 
         // clearDataBase from db-manager.js
         clearDataBase();
@@ -565,6 +573,7 @@ if (advAnalyticsBtn) {
 
                 baseWeapon.modifiers.melta = originalMelta;
 
+                //attacker mods
                 for (const [category, mods] of Object.entries(SIMULATION_SCENARIOS)) {
                     for (const modKey of mods) {
                         const skipReason = checkSkipReason([baseWeapon], targetUnit, modKey);
@@ -588,6 +597,9 @@ if (advAnalyticsBtn) {
 
                         let results = await runWorkerSimulation(SIMULATION_ITERATIONS, [moddedWeapon], targetUnit);
 
+                        // exports specific run to telemetry
+                        dispatchTelemetryEvent(startTime, results, [moddedWeapon], targetUnit, AuthState, "delta_analysis", batchId);
+
                         loadDataIntoSQL(unitName, modKey, "Hit", results.hitDistribution);
                         loadDataIntoSQL(unitName, modKey, "Wound", results.woundDistribution);
                         loadDataIntoSQL(unitName, modKey, "Save", results.saveDistribution);
@@ -597,6 +609,7 @@ if (advAnalyticsBtn) {
                     }
                 }
 
+                //target mods
                 for (const [category, mods] of Object.entries(target_SIMULATION_SCENARIOS)) {
                     for (const modKey of mods) {
                         const skipReason = checkSkipReasonTarget(targetUnit, [baseWeapon], modKey);
@@ -617,6 +630,8 @@ if (advAnalyticsBtn) {
                         applyModifiersToTarget(moddedTarget, modKey);
 
                         let results = await runWorkerSimulation(SIMULATION_ITERATIONS, [baseWeapon], moddedTarget);
+
+                        dispatchTelemetryEvent(startTime, results, [baseWeapon], moddedTarget, AuthState, "delta_analysis", batchId);
 
                         loadDataIntoSQL(unitName, modKey, "Hit", results.hitDistribution);
                         loadDataIntoSQL(unitName, modKey, "Wound", results.woundDistribution);
@@ -657,6 +672,9 @@ if (advAnalyticsBtn) {
 
             // spawnLeaderboard from ui-manager.js
             spawnLeaderboard(mainContainer, leaderboardStats, isSingleTarget);
+
+            // dispatche analysis telemetry
+            dispatchTelemetryEvent(startTime, leaderboardStats, baseWeapons, targetUnit, AuthState, "delta_analysis");
 
         } catch (error) {
             console.error("Pipeline Failed:", error);
@@ -1153,6 +1171,10 @@ if (combiButton) {
 
         if (simCounterDisplay) simCounterDisplay.textContent = "0";
 
+        //start timer
+        const startTime = startTelemetryTimer();
+        const batchId = generateId();
+
         try {
             // scrapeCombinatorialSelections from combinatorial-engine.js
             const selectedMods = scrapeCombinatorialSelections();
@@ -1242,6 +1264,9 @@ if (combiButton) {
                         worker.postMessage(payload);
                     });
 
+                    // export specific permutation to telemetry
+                    dispatchTelemetryEvent(startTime, workerResult, moddedWeapons, activeCombiTarget, AuthState, "combinatorial_engine", batchId);
+
                     masterCompArray.push([mod, workerResult]);
 
                     totalSimulationsRun += SIMULATION_ITERATIONS;
@@ -1275,6 +1300,8 @@ if (combiButton) {
 
             // renderCombinatorialLeaderboard from ui-manager.js
             renderCombinatorialLeaderboard(allWeaponsLeaderboard, totalSimulationsRun, selectedMods);
+
+
 
         } catch (error) {
             console.error("Combinatorial Engine Failed:", error);
