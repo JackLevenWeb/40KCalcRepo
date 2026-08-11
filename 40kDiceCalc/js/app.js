@@ -571,6 +571,9 @@ if (advAnalyticsBtn) {
                 // loadAveragesIntoSQL from db-manager.js
                 loadAveragesIntoSQL(unitName, "Base", baseResults.averages);
 
+                // dispatche analysis telemetry
+                dispatchTelemetryEvent(startTime, baseResults, singleWeaponRoster, targetUnit, AuthState, "delta_analysis", batchId);
+
                 baseWeapon.modifiers.melta = originalMelta;
 
                 //attacker mods
@@ -673,8 +676,6 @@ if (advAnalyticsBtn) {
             // spawnLeaderboard from ui-manager.js
             spawnLeaderboard(mainContainer, leaderboardStats, isSingleTarget);
 
-            // dispatche analysis telemetry
-            dispatchTelemetryEvent(startTime, leaderboardStats, baseWeapons, targetUnit, AuthState, "delta_analysis");
 
         } catch (error) {
             console.error("Pipeline Failed:", error);
