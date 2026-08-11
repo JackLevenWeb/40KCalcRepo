@@ -95,23 +95,23 @@ async function buildAndSendPayLoad(data) {
     };
 
 
-    // try {
-    //     const respone = await fetch(azureEndpoint, {
-    //         method: "POST",
-    //         headers: {
-    //             "Content-Type": "application/json"
-    //         },
-    //         body: JSON.stringify(finalPayload)
-    //     });
+    try {
+        const respone = await fetch(azureEndpoint, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(finalPayload)
+        });
 
-    //     if (!response.ok) {
-    //         console.error("telemetry export failed with status", response.status);
-    //     }
-    // } catch (error) {
-    //     console.error("network error during telemetry export", error);
-    // }
+        if (!response.ok) {
+            console.error("telemetry export failed with status", response.status);
+        }
+    } catch (error) {
+        console.error("network error during telemetry export", error);
+    }
 
-    // console.log("final telemetry payload ready for azure", finalPayload);
+    console.log("final telemetry payload ready for azure", finalPayload);
 
 }
 
