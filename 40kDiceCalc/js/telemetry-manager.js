@@ -1,9 +1,14 @@
 
+// placeholder for azure function endpoint
+const azureEndpoint = "https://your-azure-function-app.azurewebsites.net/api/telemetry";
+
+
 
 //unique string for database tracking
-export function generateRunId() {
+export function generateId() {
     return crypto.randomUUID();
 }
+
 
 export function startTelemetryTimer() {
     return performance.now();
@@ -42,7 +47,7 @@ export function initializeTelemetry() {
 //map and package raw data
 async function buildAndSendPayLoad(data) {
 
-    const runId = generateRunId();
+    const runId = generateId();
     const timeStamp = new Date().toISOString();
 
 
@@ -54,7 +59,7 @@ async function buildAndSendPayLoad(data) {
             run_id: runId,
             batch_id: data.batchId,
             user_id: data.auth.userId,
-            timestamp: timestamp,
+            timeStamp: timeStamp,
             app_version: data.auth.appVersion
         },
         performance_metrics: {
@@ -89,5 +94,25 @@ async function buildAndSendPayLoad(data) {
         }
     };
 
+
+    try {
+        const respone = await fetch(azureEndpoint, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(finalPayload)
+        });
+
+        if (!response.ok) {
+            console.error("telemetry export failed with status", response.status);
+        }
+    } catch (error) {
+        console.error("network error during telemetry export", error);
+    }
+
     console.log("final telemetry payload ready for azure", finalPayload);
+
 }
+
+
