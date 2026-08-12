@@ -1,0 +1,21 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "sqlproj: Build AuspexDataModel",
+			"type": "process",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"c:/Users/jackh/OneDrive/Documents/vsCodeProjects/40kCalcProjectFolder/40kDiceCalc/auspex_backend/AuspexDataModel_DBs/AuspexDataModel/AuspexDataModel.sqlproj"
+			],
+			"problemMatcher": "$sqlproj-problem-matcher",
+			"isBackground": true,
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"detail": "Builds the AuspexDataModel SQL project"
+		}
+	]
+}

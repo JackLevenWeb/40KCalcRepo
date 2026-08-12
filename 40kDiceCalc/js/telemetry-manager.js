@@ -1,6 +1,6 @@
 
 // placeholder for azure function endpoint
-const azureEndpoint = "https://your-azure-function-app.azurewebsites.net/api/telemetry";
+const azureEndpoint = "http://localhost:8080/api/telemetry";
 
 
 
@@ -47,10 +47,11 @@ export function initializeTelemetry() {
 //map and package raw data
 async function buildAndSendPayLoad(data) {
 
+    // generate tracking ids
     const runId = generateId();
     const timeStamp = new Date().toISOString();
 
-
+    // check hardware limits
     const concurrency = navigator.hardwareConcurrency || 1;
 
 
@@ -72,14 +73,17 @@ async function buildAndSendPayLoad(data) {
             target_unit: {
                 name: data.target.name,
                 faction: data.target.faction,
+                //  points: data.target.points,
                 wounds: data.target.wounds,
                 toughness: data.target.toughness,
                 save: data.target.save,
                 modifiers: data.target.modifiers
             },
+
             attacker_units: data.attackers.map(attacker => ({
                 name: attacker.unitName,
                 faction: attacker.faction,
+                // points: attacker.points, ////points has not been addressed in any of the other code, right now this line is meaningless
                 models: attacker.modelCount,
                 attacks: attacker.attack,
                 modifiers: attacker.modifiers
@@ -94,9 +98,9 @@ async function buildAndSendPayLoad(data) {
         }
     };
 
-
     try {
-        const respone = await fetch(azureEndpoint, {
+
+        const response = await fetch(azureEndpoint, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -112,7 +116,7 @@ async function buildAndSendPayLoad(data) {
     }
 
     console.log("final telemetry payload ready for azure", finalPayload);
-
 }
+
 
 
