@@ -1,68 +1,111 @@
 # Data Flow Explanation
 
-This document outlines the high-level Extract, Transform, Load (ETL) pipeline used to generate and visualize probability data.
+This document outlines the high-level Extract, Transform, Load (ETL) pipeline used to generate, visualize, and store probability data across the application.
 
-## 1. High-Level Pipeline Architecture
+## JavaScript Application (Client Side)
+
+### 1. High-Level Pipeline Architecture
 
 [User Input (UI) or API Search]
       |
       v
-[Event Manager or Fetch Router]       * Intercepts inputs, fetches API data, and broadcasts global events
+[Event Manager / Fetch Router]   <-- Intercepts inputs (event-manager.js), fetches OpenHammer API data (fetchUnitStats.js), and broadcasts global events
       |
       v
-[State Extraction]                    * Parses DOM for Weapon/Unit profiles, or generates permutations via the Combinatorial Engine
+[Extract State]                  <-- Parses DOM for Weapon/Unit profiles or translates API payloads into DTOs (app.js: createWeaponsArray / createUnit)
       |
       v
-[Web Worker]                          * Background Thread: Runs 250,000 waterfall iterations per profile
+[Web Worker]                     <-- Background Thread: Runs 100,000 waterfall iterations per scenario
       |
       v
-[Logic Engine]                        * Executes pure JS math sequentially (Hits > Wounds > Saves > Damage); Returns structured JSON distributions
+[Logic Engine]                   <-- Executes pure JS math sequentially (Hits -> Wounds -> Saves -> Damage); Returns structured JSON distributions
       |
       v
-[SQL Database]                        * In-Memory SQLite (sql.js). INSERTS raw distribution rows
+[SQL Database]                   <-- In-Memory SQLite (sql.js). INSERTS raw distribution and average rows (db-manager.js)
       |
       v
-[SQL Query]                           * SELECT rows grouped by Category (Hit/Wound/Save) and Modifier
+[SQL Query]                      <-- SELECT rows grouped by Category (Hit/Wound/Save/Damage) and Modifier
       |
       v
-[Data Processing]                     * Sorts array averages for Leaderboard rendering
+[Data Processing]                <-- Sorts array averages by Models Killed and Damage for Leaderboard rendering
       |
       v
-[Chart Rendering]                     * Chart.js maps SQL rows to X/Y coordinates
+[Chart Rendering]                <-- Chart.js maps SQL rows to X/Y coordinates and conditionally applies dash styling for target buffs (chart-manager.js)
       |
       v
-[DOM Output]                          * Rendered UI Report Cards and Leaderboards
+[DOM Output]                     <-- Rendered UI Report Cards and interactive Leaderboards appended to the application (ui-manager.js)
 
-## 2. Web Worker Execution Flow
+### 2. Web Worker Execution Flow
 
 [Main Thread (app.js)]
       |
-      * postMessage({ weapons, target, iterations })
+      |-- postMessage({ iterations, weaponsArray, targetUnit })
       v
 [webWorker.js]
       |
-      * Imports runSimulation()
-      * Executes waterfall loop (resolving the entire sequence of Hits, Wounds, Saves, and Damage in a single, unified iteration)
+      |-- Imports runSimulation() from logic.js
+      |-- Executes waterfall loop (resolving hits, passing successes to wounds, forcing saves)
       |
-      * postMessage(results)
+      |-- postMessage(results)
       v
 [Main Thread (app.js)]
       |
       v
-(Data goes to SQL Engine)
+(Data goes to SQL Engine for aggregation)
 
-## 3. Database Aggregation Flow
+### 3. Database Aggregation Flow
 
-Application Logic
+Application Logic (app.js)
 |
-* Extract Output
-  * JSON object: { "4": 1200, "5": 3000 }
+|-- Extract Output
+|   |-- JSON object: { "4": 1200, "5": 3000 }
 |
-* Prepare Statement (db-manager.js)
-  * "INSERT INTO simulation_runs (modifier_name, category, value, occurrence_count) VALUES (?, ?, ?, ?)"
+|-- Prepare Statement (db-manager.js)
+|   |-- "INSERT INTO simulation_runs (unit_name, modifier_name, category, value, occurrence_count) VALUES (?, ?, ?, ?, ?)"
 |
-* Execute Query
-  * stmt.run(["Lethal", "Hit", 4, 1200])
+|-- Execute Query
+|   |-- stmt.run(["Attacker Unit", "plus_1_save", "Save", 4, 1200])
 |
-* SQLite Engine (WASM)
-  * Update Storage (RAM)
+|-- SQLite Engine (WASM)
+    |
+    |-- Update Storage (RAM)
+
+---
+
+## Hybrid Network Transport (Client to Server)
+
+### 4. Telemetry Export Flow
+
+Application Logic (app.js)
+|
+|-- Event Dispatch
+|   |-- document.dispatchEvent("App:ExportTelemetry", telemetryBundle)
+|
+|-- Event Listener (telemetry-manager.js)
+|   |-- Intercepts bundle. Appends target.points and attacker.points from OpenHammer API.
+|   |-- Packages JSON finalPayload.
+|
+|-- HTTP POST Request
+    |-- fetch() to http://localhost:8080/api/telemetry (Local) or Azure Endpoint (Production).
+
+---
+
+## Azure Backend (Server Side)
+
+### 5. Backend Database Ingestion Flow
+
+Azure Function (function_app.py)
+|
+|-- HTTP Trigger
+|   |-- Catches POST request on port 8080. Validates JSON payload.
+|
+|-- Database Connection Manager (database.py)
+|   |-- Extracts SqlConnectionString from Environment Variables.
+|   |-- Opens pyodbc connection to Azure SQL Database using ODBC Driver 17.
+|
+|-- Data Service Layer (services.py)
+|   |-- Maps JSON arrays to SQL parameters.
+|
+|-- Azure SQL Execution
+    |-- INSERTS raw payload string into Bronze_RawTelemetry table.
+    |-- Commits transaction and returns 200 OK.
