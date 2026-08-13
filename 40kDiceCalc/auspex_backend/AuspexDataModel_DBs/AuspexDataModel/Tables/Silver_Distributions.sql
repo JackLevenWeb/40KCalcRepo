@@ -8,6 +8,6 @@ create table [dbo].[silver_distributions]
     [occurrencecount] int not null,
     [rawdicethrown] int null,
 
-    -- link to main sim table
+    -- llink to main simulation table
     constraint fk_silverdist_runid foreign key ([runid]) references [dbo].[silver_simulations]([runid])
 );

@@ -8,6 +8,6 @@ create table [dbo].[silver_attackers]
     [models] int not null,
     [attacks] varchar(50) not null,
 
-    -- link to main sim table
+    -- llink to main simulation table
     constraint fk_silverattackers_runid foreign key ([runid]) references [dbo].[silver_simulations]([runid])
 );
