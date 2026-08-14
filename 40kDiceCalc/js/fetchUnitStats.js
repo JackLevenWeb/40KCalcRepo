@@ -241,10 +241,11 @@ function formatWeaponData(apiWeapon, apiUnit, isRanged) {
         modelCount: apiUnit.composition ? apiUnit.composition.min_models : 5,
         unitCount: 1,
         isLeader: false,
-        attachTarget: null,
+        attachTargetId: null, // updated to match new id architecture
         grantedKeyword: "none",
 
         modifiers: {
+            // ... (keep your existing modifiers here)
             lethal: keywordStr.includes("lethal hits"),
             devastating: keywordStr.includes("devastating wounds"),
             torrent: keywordStr.includes("torrent"),
@@ -270,6 +271,12 @@ function formatWeaponData(apiWeapon, apiUnit, isRanged) {
 
 // formats target unit payload dealing with inconsistent api keys
 function populateTargetProfile(apiUnit) {
+    // update the target name input
+    const nameInput = document.getElementById("target-name");
+    if (nameInput && apiUnit.name) {
+        nameInput.value = apiUnit.name;
+    }
+
     let profile = apiUnit.stats ? (Array.isArray(apiUnit.stats) ? apiUnit.stats[0] : apiUnit.stats) : null;
 
     if (!profile) profile = apiUnit.profiles ? (Array.isArray(apiUnit.profiles) ? apiUnit.profiles[0] : apiUnit.profiles) : null;

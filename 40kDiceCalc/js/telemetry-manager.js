@@ -1,9 +1,47 @@
+// placeholder for azure function endpoint
+const azureEndpoint = "http://localhost:8080/api/telemetry";
+
+// unique string for database tracking
+export function generateId() {
+    return crypto.randomUUID();
+}
+
+export function startTelemetryTimer() {
+    return performance.now();
+}
+
+// calculates time and dispatches event
+export function dispatchTelemetryEvent(startTime, results, attackers, target, auth, simType, batchId) {
+    const executionTime = performance.now() - startTime;
+
+    const telemetryBundle = {
+        results: results,
+        attackers: attackers,
+        target: target,
+        auth: auth,
+        executionTime: executionTime,
+        simType: simType,
+        batchId: batchId
+    };
+
+    document.dispatchEvent(new CustomEvent("App:ExportTelemetry", { detail: telemetryBundle }));
+}
+
+// trigger data export
+export function initializeTelemetry() {
+    document.addEventListener("App:ExportTelemetry", (event) => {
+        const simulationData = event.detail;
+        buildAndSendPayLoad(simulationData);
+    });
+}
+
+// map and package raw data
 async function buildAndSendPayLoad(data) {
     const runId = generateId();
     const timeStamp = new Date().toISOString();
     const concurrency = navigator.hardwareConcurrency || 1;
 
-    //  build payload 
+    // build payload 
     const finalPayload = {
         session_data: {
             run_id: runId,
@@ -90,7 +128,7 @@ async function buildAndSendPayLoad(data) {
         }
     };
 
-    //  execute transmission 
+    // execute transmission 
     try {
         const response = await fetch(azureEndpoint, {
             method: "POST",

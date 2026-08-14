@@ -1188,20 +1188,21 @@ if (combiButton) {
             let totalSimulationsRun = 0;
 
             const attackGroups = [];
-            const processedNames = new Set();
+            const processedIds = new Set();
 
             activeCombiWeapons.forEach(w => {
                 if (!w.isLeader) {
                     const group = [w];
-                    processedNames.add(w.unitName);
+                    processedIds.add(w.unitId);
 
                     const leaderNames = [];
 
                     activeCombiWeapons.forEach(lw => {
-                        if (lw.isLeader && lw.attachTarget === w.unitName) {
+                        // link leaders using attachTargetId
+                        if (lw.isLeader && lw.attachTargetId === w.unitId) {
                             group.push(lw);
                             leaderNames.push(lw.unitName);
-                            processedNames.add(lw.unitName);
+                            processedIds.add(lw.unitId);
                         }
                     });
 
@@ -1215,7 +1216,7 @@ if (combiButton) {
             });
 
             activeCombiWeapons.forEach(w => {
-                if (w.isLeader && !processedNames.has(w.unitName)) {
+                if (w.isLeader && !processedIds.has(w.unitId)) {
                     attackGroups.push({ groupName: w.unitName + " (Solo)", weapons: [w] });
                 }
             });

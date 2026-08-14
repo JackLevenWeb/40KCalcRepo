@@ -326,6 +326,7 @@ export function syncAppUI() {
     });
 }
 
+
 // rebuild modules from imported json state
 export function buildRosterFromJSON(containerElement, jsonData, clearRoster = true) {
     if (clearRoster) {
@@ -334,8 +335,12 @@ export function buildRosterFromJSON(containerElement, jsonData, clearRoster = tr
 
     jsonData.forEach(unitData => {
         addAttackerModule(containerElement);
-
         const newModule = containerElement.lastElementChild;
+
+        // restore the saved unique id on from auto save
+        if (unitData.unitId) {
+            newModule.setAttribute('data-unit-id', unitData.unitId);
+        }
 
         newModule.querySelector(".in-unit-name").value = unitData.unitName || "Attacker Unit";
         newModule.querySelector(".in-attacks").value = unitData.attack || "1";
@@ -364,10 +369,11 @@ export function buildRosterFromJSON(containerElement, jsonData, clearRoster = tr
         if (unitData.isLeader) {
             newModule.querySelector('.is-leader').checked = true;
 
-            if (unitData.attachTarget) {
+
+            if (unitData.attachTargetId) {
                 const attachSelect = newModule.querySelector('.attach-to');
-                attachSelect.innerHTML = `<option value="${unitData.attachTarget}">${unitData.attachTarget}</option>`;
-                attachSelect.value = unitData.attachTarget;
+                attachSelect.innerHTML = `<option value="${unitData.attachTargetId}">Loading...</option>`;
+                attachSelect.value = unitData.attachTargetId;
             }
 
             if (unitData.grantedKeyword) {
@@ -603,18 +609,18 @@ export function renderCombiMirror(weaponsArray, targetUnit) {
     `;
 
     const groups = [];
-    const processed = new Set();
+    const processedIds = new Set();
 
     weaponsArray.forEach(w => {
         if (!w.isLeader) {
-            const leaders = weaponsArray.filter(lw => lw.isLeader && lw.attachTarget === w.unitName);
-            leaders.forEach(l => processed.add(l.unitName));
+            const leaders = weaponsArray.filter(lw => lw.isLeader && lw.attachTargetId === w.unitId);
+            leaders.forEach(l => processedIds.add(l.unitId));
             groups.push({ base: w, leaders: leaders });
         }
     });
 
     weaponsArray.forEach(w => {
-        if (w.isLeader && !processed.has(w.unitName)) {
+        if (w.isLeader && !processedIds.has(w.unitId)) {
             groups.push({ base: null, leaders: [w] });
         }
     });
