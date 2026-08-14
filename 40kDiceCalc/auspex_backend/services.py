@@ -2,16 +2,15 @@
 import pyodbc
 import json
 
-#  defensive conversion helpers 
+#  defensive conversion helpers (added minimal methods of cleaning or totally uncleaned data to simulate messy data imports into cloud)
 def safe_str(val, max_len=50, default="Unknown"):
     if val is None or str(val).strip() == "":
         res = default
     else:
         raw_str = str(val).strip()
-        # encode to ascii, ignoring unknown characters, then decode back to a string
-        clean_str = raw_str.encode('ascii', 'ignore').decode('ascii')
-        res = clean_str if clean_str != "" else default
+        res = raw_str if raw_str != "" else default
     return res[:max_len]
+
 
 #  main pipeline service 
 def process_telemetry_payload(conn_string, payload):
@@ -52,6 +51,8 @@ def process_telemetry_payload(conn_string, payload):
 
 
 #move to azure comp approach - keeping previous code to reference for later steps >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+#previoulsy created bronze as backup of raw data and immediately acted on raw payload to create silver
+#this work has now been moved to azure db engine
 # import pyodbc
 # import uuid
 # import json
