@@ -3,22 +3,21 @@ create table [dbo].[silver_attackers]
 (
     [attackerid] int identity(1,1) primary key,
     [runid] uniqueidentifier,
+    [unit_id] varchar(50),
     [attackername] varchar(100),
     [attackerfaction] varchar(50),
     [models] int,
     [attacks] varchar(50),
 
-    -- base stats
     [bs_ws] varchar(10),
     [strength] int,
     [ap] int,
     [damage] varchar(50),
     [unit_count] int,
     [is_leader] bit,
-    [attach_target] varchar(100),
+    [attach_target_id] varchar(50),
     [granted_keyword] varchar(50),
 
-    -- modifiers and rules
     [mod_lethal] bit,
     [mod_devastating] bit,
     [mod_torrent] bit,

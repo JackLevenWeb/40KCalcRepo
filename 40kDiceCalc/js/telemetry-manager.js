@@ -3,7 +3,7 @@ async function buildAndSendPayLoad(data) {
     const timeStamp = new Date().toISOString();
     const concurrency = navigator.hardwareConcurrency || 1;
 
-    // --- build payload ---
+    //  build payload 
     const finalPayload = {
         session_data: {
             run_id: runId,
@@ -31,7 +31,9 @@ async function buildAndSendPayLoad(data) {
                 def_cover: data.target.modifiers?.cover || false,
                 def_plus_one_save: data.target.modifiers?.plusOneSave || false
             },
+            // map attacker units for payload
             attacker_units: data.attackers.map(attacker => ({
+                unit_id: attacker.unitId,
                 name: attacker.unitName,
                 faction: attacker.faction,
                 models: attacker.modelCount,
@@ -42,7 +44,7 @@ async function buildAndSendPayLoad(data) {
                 damage: attacker.damage,
                 unit_count: attacker.unitCount,
                 is_leader: attacker.isLeader,
-                attach_target: attacker.attachTarget,
+                attach_target_id: attacker.attachTargetId,
                 granted_keyword: attacker.grantedKeyword,
                 modifiers: {
                     lethal: attacker.modifiers.lethal,
@@ -88,7 +90,7 @@ async function buildAndSendPayLoad(data) {
         }
     };
 
-    // --- execute transmission ---
+    //  execute transmission 
     try {
         const response = await fetch(azureEndpoint, {
             method: "POST",

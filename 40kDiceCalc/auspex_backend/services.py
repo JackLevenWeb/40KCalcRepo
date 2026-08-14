@@ -1,7 +1,7 @@
 import pyodbc
 import uuid
 
-# --- defensive conversion helpers ---
+#  defensive conversion helpers 
 
 def safe_uuid(val):
     try:
@@ -37,7 +37,7 @@ def safe_bool(val):
         return 1
     return 0
 
-# --- main pipeline service ---
+#  main pipeline service 
 
 def process_telemetry_payload(conn_string, payload):
     conn = None
@@ -54,7 +54,7 @@ def process_telemetry_payload(conn_string, payload):
         aggregates = payload.get("phase_aggregates", {})
         raw_data = payload.get("raw_data", {})
         
-        # --- parse silver_simulations data ---
+        #  parse silver_simulations data 
         run_id = safe_uuid(session.get("run_id"))
         
         cursor.execute("""
@@ -102,22 +102,24 @@ def process_telemetry_payload(conn_string, payload):
             safe_float(aggregates.get("final_health"))
         )
         
-        # --- parse silver_attackers data ---
+        # parse silver_attackers data
+        # parse silver_attackers data
         attackers = params.get("attacker_units", [])
         for att in attackers:
             mods = att.get("modifiers", {})
             
             cursor.execute("""
                 INSERT INTO silver_attackers (
-                    runid, attackername, attackerfaction, models, attacks,
-                    bs_ws, strength, ap, damage, unit_count, is_leader, attach_target, granted_keyword,
+                    runid, unit_id, attackername, attackerfaction, models, attacks,
+                    bs_ws, strength, ap, damage, unit_count, is_leader, attach_target_id, granted_keyword,
                     mod_lethal, mod_devastating, mod_torrent, mod_twin_linked, mod_blast, mod_cleave, mod_lance,
                     mod_sustained, mod_melta, mod_rapid_fire, mod_anti, mod_hit_mod, mod_wound_mod,
                     mod_crit_hit_threshold, mod_crit_wound_threshold, mod_reroll_hits, mod_reroll_wounds, mod_fish_for_crits
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, 
                 run_id, 
+                safe_str(att.get("unit_id"), 50, ""),
                 safe_str(att.get("name"), 100, "Attacker Unit"), 
                 safe_str(att.get("faction"), 50, "Unknown"), 
                 safe_int(att.get("models"), 1), 
@@ -128,7 +130,7 @@ def process_telemetry_payload(conn_string, payload):
                 safe_str(att.get("damage"), 50, "1"),
                 safe_int(att.get("unit_count"), 1),
                 safe_bool(att.get("is_leader")),
-                safe_str(att.get("attach_target"), 100, ""),
+                safe_str(att.get("attach_target_id"), 50, ""),
                 safe_str(att.get("granted_keyword"), 50, "none"),
                 safe_bool(mods.get("lethal")),
                 safe_bool(mods.get("devastating")),
@@ -150,7 +152,7 @@ def process_telemetry_payload(conn_string, payload):
                 safe_bool(mods.get("fish_for_crits"))
             )
             
-        # --- parse silver_distributions data ---
+        #parse silver_distributions data 
         def insert_distributions(category_name, dist_dict):
             if not isinstance(dist_dict, dict):
                 return
