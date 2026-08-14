@@ -29,7 +29,9 @@ def safe_str(val, max_len=50, default="Unknown"):
     if val is None or str(val).strip() == "":
         res = default
     else:
-        res = str(val).strip()
+        raw_str = str(val).strip()
+        clean_str = raw_str.encode('ascii', 'ignore').decode('ascii')
+        res = clean_str if clean_str != "" else default
     return res[:max_len]
 
 def safe_bool(val):
@@ -102,7 +104,7 @@ def process_telemetry_payload(conn_string, payload):
             safe_float(aggregates.get("final_health"))
         )
         
-        # parse silver_attackers data
+     
         # parse silver_attackers data
         attackers = params.get("attacker_units", [])
         for att in attackers:

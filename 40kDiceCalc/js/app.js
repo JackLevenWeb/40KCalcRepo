@@ -17,9 +17,9 @@ import { initializeTelemetry, startTelemetryTimer, dispatchTelemetryEvent, gener
 
 // Placeholder Authentication State (To be replaced by IDaaS later)
 export const AuthState = {
-    userId: "guest_user_12345",
+    userId: "admin_dev_user_12345",
     authToken: null,
-    appVersion: "1.0.0-OpenHammer"
+    appVersion: "1.0.0"
 };
 
 const SIMULATION_ITERATIONS = 250000;
