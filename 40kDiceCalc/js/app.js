@@ -80,12 +80,13 @@ function createWeaponsArray(stripBadges = false) {
     const weaponsArray = [];
 
     modules.forEach(module => {
+
+        const unitId = module.getAttribute('data-unit-id');
+
         const rawUnitName = module.querySelector(".in-unit-name").value.trim();
         const unitName = rawUnitName.replace(/'/g, "`");
 
-        //grab the faction
         const faction = module.querySelector(".in-faction") ? module.querySelector(".in-faction").value : "Unknown";
-
         const attack = module.querySelector(".in-attacks").value.trim().toUpperCase() || "1";
         const damage = module.querySelector(".in-dam").value.trim().toUpperCase() || "1";
         const bsws = module.querySelector(".in-bsws").value.trim().toUpperCase();
@@ -95,7 +96,9 @@ function createWeaponsArray(stripBadges = false) {
         const unitCount = parseInt(module.querySelector(".in-units").value, 10);
 
         const isLeader = module.querySelector('.is-leader').checked;
-        const attachTarget = module.querySelector('.attach-to').value || null;
+
+        // --- extract the target id instead of the string name ---
+        const attachTargetId = module.querySelector('.attach-to').value || null;
 
         const grantedKeyword = stripBadges ? "none" : module.querySelector('.grant-keyword').value;
 
@@ -162,11 +165,13 @@ function createWeaponsArray(stripBadges = false) {
         };
 
         // Weapon from Weapon.js
+
         const newWeapon = new Weapon(unitName, attack, bsws, strength, ap, damage, modelCount, unitCount, modifiers);
 
+        newWeapon.unitId = unitId;
         newWeapon.faction = faction;
         newWeapon.isLeader = isLeader;
-        newWeapon.attachTarget = attachTarget;
+        newWeapon.attachTargetId = attachTargetId;
         newWeapon.grantedKeyword = grantedKeyword;
         newWeapon.includeInCombi = module.querySelector('.in-combi-roster') ? module.querySelector('.in-combi-roster').checked : false;
 

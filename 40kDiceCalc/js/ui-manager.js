@@ -46,8 +46,9 @@ export function switchDashboardView(activeTabId, activeViewId) {
 
 // inject html for a new attacker unit module
 export function addAttackerModule(containerElement) {
+    const unitId = crypto.randomUUID();
     const moduleHTML = `
-      <div class="attacker-module" style="background: var(--surface-color); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px;">
+      <div class="attacker-module" data-unit-id="${unitId}" style="background: var(--surface-color); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 15px;">
             
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                <div class="input-field" style="flex-grow: 1; margin-right: 15px;">
@@ -267,7 +268,12 @@ export function addBadgeToModule(moduleNode, modKey, isGranted) {
 // update dropdowns and leader assignments across modules
 export function syncAppUI() {
     const modules = document.querySelectorAll('.attacker-module');
-    const allNames = Array.from(modules).map(m => m.querySelector('.in-unit-name').value.trim());
+
+    //map both names and unique ids 
+    const allUnits = Array.from(modules).map(m => ({
+        id: m.getAttribute('data-unit-id'),
+        name: m.querySelector('.in-unit-name').value.trim()
+    }));
 
     modules.forEach(module => {
         module.querySelector('.in-units').disabled = false;
@@ -279,34 +285,35 @@ export function syncAppUI() {
 
         const select = module.querySelector('.attach-to');
         const currentSelection = select.value;
-        const myName = module.querySelector('.in-unit-name').value.trim();
+        const myId = module.getAttribute('data-unit-id');
 
-        select.innerHTML = '<option value="">-- Select Unit --</option>';
+        select.innerHTML = '<option value="">-- select unit --</option>';
 
-        allNames.forEach(name => {
-            if (name && name !== myName) {
+        // --- populate dropdown with names but use ids as values ---
+        allUnits.forEach(unit => {
+            if (unit.name && unit.id !== myId) {
                 const option = document.createElement('option');
-                option.value = name;
-                option.textContent = name;
+                option.value = unit.id;
+                option.textContent = unit.name;
                 select.appendChild(option);
             }
         });
 
-        if (allNames.includes(currentSelection)) select.value = currentSelection;
+        if (allUnits.some(u => u.id === currentSelection)) select.value = currentSelection;
     });
 
-    // attach leader logic and auto-grant keywords
+    // attach leader ids 
     modules.forEach(leaderModule => {
         const isLeader = leaderModule.querySelector('.is-leader').checked;
-        const targetName = leaderModule.querySelector('.attach-to').value;
+        const targetId = leaderModule.querySelector('.attach-to').value;
         const granted = leaderModule.querySelector('.grant-keyword').value;
         const leaderName = leaderModule.querySelector('.in-unit-name').value.trim();
 
-        if (isLeader && targetName) {
-            const targetModule = Array.from(modules).find(m => m.querySelector('.in-unit-name').value.trim() === targetName);
+        if (isLeader && targetId) {
+            const targetModule = Array.from(modules).find(m => m.getAttribute('data-unit-id') === targetId);
 
             if (targetModule) {
-                targetModule.querySelector('.attached-leaders-display').innerHTML += `Led by: ${leaderName}`;
+                targetModule.querySelector('.attached-leaders-display').innerHTML += `led by: ${leaderName}`;
                 targetModule.querySelector('.in-units').value = 1;
                 targetModule.querySelector('.in-units').disabled = true;
 
