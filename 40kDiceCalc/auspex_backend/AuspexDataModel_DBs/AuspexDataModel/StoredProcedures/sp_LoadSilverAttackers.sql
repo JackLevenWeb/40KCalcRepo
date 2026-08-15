@@ -3,6 +3,7 @@ as
 begin
   set nocount on;
 
+  -- 2. insert new attackers into silver_attackers
   insert into dbo.silver_attackers
     (
     runid, unit_id, attackername, attackerfaction, models, attacks,
@@ -15,7 +16,7 @@ begin
     SessionData.run_id,
     Attacker.unit_id,
 
-    -- cleaning
+    -- server side data cleaning: strip out the ? artifact from the ui arrow
     ltrim(rtrim(replace(Attacker.name, '?', ''))),
 
     Attacker.faction,
@@ -87,10 +88,9 @@ begin
         reroll_wounds varchar(20) '$.reroll_wounds',
         fish_for_crits bit '$.fish_for_crits'
     ) as Mods
-  where not exists (
-        select 1
-  from dbo.silver_attackers a
-  where a.runid = SessionData.run_id and a.unit_id = Attacker.unit_id
-    );
+    left join dbo.silver_attackers existing_a
+    on existing_a.runid = SessionData.run_id
+      and existing_a.unit_id = Attacker.unit_id
+  where existing_a.runid is null;
 
 end;
