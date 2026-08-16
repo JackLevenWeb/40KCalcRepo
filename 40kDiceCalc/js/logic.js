@@ -11,12 +11,13 @@ import { Dice } from './classes/Dice.js';
 export function runSimulation(iterationsTotal, weaponsArray, unit) {
     let sumTotalDamage = 0, sumModelsKilled = 0, sumWastedDamage = 0;
     const allTotalDamage = [], allModelsKilled = [], allWastedDamage = [];
-
+    let sumTotalAttacks = 0;
     // distributions for advanced graphs
     const hitDistribution = {};
     const woundDistribution = {};
     const saveDistribution = {};
 
+    let sumAttacks = 0;
     let sumHits = { rawSuccesses: 0, bonusHits: 0, autoWounds: 0 };
     let sumWounds = { rawSuccesses: 0, devWounds: 0, normalWounds: 0 };
     let sumSaves = { failedSavesCount: 0, passedSavesCount: 0 };
@@ -35,7 +36,7 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
 
         for (const weapon of weaponsArray) {
             const hurtSystem = runHurtSystem(weapon, unit, currentTargetHealth);
-
+            sumAttacks += hurtSystem.totalAttacks;
             runTotalDamage += hurtSystem.damage.totalDamage;
             runModelsKilled += hurtSystem.damage.modelsKilled;
             runWastedDamage += hurtSystem.damage.wastedDamage;
@@ -96,7 +97,7 @@ export function runSimulation(iterationsTotal, weaponsArray, unit) {
 
     return {
         SimulatedRuns: iterationsTotal,
-        totals: { sumHits, sumWounds, sumSaves },
+        totals: { sumAttacks, sumHits, sumWounds, sumSaves },
         hitDistribution,
         woundDistribution,
         saveDistribution,
@@ -170,6 +171,7 @@ export function runHurtSystem(weapon, unit, startingHealth) {
     // early return
     if (successfulHits === 0 && autoWounds === 0) {
         return {
+            totalAttacks: totalAttacks,
             hits: { rawSuccesses: 0, bonusHits: 0, autoWounds: 0 },
             wounds: { rawSuccesses: 0, devWounds: 0, normalWounds: 0 },
             saves: { failedSavesCount: 0 },
@@ -211,6 +213,7 @@ export function runHurtSystem(weapon, unit, startingHealth) {
     // early return
     if (normalWounds === 0 && devWounds === 0) {
         return {
+            totalAttacks: totalAttacks,
             hits: { rawSuccesses: hitData.successes, bonusHits: hitData.bonus, autoWounds: autoWounds },
             wounds: { rawSuccesses: 0, devWounds: 0, normalWounds: 0 },
             saves: { failedSavesCount: 0 },
@@ -239,6 +242,7 @@ export function runHurtSystem(weapon, unit, startingHealth) {
 
     if (totalDamageEvents === 0) {
         return {
+            totalAttacks: totalAttacks,
             hits: { rawSuccesses: hitData.successes, bonusHits: hitData.bonus, autoWounds: autoWounds },
             wounds: { rawSuccesses: woundData.successes, devWounds: devWounds, normalWounds: normalWounds },
             saves: { failedSavesCount: failedSavesCount },
@@ -251,6 +255,7 @@ export function runHurtSystem(weapon, unit, startingHealth) {
     const damageDone = modelsKill(totalDamageEvents, weapon, unit, startingHealth);
 
     return {
+        totalAttacks: totalAttacks,
         hits: {
             rawSuccesses: hitData.successes,
             bonusHits: hitData.bonus,

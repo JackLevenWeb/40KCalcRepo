@@ -11,7 +11,7 @@ begin
         targetname, targetfaction, targetwounds, targettoughness, targetsave,
         target_def_minus_hit, target_def_minus_wound, target_def_minus_wound_str,
         target_def_cover, target_def_plus_one_save,
-        hits_raw_successes, hits_bonus_hits, hits_auto_wounds,
+        attacks_rolled, hits_raw_successes, hits_bonus_hits, hits_auto_wounds,
         wounds_raw_successes, wounds_dev_wounds, wounds_normal_wounds,
         saves_failed_count, damage_total, damage_models_killed, damage_wasted, final_health
         )
@@ -35,6 +35,7 @@ begin
         TargetUnit.def_minus_wound_str,
         TargetUnit.def_cover,
         TargetUnit.def_plus_one_save,
+        Agg.attacks_rolled,
         Agg.hits_raw_successes,
         Agg.hits_bonus_hits,
         Agg.hits_auto_wounds,
@@ -75,6 +76,7 @@ begin
         def_plus_one_save bit '$.def_plus_one_save'
     ) as TargetUnit
     cross apply openjson(b.jsonpayload, '$.phase_aggregates') with (
+        attacks_rolled float '$.attacks_rolled',
         hits_raw_successes float '$.hits_raw_successes',
         hits_bonus_hits float '$.hits_bonus_hits',
         hits_auto_wounds float '$.hits_auto_wounds',

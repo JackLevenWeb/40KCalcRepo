@@ -23,7 +23,8 @@ begin
     cross apply openjson(Dist.[value]) as DistDetails
         left join dbo.silver_distributions existing_d
         on existing_d.runid = SessionData.run_id
-            and existing_d.category = replace(Dist.[key], '_distribution', '')
+            -- apply the database default collation to the dynamic json key so the text rules match
+            and existing_d.category = replace(Dist.[key], '_distribution', '') collate database_default
             and existing_d.rollvalue = cast(DistDetails.[key] as int)
     where existing_d.runid is null;
 

@@ -41,6 +41,8 @@ async function buildAndSendPayLoad(data) {
     const timeStamp = new Date().toISOString();
     const concurrency = navigator.hardwareConcurrency || 1;
 
+
+
     // build payload 
     const finalPayload = {
         session_data: {
@@ -107,6 +109,7 @@ async function buildAndSendPayLoad(data) {
             }))
         },
         phase_aggregates: {
+            attacks_rolled: data.results.totals?.sumAttacks || 0,
             hits_raw_successes: data.results.totals?.sumHits?.rawSuccesses || 0,
             hits_bonus_hits: data.results.totals?.sumHits?.bonusHits || 0,
             hits_auto_wounds: data.results.totals?.sumHits?.autoWounds || 0,

@@ -5,9 +5,8 @@ create table [dbo].[silver_distributions]
     [runid] uniqueidentifier not null,
     [category] varchar(50) not null,
     [rollvalue] int not null,
-    [occurrencecount] int not null,
-    [rawdicethrown] int null,
+    [occurrencecount] int not null
 
-    -- llink to main simulation table
-    constraint fk_silverdist_runid foreign key ([runid]) references [dbo].[silver_simulations]([runid])
+        -- llink to main simulation table
+        constraint fk_silverdist_runid foreign key ([runid]) references [dbo].[silver_simulations]([runid])
 );

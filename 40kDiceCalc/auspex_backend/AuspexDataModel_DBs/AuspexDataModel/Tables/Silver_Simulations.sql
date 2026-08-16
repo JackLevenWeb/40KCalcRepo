@@ -24,6 +24,7 @@ create table [dbo].[silver_simulations]
     [target_def_plus_one_save] bit,
 
     -- phase aggregates
+    [attacks_rolled] float null,
     [hits_raw_successes] float,
     [hits_bonus_hits] float,
     [hits_auto_wounds] float,
