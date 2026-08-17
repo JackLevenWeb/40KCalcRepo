@@ -1,6 +1,15 @@
 {
   "editor.formatOnSave": true,
+  
+  // SQL Formatting Configuration - Poor Man's T-SQL Formatter
   "[sql]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  }
+    "editor.defaultFormatter": "taoklerks.poor-mans-t-sql-formatter-vscode",
+    "editor.formatOnSave": true
+  },
+  
+  // Poor Man's T-SQL Formatter Configuration
+  "pmt.keywordCase": "uppercase",
+  "pmt.dataTypeCase": "lowercase",
+  "pmt.logicalOperatorNewline": true,
+  "pmt.indentation": 4
 }
