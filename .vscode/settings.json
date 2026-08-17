@@ -1,0 +1,6 @@
+{
+  "editor.formatOnSave": true,
+  "[sql]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}
