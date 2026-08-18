@@ -1,9 +1,9 @@
-CREATE PROCEDURE dbo.sp_LoadGoldFactSimRuns
+CREATE PROCEDURE [dbo].[sp_LoadGoldFactSimRuns]
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    INSERT INTO dbo.gold_fact_sim_runs (
+    INSERT INTO [dbo].[gold_fact_sim_runs] (
         runid, 
         audit_sk, 
         sim_config_sk, 
@@ -40,10 +40,10 @@ BEGIN
         ss.damage_models_killed,
         ss.damage_wasted, 
         ss.final_health
-    FROM dbo.silver_simulations AS ss
+    FROM [dbo].[silver_simulations] AS ss
     
    
-    INNER JOIN dbo.gold_dim_target_base tb
+    INNER JOIN [dbo].[gold_dim_target_base] tb
         ON ss.targetname = tb.targetname
        AND ss.targetfaction = tb.targetfaction
        AND ss.targetwounds = tb.targetwounds
@@ -51,11 +51,11 @@ BEGIN
        AND ss.targetsave = tb.targetsave
        
 
-    INNER JOIN dbo.gold_dim_audit AS aa
+    INNER JOIN [dbo].[gold_dim_audit] AS aa
         ON ss.runid = aa.runid
         
   
-    INNER JOIN dbo.gold_dim_target_modifiers tm
+    INNER JOIN [dbo].[gold_dim_target_modifiers] tm
         ON ss.target_def_minus_hit = tm.target_def_minus_hit
        AND ss.target_def_minus_wound = tm.target_def_minus_wound
        AND ss.target_def_minus_wound_str = tm.target_def_minus_wound_str
@@ -63,14 +63,14 @@ BEGIN
        AND ss.target_def_plus_one_save = tm.target_def_plus_one_save
        
   
-    INNER JOIN dbo.gold_dim_sim_config sc
+    INNER JOIN [dbo].[gold_dim_sim_config] sc
         ON ss.simulationtype = sc.simulationtype
        AND ss.totaliterations = sc.totaliterations
 
     -- prevent duplicate inserts
     WHERE NOT EXISTS (
         SELECT 1 
-        FROM dbo.gold_fact_sim_runs AS f
+        FROM [dbo].[gold_fact_sim_runs] AS f
         WHERE f.runid = ss.runid
     );
 

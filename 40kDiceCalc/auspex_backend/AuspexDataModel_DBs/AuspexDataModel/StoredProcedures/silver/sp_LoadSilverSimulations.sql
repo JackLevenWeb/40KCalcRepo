@@ -1,12 +1,12 @@
-create procedure [dbo].[sp_LoadSilverSimulations]
-as
-begin
-    set nocount on;
+CREATE PROCEDURE [dbo].[sp_LoadSilverSimulations]
+AS
+BEGIN
+    SET NOCOUNT ON;
 
     -- 1. insert new simulations into silver_simulations
-    insert into dbo.silver_simulations
+    INSERT INTO [dbo].[silver_simulations]
         (
-        runid, batchid, userid, timestamp, appversion,
+        runid, batchid, userid, [timestamp], appversion,
         executiontimems, deviceconcurrency, simulationtype, totaliterations,
         targetname, targetfaction, targetwounds, targettoughness, targetsave,
         target_def_minus_hit, target_def_minus_wound, target_def_minus_wound_str,
@@ -15,7 +15,7 @@ begin
         wounds_raw_successes, wounds_dev_wounds, wounds_normal_wounds,
         saves_failed_count, damage_total, damage_models_killed, damage_wasted, final_health
         )
-    select
+    SELECT
         SessionData.run_id,
         SessionData.batch_id,
         SessionData.user_id,
@@ -25,7 +25,7 @@ begin
         Perf.device_concurrency,
         Params.simulation_type,
         Params.total_iterations,
-        ltrim(rtrim(replace(TargetUnit.name, '?', ''))),
+        LTRIM(RTRIM(REPLACE(TargetUnit.name, '?', ''))),
         TargetUnit.faction,
         TargetUnit.wounds,
         TargetUnit.toughness,
@@ -47,23 +47,23 @@ begin
         Agg.damage_models_killed,
         Agg.damage_wasted,
         Agg.final_health
-    from dbo.bronze_rawtelemetry b
-    cross apply openjson(b.jsonpayload, '$.session_data') with (
+    FROM [dbo].[bronze_rawtelemetry] b
+    CROSS APPLY OPENJSON(b.jsonpayload, '$.session_data') WITH (
         run_id uniqueidentifier '$.run_id',
         batch_id varchar(50) '$.batch_id',
         user_id varchar(100) '$.user_id',
         timeStamp varchar(50) '$.timeStamp',
         app_version varchar(50) '$.app_version'
-    ) as SessionData
-    cross apply openjson(b.jsonpayload, '$.performance_metrics') with (
+    ) AS SessionData
+    CROSS APPLY OPENJSON(b.jsonpayload, '$.performance_metrics') WITH (
         execution_time_ms float '$.execution_time_ms',
         device_concurrency int '$.device_concurrency'
-    ) as Perf
-    cross apply openjson(b.jsonpayload, '$.simulation_parameters') with (
+    ) AS Perf
+    CROSS APPLY OPENJSON(b.jsonpayload, '$.simulation_parameters') WITH (
         simulation_type varchar(50) '$.simulation_type',
         total_iterations int '$.total_iterations'
-    ) as Params
-    cross apply openjson(b.jsonpayload, '$.simulation_parameters.target_unit') with (
+    ) AS Params
+    CROSS APPLY OPENJSON(b.jsonpayload, '$.simulation_parameters.target_unit') WITH (
         name varchar(100) '$.name',
         faction varchar(50) '$.faction',
         wounds int '$.wounds',
@@ -74,8 +74,8 @@ begin
         def_minus_wound_str bit '$.def_minus_wound_str',
         def_cover bit '$.def_cover',
         def_plus_one_save bit '$.def_plus_one_save'
-    ) as TargetUnit
-    cross apply openjson(b.jsonpayload, '$.phase_aggregates') with (
+    ) AS TargetUnit
+    CROSS APPLY OPENJSON(b.jsonpayload, '$.phase_aggregates') WITH (
         attacks_rolled float '$.attacks_rolled',
         hits_raw_successes float '$.hits_raw_successes',
         hits_bonus_hits float '$.hits_bonus_hits',
@@ -88,9 +88,9 @@ begin
         damage_models_killed float '$.damage_models_killed',
         damage_wasted float '$.damage_wasted',
         final_health float '$.final_health'
-    ) as Agg
-        left join dbo.silver_simulations existing_s
-        on existing_s.runid = SessionData.run_id
-    where existing_s.runid is null;
+    ) AS Agg
+        LEFT JOIN [dbo].[silver_simulations] existing_s
+        ON existing_s.runid = SessionData.run_id
+    WHERE existing_s.runid IS NULL;
 
-end;
+END;

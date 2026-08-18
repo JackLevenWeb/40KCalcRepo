@@ -1,12 +1,12 @@
-create table [dbo].[gold_dim_audit]
+CREATE TABLE [dbo].[gold_dim_audit]
 (
-    [audit_sk] int identity(1,1) primary key,
-    [runid] uniqueidentifier not null,
-    [batchid] varchar(50) not null,
-    [userid] varchar(100) not null,
-    [timestamp] varchar(50) not null,
-    [appversion] varchar(50) not null,
-    [executiontimems] float not null,
-    [deviceconcurrency] int not null,
-    [simulationtype] varchar(50) not null
+    [audit_sk] int IDENTITY(1,1) PRIMARY KEY,
+    [runid] uniqueidentifier NOT NULL,
+    [batchid] varchar(50) NOT NULL,
+    [userid] varchar(100) NOT NULL,
+    [timestamp] varchar(50) NOT NULL,
+    [appversion] varchar(50) NOT NULL,
+    [executiontimems] float NOT NULL,
+    [deviceconcurrency] int NOT NULL,
+    [simulationtype] varchar(50) NOT NULL
 );

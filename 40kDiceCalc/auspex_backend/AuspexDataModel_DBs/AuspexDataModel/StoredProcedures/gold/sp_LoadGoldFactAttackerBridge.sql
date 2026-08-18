@@ -1,9 +1,9 @@
-CREATE PROCEDURE dbo.sp_LoadGoldFactAttackerBridge
+CREATE PROCEDURE [dbo].[sp_LoadGoldFactAttackerBridge]
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    INSERT INTO dbo.gold_fact_attacker_bridge (
+    INSERT INTO [dbo].[gold_fact_attacker_bridge] (
         runid,
         attacker_sk,
         attacker_status_sk,
@@ -14,10 +14,10 @@ BEGIN
         ap.attacker_sk,
         st.attacker_status_sk,
         m.modifier_sk
-    FROM dbo.silver_attackers AS sa
+    FROM [dbo].[silver_attackers] AS sa
     
    
-    INNER JOIN dbo.gold_dim_attacker_profile ap
+    INNER JOIN [dbo].[gold_dim_attacker_profile] ap
         ON sa.attackername = ap.unitname
        AND sa.attackerfaction = ap.faction
        AND sa.models = ap.models
@@ -29,12 +29,12 @@ BEGIN
        AND sa.unit_count = ap.unit_count
        
     
-    INNER JOIN dbo.gold_dim_attacker_status st
+    INNER JOIN [dbo].[gold_dim_attacker_status] st
         ON sa.is_leader = st.is_leader
        AND ISNULL(sa.granted_keyword, '') = ISNULL(st.granted_keyword, '')
        
    
-    INNER JOIN dbo.gold_dim_modifiers m
+    INNER JOIN [dbo].[gold_dim_modifiers] m
         ON sa.mod_lethal = m.mod_lethal
        AND sa.mod_devastating = m.mod_devastating
        AND sa.mod_torrent = m.mod_torrent
@@ -57,7 +57,7 @@ BEGIN
     -- pevent inserting the same attacker for the same run
     WHERE NOT EXISTS (
         SELECT 1 
-        FROM dbo.gold_fact_attacker_bridge AS b
+        FROM [dbo].[gold_fact_attacker_bridge] AS b
         WHERE b.runid = sa.runid
           AND b.attacker_sk = ap.attacker_sk
           AND b.attacker_status_sk = st.attacker_status_sk

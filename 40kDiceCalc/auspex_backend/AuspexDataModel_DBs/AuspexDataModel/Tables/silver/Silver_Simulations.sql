@@ -1,8 +1,8 @@
 -- silver_simulations schema
-create table [dbo].[silver_simulations]
+CREATE TABLE [dbo].[silver_simulations]
 (
-    [runid] uniqueidentifier primary key,
-    [batchid] varchar(50) not null,
+    [runid] uniqueidentifier PRIMARY KEY,
+    [batchid] varchar(50) NOT NULL,
     [userid] varchar(100),
     [timestamp] varchar(50),
     [appversion] varchar(50),
@@ -24,7 +24,7 @@ create table [dbo].[silver_simulations]
     [target_def_plus_one_save] bit,
 
     -- phase aggregates
-    [attacks_rolled] float null,
+    [attacks_rolled] float NULL,
     [hits_raw_successes] float,
     [hits_bonus_hits] float,
     [hits_auto_wounds] float,

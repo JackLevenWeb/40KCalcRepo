@@ -1,31 +1,31 @@
-create table [dbo].[gold_fact_sim_runs]
+CREATE TABLE [dbo].[gold_fact_sim_runs]
 (
-    [fact_sk] int identity(1,1) primary key,
-    [runid] uniqueidentifier not null,
+    [fact_sk] int IDENTITY(1,1) PRIMARY KEY,
+    [runid] uniqueidentifier NOT NULL,
 
     -- The Dimension Links (Foreign Keys)
-    [audit_sk] int not null,
-    [sim_config_sk] int not null,
-    [target_base_sk] int not null,
-    [target_modifier_sk] int not null,
+    [audit_sk] int NOT NULL,
+    [sim_config_sk] int NOT NULL,
+    [target_base_sk] int NOT NULL,
+    [target_modifier_sk] int NOT NULL,
 
     -- Phase Aggregates (The Math)
-    [attacks_rolled] float null,
-    [hits_raw_successes] float null,
-    [hits_bonus_hits] float null,
-    [hits_auto_wounds] float null,
-    [wounds_raw_successes] float null,
-    [wounds_dev_wounds] float null,
-    [wounds_normal_wounds] float null,
-    [saves_failed_count] float null,
-    [damage_total] float null,
-    [damage_models_killed] float null,
-    [damage_wasted] float null,
-    [final_health] float null,
+    [attacks_rolled] float NULL,
+    [hits_raw_successes] float NULL,
+    [hits_bonus_hits] float NULL,
+    [hits_auto_wounds] float NULL,
+    [wounds_raw_successes] float NULL,
+    [wounds_dev_wounds] float NULL,
+    [wounds_normal_wounds] float NULL,
+    [saves_failed_count] float NULL,
+    [damage_total] float NULL,
+    [damage_models_killed] float NULL,
+    [damage_wasted] float NULL,
+    [final_health] float NULL,
 
     -- Enforcing Referential Integrity
-    constraint fk_fact_audit foreign key ([audit_sk]) references [dbo].[gold_dim_audit]([audit_sk]),
-    constraint fk_fact_sim_config foreign key ([sim_config_sk]) references [dbo].[gold_dim_sim_config]([sim_config_sk]),
-    constraint fk_fact_target_base foreign key ([target_base_sk]) references [dbo].[gold_dim_target_base]([target_base_sk]),
-    constraint fk_fact_target_mod foreign key ([target_modifier_sk]) references [dbo].[gold_dim_target_modifiers]([target_modifier_sk])
+    CONSTRAINT fk_fact_audit FOREIGN KEY ([audit_sk]) REFERENCES [dbo].[gold_dim_audit]([audit_sk]),
+    CONSTRAINT fk_fact_sim_config FOREIGN KEY ([sim_config_sk]) REFERENCES [dbo].[gold_dim_sim_config]([sim_config_sk]),
+    CONSTRAINT fk_fact_target_base FOREIGN KEY ([target_base_sk]) REFERENCES [dbo].[gold_dim_target_base]([target_base_sk]),
+    CONSTRAINT fk_fact_target_mod FOREIGN KEY ([target_modifier_sk]) REFERENCES [dbo].[gold_dim_target_modifiers]([target_modifier_sk])
 );

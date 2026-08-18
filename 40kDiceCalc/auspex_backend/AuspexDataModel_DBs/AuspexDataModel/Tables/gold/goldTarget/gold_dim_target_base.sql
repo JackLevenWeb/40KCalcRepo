@@ -1,9 +1,9 @@
-create table [dbo].[gold_dim_target_base]
+CREATE TABLE [dbo].[gold_dim_target_base]
 (
-    [target_base_sk] int identity(1,1) primary key,
-    [targetname] varchar(100) not null,
-    [targetfaction] varchar(50) not null,
-    [targetwounds] int not null,
-    [targettoughness] int not null,
-    [targetsave] int not null
+    [target_base_sk] int IDENTITY(1,1) PRIMARY KEY,
+    [targetname] varchar(100) NOT NULL,
+    [targetfaction] varchar(50) NOT NULL,
+    [targetwounds] int NOT NULL,
+    [targettoughness] int NOT NULL,
+    [targetsave] int NOT NULL
 );

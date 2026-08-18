@@ -1,9 +1,9 @@
-CREATE PROCEDURE dbo.sp_LoadGoldDimAudit
+CREATE PROCEDURE [dbo].[sp_LoadGoldDimAudit]
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    INSERT INTO dbo.gold_dim_audit (
+    INSERT INTO [dbo].[gold_dim_audit] (
         runid,
         batchid,
         userid,
@@ -17,15 +17,15 @@ BEGIN
         ss.runid,
         ss.batchid,
         ss.userid,
-        ss.timestamp,
+        ss.[timestamp],
         ss.appversion,
         ss.executiontimems,
         ss.deviceconcurrency,
         ss.simulationtype
-    FROM dbo.silver_simulations AS ss
+    FROM [dbo].[silver_simulations] AS ss
     WHERE NOT EXISTS (
         SELECT 1
-        FROM dbo.gold_dim_audit AS a
+        FROM [dbo].[gold_dim_audit] AS a
         WHERE a.runid = ss.runid
     );
 END;

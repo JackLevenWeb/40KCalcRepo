@@ -1,10 +1,10 @@
-create procedure [dbo].[sp_LoadSilverAttackers]
-as
-begin
-  set nocount on;
+CREATE PROCEDURE [dbo].[sp_LoadSilverAttackers]
+AS
+BEGIN
+  SET NOCOUNT ON;
 
   -- 2. insert new attackers into silver_attackers
-  insert into dbo.silver_attackers
+  INSERT INTO [dbo].[silver_attackers]
     (
     runid, unit_id, attackername, attackerfaction, models, attacks,
     bs_ws, strength, ap, damage, unit_count, is_leader, attach_target_id, granted_keyword,
@@ -12,12 +12,12 @@ begin
     mod_sustained, mod_melta, mod_rapid_fire, mod_anti, mod_hit_mod, mod_wound_mod,
     mod_crit_hit_threshold, mod_crit_wound_threshold, mod_reroll_hits, mod_reroll_wounds, mod_fish_for_crits
     )
-  select
+  SELECT
     SessionData.run_id,
     Attacker.unit_id,
 
     -- server side data cleaning: strip out the ? artifact from the ui arrow
-    ltrim(rtrim(replace(Attacker.name, '?', ''))),
+    LTRIM(RTRIM(REPLACE(Attacker.name, '?', ''))),
 
     Attacker.faction,
     Attacker.models,
@@ -48,11 +48,11 @@ begin
     Mods.reroll_hits,
     Mods.reroll_wounds,
     Mods.fish_for_crits
-  from dbo.bronze_rawtelemetry b
-    cross apply openjson(b.jsonpayload, '$.session_data') with (
+  FROM [dbo].[bronze_rawtelemetry] b
+    CROSS APPLY OPENJSON(b.jsonpayload, '$.session_data') WITH (
         run_id uniqueidentifier '$.run_id'
-    ) as SessionData
-    cross apply openjson(b.jsonpayload, '$.simulation_parameters.attacker_units') with (
+    ) AS SessionData
+    CROSS APPLY OPENJSON(b.jsonpayload, '$.simulation_parameters.attacker_units') WITH (
         unit_id varchar(50) '$.unit_id',
         name varchar(100) '$.name',
         faction varchar(50) '$.faction',
@@ -66,9 +66,9 @@ begin
         is_leader bit '$.is_leader',
         attach_target_id varchar(50) '$.attach_target_id',
         granted_keyword varchar(50) '$.granted_keyword',
-        modifiers nvarchar(max) '$.modifiers' as json
-    ) as Attacker
-    cross apply openjson(Attacker.modifiers) with (
+        modifiers nvarchar(max) '$.modifiers' AS JSON
+    ) AS Attacker
+    CROSS APPLY OPENJSON(Attacker.modifiers) WITH (
         lethal bit '$.lethal',
         devastating bit '$.devastating',
         torrent bit '$.torrent',
@@ -87,10 +87,10 @@ begin
         reroll_hits varchar(20) '$.reroll_hits',
         reroll_wounds varchar(20) '$.reroll_wounds',
         fish_for_crits bit '$.fish_for_crits'
-    ) as Mods
-    left join dbo.silver_attackers existing_a
-    on existing_a.runid = SessionData.run_id
-      and existing_a.unit_id = Attacker.unit_id
-  where existing_a.runid is null;
+    ) AS Mods
+    LEFT JOIN [dbo].[silver_attackers] existing_a
+    ON existing_a.runid = SessionData.run_id
+      AND existing_a.unit_id = Attacker.unit_id
+  WHERE existing_a.runid IS NULL;
 
-end;
+END;
