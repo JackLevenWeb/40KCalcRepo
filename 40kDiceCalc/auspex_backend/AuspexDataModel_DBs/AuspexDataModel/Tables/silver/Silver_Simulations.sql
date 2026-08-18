@@ -1,4 +1,4 @@
--- silver_simulations schema
+-- silver_simulations [SCHEMA]
 CREATE TABLE [dbo].[silver_simulations]
 (
     [runid] uniqueidentifier PRIMARY KEY,

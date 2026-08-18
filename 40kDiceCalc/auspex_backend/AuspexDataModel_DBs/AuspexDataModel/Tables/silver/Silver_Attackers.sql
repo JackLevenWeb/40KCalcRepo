@@ -1,4 +1,4 @@
--- --- silver_attackers schema ---
+-- --- silver_attackers [SCHEMA] ---
 CREATE TABLE [dbo].[silver_attackers] (
     [attackerid] int IDENTITY(1, 1) PRIMARY KEY,
     [runid] uniqueidentifier,
@@ -33,6 +33,6 @@ CREATE TABLE [dbo].[silver_attackers] (
     [mod_reroll_hits] varchar(20),
     [mod_reroll_wounds] varchar(20),
     [mod_fish_for_crits] bit,
-    -- foreign key relationship
+    -- FOREIGN KEY relationship
     CONSTRAINT fk_silverattackers_runid FOREIGN KEY ([runid]) REFERENCES [dbo].[silver_simulations]([runid])
 )

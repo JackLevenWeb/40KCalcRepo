@@ -1,15 +1,12 @@
 {
   "editor.formatOnSave": true,
-  
-  // SQL Formatting Configuration - Poor Man's T-SQL Formatter
+  "files.associations": {
+    "*.sql": "sql"
+  },
   "[sql]": {
-    "editor.defaultFormatter": "taoklerks.poor-mans-t-sql-formatter-vscode",
+    "editor.defaultFormatter": "adpyke.vscode-sql-formatter",
     "editor.formatOnSave": true
   },
-  
-  // Poor Man's T-SQL Formatter Configuration
-  "pmt.keywordCase": "uppercase",
-  "pmt.dataTypeCase": "lowercase",
-  "pmt.logicalOperatorNewline": true,
-  "pmt.indentation": 4
+  "sql-formatter.dialect": "sql",
+  "sql-formatter.uppercase": true
 }

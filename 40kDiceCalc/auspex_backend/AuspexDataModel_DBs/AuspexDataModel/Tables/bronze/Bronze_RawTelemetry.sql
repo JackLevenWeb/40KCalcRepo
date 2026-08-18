@@ -1,4 +1,4 @@
--- bronze layer table for raw json payloads
+-- bronze layer TABLE for raw json payloads
 CREATE TABLE [dbo].[bronze_rawtelemetry] (
     [telemetryid] uniqueidentifier DEFAULT NEWSEQUENTIALID() PRIMARY KEY,
     [batchid] varchar(50) NOT NULL,
