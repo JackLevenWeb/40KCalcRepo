@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="style.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+    <!-- Microsoft Authentication Library (MSAL v2) -->
+    <script type="text/javascript" src="https://alcdn.msauth.net/browser/2.30.0/js/msal-browser.min.js"></script>
   </head>
   <body>
     <main class="calculator-container">
@@ -14,6 +16,62 @@
         The Munitorum Auspex
         <button class="tutorial-btn" data-tutorial="main_site">?</button>
       </h1>
+
+      <!-- Authentication Status & Action Bar -->
+      <div
+        id="auth-ui-container"
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          background: var(--surface-color);
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          padding: 10px 20px;
+          margin-bottom: 20px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        "
+      >
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="color: var(--theme-text-muted); font-size: 0.85rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">
+            Operative Status:
+          </span>
+          <span
+            id="user-greeting"
+            style="color: var(--theme-accent); font-size: 0.95rem; font-weight: bold;"
+          >
+            Guest (Unauthenticated)
+          </span>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button
+            id="open-auth-modal-btn"
+            class="btn-primary"
+            style="
+              background-color: var(--theme-accent);
+              color: #0f1115;
+              padding: 6px 16px;
+              font-size: 0.85rem;
+            "
+          >
+            Sign In
+          </button>
+          <button
+            id="logout-btn"
+            class="btn-primary"
+            style="
+              display: none;
+              background-color: var(--bg-color);
+              color: var(--danger-red);
+              border-color: var(--danger-red);
+              padding: 6px 16px;
+              font-size: 0.85rem;
+            "
+          >
+            Sign Out
+          </button>
+        </div>
+      </div>
 
       <div
         style="
@@ -1204,6 +1262,68 @@
           "
         >
           Placeholder text...
+        </div>
+      </div>
+    </div>
+
+    <!-- Authentication Disclaimer Modal -->
+    <div id="auth-disclaimer-modal" class="tutorial-modal">
+      <div class="modal-content" style="max-width: 600px;">
+        <span class="modal-close" id="auth-modal-close">&times;</span>
+        <h2 style="color: var(--theme-accent); margin-bottom: 15px;">
+          Account Sign-In & Telemetry Notice
+        </h2>
+        <div
+          style="
+            color: var(--theme-text-light);
+            line-height: 1.7;
+            font-size: 0.95rem;
+          "
+        >
+          <p>
+            <strong>Portfolio & Hobbyist Demonstration:</strong> This web application is a non-commercial probability calculator built for Warhammer 40k hobbyists and technical showcase.
+          </p>
+
+          <p style="margin-top: 12px;">
+            <strong>Purpose of Logging In:</strong> Signing in is solely used to capture your username and associate it with simulation telemetry payloads for backend analytical modeling. <em>Please note: Access to backend telemetry reports and dashboards is currently restricted to developer administration and is not accessible within this client interface.</em>
+          </p>
+
+          <p style="margin-top: 12px;">
+            <strong>Enterprise Security via MSAL:</strong> Authentication is handled via the <em>Microsoft Authentication Library (MSAL)</em>. Your sign-in is executed directly on Microsoft identity servers. This application never receives, processes, or stores your password.
+          </p>
+        </div>
+
+        <div
+          style="
+            margin-top: 25px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+          "
+        >
+          <button
+            id="cancel-auth-btn"
+            class="btn-primary"
+            style="
+              background: var(--surface-hover);
+              color: var(--theme-text-muted);
+              border: 1px solid var(--border-color);
+              padding: 8px 16px;
+            "
+          >
+            Continue as Guest
+          </button>
+          <button
+            id="proceed-login-btn"
+            class="btn-primary"
+            style="
+              background-color: var(--theme-accent);
+              color: #0f1115;
+              padding: 8px 16px;
+            "
+          >
+            Proceed to Microsoft Login
+          </button>
         </div>
       </div>
     </div>

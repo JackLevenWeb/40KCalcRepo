@@ -11,16 +11,21 @@ import { applyTheme, getCurrentTheme } from './theme-manager.js';
 import { scrapeCombinatorialSelections, generateCombinations } from './combinatorial-engine.js';
 import './fetchUnitStats.js'
 import { initializeTelemetry, startTelemetryTimer, dispatchTelemetryEvent, generateId } from './telemetry-manager.js';
+import { initializeAuth } from './auth-manager.js';
 //#endregion
 
 //#region initialization and state >>>>>>>>>>>>>>>>>>>>>>>
 
-// Placeholder Authentication State (To be replaced by IDaaS later)
+// Global Authentication State consumed by telemetry-manager.js
 export const AuthState = {
-    userId: "admin_dev_user_12345",
+    userId: "guest_user",
+    userName: "Guest",
     authToken: null,
     appVersion: "1.0.0"
 };
+
+// initializeWatchers from auth-manager.js
+initializeAuth(AuthState);
 
 const SIMULATION_ITERATIONS = 250000;
 
