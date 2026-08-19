@@ -17,109 +17,118 @@
         <button class="tutorial-btn" data-tutorial="main_site">?</button>
       </h1>
 
-      <!-- Authentication Status & Action Bar -->
+      <!-- NEW BALANCED CONTAINER FOR AUTH AND TABS (RIGHT-ALIGNED AUTH) -->
       <div
-        id="auth-ui-container"
         style="
           display: flex;
-          justify-content: space-between;
           align-items: center;
-          background: var(--surface-color);
-          border: 1px solid var(--border-color);
-          border-radius: 8px;
-          padding: 10px 20px;
-          margin-bottom: 20px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+          justify-content: space-between;
+          margin-bottom: 25px;
+          border-bottom: 2px solid var(--border-color);
+          padding-bottom: 15px;
+          width: 100%;
         "
       >
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="color: var(--theme-text-muted); font-size: 0.85rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">
-            Operative Status:
-          </span>
-          <span
-            id="user-greeting"
-            style="color: var(--theme-accent); font-size: 0.95rem; font-weight: bold;"
-          >
-            Guest (Unauthenticated)
-          </span>
-        </div>
-        <div style="display: flex; gap: 10px;">
+        <!-- LEFT SIDE: Empty invisible counterweight to balance the tabs -->
+        <div style="flex: 1;"></div>
+
+        <!-- CENTER: Simulation Tabs -->
+        <div style="display: flex; justify-content: center; gap: 10px;">
           <button
-            id="open-auth-modal-btn"
+            id="tab-standard"
             class="btn-primary"
             style="
               background-color: var(--theme-accent);
               color: #0f1115;
-              padding: 6px 16px;
-              font-size: 0.85rem;
+              font-size: 1.1rem;
+              padding: 12px 24px;
             "
           >
-            Sign In
+            Standard Analytics
           </button>
           <button
-            id="logout-btn"
+            id="tab-combinatorial"
             class="btn-primary"
             style="
-              display: none;
-              background-color: var(--bg-color);
-              color: var(--danger-red);
-              border-color: var(--danger-red);
-              padding: 6px 16px;
-              font-size: 0.85rem;
+              background-color: var(--surface-color);
+              color: var(--theme-text-light);
+              font-size: 1.1rem;
+              padding: 12px 24px;
             "
           >
-            Sign Out
+            Combinatorial Engine
+          </button>
+          <button
+            id="tab-dataloom"
+            class="btn-primary"
+            style="
+              background-color: var(--surface-color);
+              color: var(--theme-text-light);
+              font-size: 1.1rem;
+              padding: 12px 24px;
+              display: none;
+            "
+          >
+            Data-Loom
           </button>
         </div>
-      </div>
 
-      <div
-        style="
-          display: flex;
-          justify-content: center;
-          gap: 10px;
-          margin-bottom: 25px;
-          border-bottom: 2px solid var(--border-color);
-          padding-bottom: 15px;
-        "
-      >
-        <button
-          id="tab-standard"
-          class="btn-primary"
-          style="
-            background-color: var(--theme-accent);
-            color: #0f1115;
-            font-size: 1.1rem;
-            padding: 12px 24px;
-          "
-        >
-          Standard Analytics
-        </button>
-        <button
-          id="tab-combinatorial"
-          class="btn-primary"
-          style="
-            background-color: var(--surface-color);
-            color: var(--theme-text-light);
-            font-size: 1.1rem;
-            padding: 12px 24px;
-          "
-        >
-          Combinatorial Engine
-        </button>
-        <button
-          id="tab-dataloom"
-          class="btn-primary"
-          style="
-            background-color: var(--surface-color);
-            color: var(--theme-text-light);
-            font-size: 1.1rem;
-            padding: 12px 24px;
-            display: none;
-          "
-        >
-          Data-Loom
-        </button>
+        <!-- RIGHT SIDE: Authentication Status & Action Bar -->
+        <div style="flex: 1; display: flex; justify-content: flex-end;">
+          <div
+            id="auth-ui-container"
+            style="
+              display: flex;
+              align-items: center;
+              gap: 15px;
+              background: var(--surface-color);
+              border: 1px solid var(--border-color);
+              border-radius: 8px;
+              padding: 8px 15px;
+              width: max-content;
+            "
+          >
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="color: var(--theme-text-muted); font-size: 0.85rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">
+                Operative:
+              </span>
+              <span
+                id="user-greeting"
+                style="color: var(--theme-accent); font-size: 0.95rem; font-weight: bold;"
+              >
+                Guest
+              </span>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <button
+                id="open-auth-modal-btn"
+                class="btn-primary"
+                style="
+                  background-color: var(--theme-accent);
+                  color: #0f1115;
+                  padding: 6px 14px;
+                  font-size: 0.85rem;
+                "
+              >
+                Sign In
+              </button>
+              <button
+                id="logout-btn"
+                class="btn-primary"
+                style="
+                  display: none;
+                  background-color: var(--bg-color);
+                  color: var(--danger-red);
+                  border-color: var(--danger-red);
+                  padding: 6px 14px;
+                  font-size: 0.85rem;
+                "
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div id="view-standard" style="display: block">
