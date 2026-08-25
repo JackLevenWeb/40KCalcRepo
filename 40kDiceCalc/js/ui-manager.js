@@ -587,6 +587,22 @@ export function initCombinatorialPool() {
     });
 }
 
+// ui-manager.js - Place this ABOVE renderCombiMirror
+
+// Builds the attacker modifier string with registry
+export function getModsString(w) {
+    let activeMods = [];
+
+    for (const key in ModifierRegistry) {
+        if (ModifierRegistry[key].getUITextAttacker) {
+            const text = ModifierRegistry[key].getUITextAttacker(w);
+            if (text && !activeMods.includes(text)) activeMods.push(text);
+        }
+    }
+
+    return activeMods.length > 0 ? `[${activeMods.join(', ')}]` : '';
+}
+
 export function renderCombiMirror(weaponsArray, targetUnit) {
     const container = document.getElementById("combi-mirror-container");
     if (!container) return;
@@ -637,35 +653,6 @@ export function renderCombiMirror(weaponsArray, targetUnit) {
         }
     });
 
-    // format active modifiers for datacards
-    const getModsString = (w) => {
-        let activeMods = [];
-
-        if (w.modifiers.lethal) activeMods.push("Lethal");
-        if (w.modifiers.devastating) activeMods.push("Dev Wounds");
-        if (w.modifiers.sustained > 0) activeMods.push(`Sus ${w.modifiers.sustained}`);
-        if (w.modifiers.rerollHits !== "none") activeMods.push(`RR Hits`);
-        if (w.modifiers.rerollWounds !== "none") activeMods.push(`RR Wounds`);
-        if (w.modifiers.anti > 0) activeMods.push(`Anti-${w.modifiers.anti}+`);
-        if (w.modifiers.lance) activeMods.push("Lance");
-        if (w.modifiers.rapidFire > 0) activeMods.push(`RF ${w.modifiers.rapidFire}`);
-        if (w.modifiers.melta > 0) activeMods.push(`Melta ${w.modifiers.melta}`);
-        if (w.modifiers.torrent) activeMods.push("Torrent");
-        if (w.modifiers.twinLinked) activeMods.push("Twin-Linked");
-        if (w.modifiers.blast) activeMods.push("Blast");
-        if (w.modifiers.cleave) activeMods.push("Cleave");
-        if (w.modifiers.hitMod > 0) activeMods.push(`+${w.modifiers.hitMod} Hit`);
-        if (w.modifiers.hitMod < 0) activeMods.push(`${w.modifiers.hitMod} Hit`);
-        if (w.modifiers.woundMod > 0) activeMods.push(`+${w.modifiers.woundMod} Wound`);
-        if (w.modifiers.woundMod < 0) activeMods.push(`${w.modifiers.woundMod} Wound`);
-        if (w.modifiers.rerollDamage) activeMods.push(`RR Damage`);
-        if (w.modifiers.rerollOneHit) activeMods.push("RR 1 Hit");
-        if (w.modifiers.rerollOneWound) activeMods.push("RR 1 Wound");
-        if (w.modifiers.rerollOneDamage) activeMods.push("RR 1 Dmg");
-        if (w.modifiers.damageMod > 0) activeMods.push(`+${w.modifiers.damageMod} Dmg`);
-
-        return activeMods.length > 0 ? `[${activeMods.join(', ')}]` : "";
-    };
 
     // build grouped attacker cards
     groups.forEach(g => {

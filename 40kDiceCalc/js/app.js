@@ -813,32 +813,21 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
     renderAdvancedChart(card.querySelector('.adv-chart'), category, sqlData, totalRuns, chartMods, isSingleTarget);
 }
 
-// generates the core stat display for the top of the report cards
+// generates the core stat display for the top of the report cards dynamically via registry
 function buildBaseStatsHTML(weaponsArray, targetUnit) {
     let html = `<div style="display: flex; gap: 10px; flex-wrap: wrap; width: 100%;">`;
 
     weaponsArray.forEach(w => {
         let activeMods = [];
 
-        if (w.modifiers.lethal) activeMods.push("Lethal");
-        if (w.modifiers.devastating) activeMods.push("Dev Wounds");
-        if (w.modifiers.sustained > 0) activeMods.push(`Sus ${w.modifiers.sustained}`);
-        if (w.modifiers.rerollHits !== "none") activeMods.push(`RR Hits`);
-        if (w.modifiers.rerollWounds !== "none") activeMods.push(`RR Wounds`);
-        if (w.modifiers.anti > 0) activeMods.push(`Anti-${w.modifiers.anti}+`);
-        if (w.modifiers.lance) activeMods.push("Lance");
-        if (w.modifiers.rapidFire > 0) activeMods.push(`RF ${w.modifiers.rapidFire}`);
-        if (w.modifiers.melta > 0) activeMods.push(`Melta ${w.modifiers.melta}`);
-        if (w.modifiers.torrent) activeMods.push("Torrent");
-        if (w.modifiers.twinLinked) activeMods.push("Twin-Linked");
-        if (w.modifiers.blast) activeMods.push("Blast");
-        if (w.modifiers.cleave) activeMods.push("Cleave");
-        if (w.modifiers.hitMod > 0) activeMods.push(`+${w.modifiers.hitMod} Hit`);
-        if (w.modifiers.hitMod < 0) activeMods.push(`${w.modifiers.hitMod} Hit`);
-        if (w.modifiers.woundMod > 0) activeMods.push(`+${w.modifiers.woundMod} Wound`);
-        if (w.modifiers.woundMod < 0) activeMods.push(`${w.modifiers.woundMod} Wound`);
-        if (w.modifiers.rerollDamage) activeMods.push(`RR Damage`);
-        if (w.modifiers.damageMod > 0) activeMods.push(`+${w.modifiers.damageMod} Dmg`);
+        // gather attacker mods from the registry
+        for (const key in ModifierRegistry) {
+            if (ModifierRegistry[key].getUITextAttacker) {
+                const text = ModifierRegistry[key].getUITextAttacker(w);
+                // check for duplicates
+                if (text && !activeMods.includes(text)) activeMods.push(text);
+            }
+        }
 
         let modsStr = activeMods.length > 0 ? `[${activeMods.join(', ')}]` : `[No Mods]`;
 
@@ -854,14 +843,13 @@ function buildBaseStatsHTML(weaponsArray, targetUnit) {
 
     let targetMods = [];
 
-    if (targetUnit.modifiers.minusOneHit) targetMods.push("-1 Hit");
-    if (targetUnit.modifiers.minusOneWound) targetMods.push("-1 Wnd");
-    if (targetUnit.modifiers.minusOneWoundHighStr) targetMods.push("S>T -1 Wnd");
-    if (targetUnit.modifiers.cover) targetMods.push("Cover");
-    if (targetUnit.modifiers.halfDamage) targetMods.push("1/2 Dmg");
-    if (targetUnit.modifiers.minusOneDamage) targetMods.push("-1 Dmg");
-    if (targetUnit.modifiers.plusOneSave) targetMods.push("+1 Save");
-    if (targetUnit.fnp && targetUnit.fnp > 1) targetMods.push(`FNP ${targetUnit.fnp}+`);
+    // gather target mods from the registry
+    for (const key in ModifierRegistry) {
+        if (ModifierRegistry[key].getUITextTarget) {
+            const text = ModifierRegistry[key].getUITextTarget(targetUnit);
+            if (text && !targetMods.includes(text)) targetMods.push(text);
+        }
+    }
 
     let targetModsStr = targetMods.length > 0 ? targetMods.join(' | ') : "[No Mods]";
 

@@ -538,6 +538,49 @@ export const ModifierRegistry = {
 
 };
 
+//UI text generators into the registry
+const UI_MAPPINGS = {
+    "lethal": { getUITextAttacker: (w) => w.modifiers.lethal ? "Lethal" : null },
+    "devastating": { getUITextAttacker: (w) => w.modifiers.devastating ? "Dev Wounds" : null },
+    "sustained": { getUITextAttacker: (w) => w.modifiers.sustained > 0 ? `Sus ${w.modifiers.sustained}` : null },
+    "reroll_hits_all": { getUITextAttacker: (w) => w.modifiers.rerollHits !== "none" ? "RR Hits" : null },
+    "reroll_wounds_all": { getUITextAttacker: (w) => w.modifiers.rerollWounds !== "none" ? "RR Wounds" : null },
+    "anti": { getUITextAttacker: (w) => w.modifiers.anti > 0 ? `Anti-${w.modifiers.anti}+` : null },
+    "lance": { getUITextAttacker: (w) => w.modifiers.lance ? "Lance" : null },
+    "rapidfire": { getUITextAttacker: (w) => w.modifiers.rapidFire > 0 ? `RF ${w.modifiers.rapidFire}` : null },
+    "melta": { getUITextAttacker: (w) => w.modifiers.melta > 0 ? `Melta ${w.modifiers.melta}` : null },
+    "torrent": { getUITextAttacker: (w) => w.modifiers.torrent ? "Torrent" : null },
+    "twinlinked": { getUITextAttacker: (w) => w.modifiers.twinLinked ? "Twin-Linked" : null },
+    "blast": { getUITextAttacker: (w) => w.modifiers.blast ? "Blast" : null },
+    "cleave": { getUITextAttacker: (w) => w.modifiers.cleave ? "Cleave" : null },
+    "hit_plus_1": { getUITextAttacker: (w) => w.modifiers.hitMod > 0 ? `+${w.modifiers.hitMod} Hit` : null },
+    "hit_minus_1": {
+        getUITextAttacker: (w) => w.modifiers.hitMod < 0 ? `${w.modifiers.hitMod} Hit` : null,
+        getUITextTarget: (t) => t.modifiers.minusOneHit ? "-1 Hit" : null
+    },
+    "wound_plus_1": { getUITextAttacker: (w) => w.modifiers.woundMod > 0 ? `+${w.modifiers.woundMod} Wound` : null },
+    "wound_minus_1": {
+        getUITextAttacker: (w) => w.modifiers.woundMod < 0 ? `${w.modifiers.woundMod} Wound` : null,
+        getUITextTarget: (t) => t.modifiers.minusOneWound ? "-1 Wnd" : null
+    },
+    "reroll_damage": { getUITextAttacker: (w) => w.modifiers.rerollDamage ? "RR Damage" : null },
+    "damage_plus_1": { getUITextAttacker: (w) => w.modifiers.damageMod > 0 ? `+${w.modifiers.damageMod} Dmg` : null },
+
+    // Target UI strings
+    "SgT_wound_minus_1": { getUITextTarget: (t) => t.modifiers.minusOneWoundHighStr ? "S>T -1 Wnd" : null },
+    "cover": { getUITextTarget: (t) => t.modifiers.cover ? "Cover" : null },
+    "damage_half": { getUITextTarget: (t) => t.modifiers.halfDamage ? "1/2 Dmg" : null },
+    "damage_minus_1": { getUITextTarget: (t) => t.modifiers.minusOneDamage ? "-1 Dmg" : null },
+    "plus_1_save": { getUITextTarget: (t) => t.modifiers.plusOneSave ? "+1 Save" : null },
+    "FNP": { getUITextTarget: (t) => t.fnp && t.fnp > 1 ? `FNP ${t.fnp}+` : null }
+};
+
+for (const key in UI_MAPPINGS) {
+    if (ModifierRegistry[key]) {
+        Object.assign(ModifierRegistry[key], UI_MAPPINGS[key]);
+    }
+}
+
 // ui labels for combi categories
 export const CombiCategoryTitles = {
     "weapon_rules": "Weapon Rules",
