@@ -12,6 +12,7 @@ import { scrapeCombinatorialSelections, generateCombinations } from './combinato
 import './fetchUnitStats.js'
 import { initializeTelemetry, startTelemetryTimer, dispatchTelemetryEvent, generateId } from './telemetry-manager.js';
 import { initializeAuth } from './auth-manager.js';
+import { ModifierRegistry } from './modifier-registry.js';
 //#endregion
 
 //#region initialization and state >>>>>>>>>>>>>>>>>>>>>>>
@@ -325,12 +326,40 @@ function runWorkerSimulation(iterations, weaponsArray, targetUnit) {
     });
 }
 
-const SIMULATION_SCENARIOS = {
-    "Hit Mods": ["hit_plus_1", "reroll_hits_1", "reroll_hits_all", "sustained_hits", "fish_crits"],
-    "Wound Mods": ["wound_plus_1", "reroll_wounds_1", "reroll_wounds_all", "lethal"],
-    "Save/Ap": ["extra_ap_1"],
-    "Damage Mods": ["damage_plus_1", "devastating", "melta_range", "reroll_damage"]
-};
+
+
+// generates testing scenarios based on the ModifierRegistry
+function generateSimulationScenarios() {
+    const scenarios = {
+        "Hit Mods": [],
+        "Wound Mods": [],
+        "Save/Ap": [],
+        "Damage Mods": []
+    };
+
+    for (const modKey in ModifierRegistry) {
+        // skip debuffs
+        if (modKey.includes("minus")) continue;
+
+
+        if (modKey.includes("hit") || modKey === "sustained" || modKey === "fish_crits") {
+            scenarios["Hit Mods"].push(modKey);
+        }
+        else if (modKey.includes("wound") || modKey === "lethal" || modKey === "lance" || modKey === "anti") {
+            scenarios["Wound Mods"].push(modKey);
+        }
+        else if (modKey.includes("ap")) {
+            scenarios["Save/Ap"].push(modKey);
+        }
+        else if (modKey.includes("damage") || modKey === "devastating" || modKey === "melta") {
+            scenarios["Damage Mods"].push(modKey);
+        }
+    }
+
+    return scenarios;
+}
+
+const SIMULATION_SCENARIOS = generateSimulationScenarios();
 
 const target_SIMULATION_SCENARIOS = {
     "Hit Mods": ["hit_minus_1", "cover"],
@@ -344,117 +373,33 @@ const target_SIMULATION_SCENARIOS = {
 //#region modifier logic >>>>>>>>>>>>>>>>>>>>>>>
 
 // directly apply active rule to weapon stats
-function applyModifierToWeapon(weapon, modKey) {
-    if (modKey === "hit_plus_1") weapon.modifiers.hitMod += 1;
-    if (modKey === "reroll_hits_1") weapon.modifiers.rerollHits = "ones";
-    if (modKey === "reroll_hits_all") weapon.modifiers.rerollHits = "all";
-    if (modKey === "sustained_hits") weapon.modifiers.sustained = 1;
-
-    if (modKey === "wound_plus_1") weapon.modifiers.woundMod += 1;
-    if (modKey === "reroll_wounds_1") weapon.modifiers.rerollWounds = "ones";
-    if (modKey === "reroll_wounds_all") weapon.modifiers.rerollWounds = "all";
-    if (modKey === "lethal") weapon.modifiers.lethal = true;
-
-    if (modKey === "extra_ap_1") weapon.Ap -= 1;
-    if (modKey === "devastating") weapon.modifiers.devastating = true;
-    if (modKey === "fish_crits") weapon.modifiers.fishForCrits = true;
-    if (modKey === "reroll_damage") weapon.modifiers.rerollDamage = true;
-    if (modKey === "damage_plus_1") weapon.modifiers.damageMod += 1;
-
-    if (modKey === "reroll_one_hit") weapon.modifiers.rerollOneHit = true;
-    if (modKey === "reroll_one_wound") weapon.modifiers.rerollOneWound = true;
-    if (modKey === "reroll_one_damage") weapon.modifiers.rerollOneDamage = true;
+function applyModifierToWeapon(weapon, modKey, targetUnit) {
+    if (ModifierRegistry[modKey] && ModifierRegistry[modKey].applyEffect) {
+        ModifierRegistry[modKey].applyEffect(weapon, targetUnit);
+    }
 }
 
 // prevent redundant or mathematically impossible rules
 function checkSkipReason(weaponsArray, targetUnit, modKey) {
-    for (const w of weaponsArray) {
-        if (modKey === "hit_plus_1" && w.modifiers.hitMod > 0) return "applied";
-        if (modKey === "reroll_hits_1" && (w.modifiers.rerollHits === "ones" || w.modifiers.rerollHits === "all")) return "applied";
-        if (modKey === "reroll_hits_all" && w.modifiers.rerollHits === "all") return "applied";
-        if (modKey === "sustained_hits" && w.modifiers.sustained > 0) return "applied";
-        if (modKey === "wound_plus_1" && w.modifiers.woundMod > 0) return "applied";
-        if (modKey === "reroll_wounds_1" && (w.modifiers.rerollWounds === "ones" || w.modifiers.rerollWounds === "all")) return "applied";
-        if (modKey === "reroll_wounds_all" && w.modifiers.rerollWounds === "all") return "applied";
-        if (modKey === "lethal" && w.modifiers.lethal === true) return "applied";
-        if (modKey === "devastating" && w.modifiers.devastating === true) return "applied";
-        if (modKey === "fish_crits" && w.modifiers.fishForCrits === true) return "applied";
-        if (modKey === "reroll_damage" && w.modifiers.rerollDamage === true) return "applied";
-        if (modKey === "damage_plus_1" && w.modifiers.damageMod > 0) return "applied";
-
-        if (modKey === "melta_range" && w.modifiers.melta === 0) return "not_applicable";
-
-        let rawDam = w.damage;
-        let parsedDam = parseInt(rawDam, 10);
-        let isFlatDamage = !isNaN(parsedDam) && String(parsedDam) === String(rawDam).trim();
-
-        if (modKey === "reroll_damage" && isFlatDamage) return "ineffective";
-
-        let effectiveBs = parseInt(w.BsWs) - w.modifiers.hitMod;
-
-        if (modKey === "hit_plus_1" && effectiveBs <= 2) return "ineffective";
-        if (modKey === "reroll_hits_all" && effectiveBs <= 2) return "ineffective";
-
-        // base wound target based on str vs tgh
-        let baseWoundTarget = 5;
-        if (w.strength >= targetUnit.toughness * 2) baseWoundTarget = 2;
-        else if (w.strength > targetUnit.toughness) baseWoundTarget = 3;
-        else if (w.strength === targetUnit.toughness) baseWoundTarget = 4;
-        else if (w.strength <= targetUnit.toughness / 2) baseWoundTarget = 6;
-
-        let effectiveWound = baseWoundTarget - w.modifiers.woundMod;
-
-        if (targetUnit.modifiers.minusOneWound) effectiveWound += 1;
-        if (targetUnit.modifiers.minusOneWoundHighStr && w.strength > targetUnit.toughness) effectiveWound += 1;
-        if (w.modifiers.lance) effectiveWound -= 1;
-
-        if (modKey === "wound_plus_1" && effectiveWound <= 2) return "ineffective";
-        if (modKey === "reroll_wounds_all" && effectiveWound <= 2) return "ineffective";
+    if (ModifierRegistry[modKey] && ModifierRegistry[modKey].checkRedundancy) {
+        return ModifierRegistry[modKey].checkRedundancy(weaponsArray, targetUnit);
     }
     return false;
 }
 
 // apply defensive buffs
-function applyModifiersToTarget(targetUnit, modKey) {
-    if (modKey === "hit_minus_1") targetUnit.modifiers.minusOneHit = true;
-    if (modKey === "cover") targetUnit.modifiers.cover = true;
-    if (modKey === "wound_minus_1") targetUnit.modifiers.minusOneWound = true;
-    if (modKey === "SgT_wound_minus_1") targetUnit.modifiers.minusOneWoundHighStr = true;
-    if (modKey === "damage_minus_1") targetUnit.modifiers.minusOneDamage = true;
-    if (modKey === "damage_half") targetUnit.modifiers.halfDamage = true;
-    if (modKey === "FNP") targetUnit.fnp = 5;
-    if (modKey === "plus_1_save") targetUnit.modifiers.plusOneSave = true;
+function applyModifiersToTarget(targetUnit, modKey, weaponsArray = []) {
+    if (ModifierRegistry[modKey] && ModifierRegistry[modKey].applyEffect) {
+        let referenceWeapon = weaponsArray.length > 0 ? weaponsArray[0] : {};
+        ModifierRegistry[modKey].applyEffect(referenceWeapon, targetUnit);
+    }
 }
 
 // prevent redundant target buffs
 function checkSkipReasonTarget(targetUnit, weaponsArray, modKey) {
-    if (modKey === "hit_minus_1" && targetUnit.modifiers.minusOneHit) return "applied";
-    if (modKey === "cover" && targetUnit.modifiers.cover) return "applied";
-    if (modKey === "wound_minus_1" && targetUnit.modifiers.minusOneWound) return "applied";
-    if (modKey === "SgT_wound_minus_1" && targetUnit.modifiers.minusOneWoundHighStr) return "applied";
-    if (modKey === "damage_minus_1" && targetUnit.modifiers.minusOneDamage) return "applied";
-    if (modKey === "damage_half" && targetUnit.modifiers.halfDamage) return "applied";
-    if (modKey === "FNP" && targetUnit.fnp > 0) return "applied";
-
-    if (modKey === "SgT_wound_minus_1" && targetUnit.toughness >= weaponsArray[0].strength) return "ineffective";
-
-    let rawDam = weaponsArray[0].damage;
-    let parsedDam = parseInt(rawDam, 10);
-    let isFlatDamage = !isNaN(parsedDam) && String(parsedDam) === String(rawDam).trim();
-
-    if (isFlatDamage) {
-        if (modKey === "damage_minus_1" && parsedDam <= 1) return "ineffective";
-        if (modKey === "damage_half" && parsedDam <= 1) return "ineffective";
-
-        let halfDmg = Math.ceil(parsedDam / 2);
-        let minusOneDmg = Math.max(1, parsedDam - 1);
-
-        if (modKey === "damage_half" && halfDmg === minusOneDmg) return "ineffective";
+    if (ModifierRegistry[modKey] && ModifierRegistry[modKey].checkRedundancy) {
+        return ModifierRegistry[modKey].checkRedundancy(weaponsArray, targetUnit);
     }
-
-    if (modKey === "plus_1_save" && targetUnit.modifiers.plusOneSave) return "applied";
-    if (modKey === "plus_1_save" && weaponsArray[0].Ap >= 0 && targetUnit.save <= 3) return "ineffective";
-
     return false;
 }
 
@@ -650,7 +595,7 @@ if (advAnalyticsBtn) {
                         }
 
                         let moddedWeapon = JSON.parse(JSON.stringify(baseWeapon));
-                        applyModifierToWeapon(moddedWeapon, modKey);
+                        applyModifierToWeapon(moddedWeapon, modKey, targetUnit);
 
                         let results = await runWorkerSimulation(SIMULATION_ITERATIONS, [moddedWeapon], targetUnit);
 
@@ -1291,7 +1236,7 @@ if (combiButton) {
                     let isInvalidCombo = false;
 
                     for (const modKey of mod) {
-                        moddedWeapons.forEach(mw => applyModifierToWeapon(mw, modKey));
+                        moddedWeapons.forEach(mw => applyModifierToWeapon(mw, modKey, activeCombiTarget));
                     }
 
                     // filter out mathematically invalid combinations

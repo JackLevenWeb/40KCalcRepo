@@ -438,7 +438,104 @@ export const ModifierRegistry = {
             }
             return false;
         }
+    },
+    // modifier-registry.js - Add to the very bottom, inside the registry object
+
+    "SgT_wound_minus_1": {
+        name: "S>T -1 Wound",
+        hasInput: false,
+        combiCategory: null,
+        applyEffect: (weapon, targetUnit) => {
+            targetUnit.modifiers.minusOneWoundHighStr = true;
+        },
+        checkRedundancy: (weaponsArray, targetUnit) => {
+            if (targetUnit.modifiers.minusOneWoundHighStr) return "applied";
+            if (targetUnit.toughness >= weaponsArray[0].strength) return "ineffective";
+            return false;
+        }
+    },
+    "cover": {
+        name: "Cover",
+        hasInput: false,
+        combiCategory: null,
+        applyEffect: (weapon, targetUnit) => {
+            targetUnit.modifiers.cover = true;
+        },
+        checkRedundancy: (weaponsArray, targetUnit) => {
+            if (targetUnit.modifiers.cover) return "applied";
+            return false;
+        }
+    },
+    "damage_minus_1": {
+        name: "-1 Damage",
+        hasInput: false,
+        combiCategory: null,
+        applyEffect: (weapon, targetUnit) => {
+            targetUnit.modifiers.minusOneDamage = true;
+        },
+        checkRedundancy: (weaponsArray, targetUnit) => {
+            if (targetUnit.modifiers.minusOneDamage) return "applied";
+
+            let rawDam = weaponsArray[0].damage;
+            let parsedDam = parseInt(rawDam, 10);
+            let isFlatDamage = !isNaN(parsedDam) && String(parsedDam) === String(rawDam).trim();
+
+            if (isFlatDamage && parsedDam <= 1) return "ineffective";
+            return false;
+        }
+    },
+    "damage_half": {
+        name: "Half Damage",
+        hasInput: false,
+        combiCategory: null,
+        applyEffect: (weapon, targetUnit) => {
+            targetUnit.modifiers.halfDamage = true;
+        },
+        checkRedundancy: (weaponsArray, targetUnit) => {
+            if (targetUnit.modifiers.halfDamage) return "applied";
+
+            let rawDam = weaponsArray[0].damage;
+            let parsedDam = parseInt(rawDam, 10);
+            let isFlatDamage = !isNaN(parsedDam) && String(parsedDam) === String(rawDam).trim();
+
+            if (isFlatDamage) {
+                if (parsedDam <= 1) return "ineffective";
+
+                let halfDmg = Math.ceil(parsedDam / 2);
+                let minusOneDmg = Math.max(1, parsedDam - 1);
+
+                // check for half damage vs -1 damage
+                if (halfDmg === minusOneDmg) return "ineffective";
+            }
+            return false;
+        }
+    },
+    "FNP": {
+        name: "Feel No Pain 5+",
+        hasInput: false,
+        combiCategory: null,
+        applyEffect: (weapon, targetUnit) => {
+            targetUnit.fnp = 5;
+        },
+        checkRedundancy: (weaponsArray, targetUnit) => {
+            if (targetUnit.fnp > 0) return "applied";
+            return false;
+        }
+    },
+    "plus_1_save": {
+        name: "+1 Save",
+        hasInput: false,
+        combiCategory: null,
+        applyEffect: (weapon, targetUnit) => {
+            targetUnit.modifiers.plusOneSave = true;
+        },
+        checkRedundancy: (weaponsArray, targetUnit) => {
+            if (targetUnit.modifiers.plusOneSave) return "applied";
+            if (weaponsArray[0].Ap >= 0 && targetUnit.save <= 3) return "ineffective";
+            return false;
+        }
     }
+
 };
 
 // ui labels for combi categories
