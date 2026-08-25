@@ -321,13 +321,13 @@ function resolveDamage(damageString, shouldReroll = false, singleRerollState = {
         for (let i = 0; i < numDice; i++) {
             let roll = Math.floor(Math.random() * sides) + 1;
 
-            if (shouldReroll && (roll === 1 || roll === 2)) {
+            if (shouldReroll && (roll === 1 || (roll === 2 && sides > 3))) {
                 roll = Math.floor(Math.random() * sides) + 1;
             } else if (!shouldReroll && singleRerollState.available && roll <= Math.floor(sides / 2)) {
-                // triggers if you roll below mathematical average
+                // triggers roll below average
                 roll = Math.floor(Math.random() * sides) + 1;
 
-                // turn off immediately after use
+                // turn off after use
                 singleRerollState.available = false;
             }
 

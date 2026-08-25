@@ -228,9 +228,16 @@ export function addAttackerModule(containerElement) {
 // build dynamic html based on modifier requirements
 export function addBadgeToModule(moduleNode, modKey, isGranted) {
     const list = moduleNode.querySelector(".active-modifiers-list");
+    const existingBadge = list.querySelector(`.mod-badge[data-key="${modKey}"]`);
 
     // prevent duplicate badges
-    if (list.querySelector(`.mod-badge[data-key="${modKey}"]`)) return;
+    if (existingBadge) {
+        if (isGranted && existingBadge.dataset.granted !== "true") {
+            existingBadge.remove();
+        } else {
+            return;
+        }
+    }
 
     const modData = ModifierRegistry[modKey];
     if (!modData) return;
@@ -665,12 +672,17 @@ export function renderCombiMirror(weaponsArray, targetUnit) {
             html += `<div style="display: flex; flex-direction: column; gap: 5px;">`;
             g.leaders.forEach(l => {
                 const modsDisplay = getModsString(l);
+
+                // determine active crit thresholds
+                const activeCritHit = l.modifiers.critHitThreshold;
+                const activeCritWound = l.modifiers.anti > 0 ? l.modifiers.anti : l.modifiers.critWoundThreshold;
+
                 html += `
                 <div style="background: rgba(196, 130, 53, 0.08); border: 1px solid var(--theme-accent); border-radius: 4px; padding: 10px;">
                     <div style="color: var(--theme-accent); font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Leader</div>
                     <div style="font-size: 1.05rem; color: #fff; font-weight: bold;">${l.unitName}</div>
                     <div style="font-size: 0.85rem; color: var(--theme-text-light); margin-top: 4px;">
-                        ${l.attack}A | BS/WS ${l.BsWs}+ | S${l.strength} | AP${l.Ap} | D${l.damage}
+                        ${l.attack}A | BS/WS ${l.BsWs}+ | S${l.strength} | AP${l.Ap} | D${l.damage} | CH ${activeCritHit}+ | CW ${activeCritWound}+
                     </div>
                     ${modsDisplay ? `<div style="color: var(--theme-accent); font-size: 0.75rem; font-weight: bold; margin-top: 4px;">${modsDisplay}</div>` : ''}
                 </div>`;
@@ -686,12 +698,16 @@ export function renderCombiMirror(weaponsArray, targetUnit) {
             const unitLabel = g.leaders.length > 0 ? "Bodyguard Unit" : "Unit";
             const modsDisplay = getModsString(g.base);
 
+            // determine active crit thresholds
+            const activeCritHit = g.base.modifiers.critHitThreshold;
+            const activeCritWound = g.base.modifiers.anti > 0 ? g.base.modifiers.anti : g.base.modifiers.critWoundThreshold;
+
             html += `
             <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 4px; padding: 10px;">
                 <div style="color: var(--theme-text-muted); font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">${unitLabel}</div>
                 <div style="font-size: 1.05rem; color: #fff; font-weight: bold;">${g.base.unitName}</div>
                 <div style="font-size: 0.85rem; color: var(--theme-text-light); margin-top: 4px;">
-                    ${g.base.unitCount * g.base.modelCount}M | ${g.base.attack}A | BS/WS ${g.base.BsWs}+ | S${g.base.strength} | AP${g.base.Ap} | D${g.base.damage}
+                    ${g.base.unitCount * g.base.modelCount}M | ${g.base.attack}A | BS/WS ${g.base.BsWs}+ | S${g.base.strength} | AP${g.base.Ap} | D${g.base.damage} | CH ${activeCritHit}+ | CW ${activeCritWound}+
                 </div>
                 ${modsDisplay ? `<div style="color: var(--theme-accent); font-size: 0.75rem; font-weight: bold; margin-top: 4px;">${modsDisplay}</div>` : ''}
             </div>`;

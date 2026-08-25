@@ -23,7 +23,8 @@ export function scrapeCombinatorialSelections() {
         { dominant: "reroll_hits_all", redundant: "reroll_hits_1" },
         { dominant: "reroll_hits_all", redundant: "reroll_one_hit" },
         { dominant: "reroll_wounds_all", redundant: "reroll_wounds_1" },
-        { dominant: "reroll_wounds_all", redundant: "reroll_one_wound" }
+        { dominant: "reroll_wounds_all", redundant: "reroll_one_wound" },
+        { dominant: "reroll_damage", redundant: "reroll_one_damage" }
     ];
 
     // if a dominant rule is present anywhere purge the redundant one entirely
@@ -84,7 +85,8 @@ export function* generateCombinations(independent, mutExclA, mutExclB, mutExclC,
     // define rules that can be tested separately but never simultaneously 
     const mutuallyExclusivePairs = [
         ["reroll_hits_1", "reroll_one_hit"],
-        ["reroll_wounds_1", "reroll_one_wound"]
+        ["reroll_wounds_1", "reroll_one_wound"],
+        ["reroll_damage", "reroll_one_damage"]
     ];
 
     // group all generated states into master array
