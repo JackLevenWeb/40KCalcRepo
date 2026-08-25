@@ -274,10 +274,12 @@ export function initializeWatchers() {
         }
     });
 
+
+
     const targetIDs = [
         "target-name", "toughness", "wounds", "save", "inVul", "target-models",
         "def-fnp", "def-minus-hit", "def-minus-wound", "def-minus-wound-str",
-        "def-cover", "def-reduce-dam"
+        "def-cover", "def-reduce-dam", "def-plus-one-save"
     ];
 
     targetIDs.forEach(id => {

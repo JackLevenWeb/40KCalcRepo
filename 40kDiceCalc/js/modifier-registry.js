@@ -581,6 +581,43 @@ for (const key in UI_MAPPINGS) {
     }
 }
 
+// maps JSON data into UI badges
+const RESTORE_MAPPINGS = {
+    "lethal": { restoreBadge: (mods) => mods.lethal },
+    "devastating": { restoreBadge: (mods) => mods.devastating },
+    "lance": { restoreBadge: (mods) => mods.lance },
+    "torrent": { restoreBadge: (mods) => mods.torrent },
+    "twinlinked": { restoreBadge: (mods) => mods.twinLinked },
+    "blast": { restoreBadge: (mods) => mods.blast },
+    "cleave": { restoreBadge: (mods) => mods.cleave },
+    "hit_plus_1": { restoreBadge: (mods) => mods.hitMod > 0 },
+    "hit_minus_1": { restoreBadge: (mods) => mods.hitMod < 0 },
+    "wound_plus_1": { restoreBadge: (mods) => mods.woundMod > 0 },
+    "wound_minus_1": { restoreBadge: (mods) => mods.woundMod < 0 },
+    "reroll_hits_all": { restoreBadge: (mods) => mods.rerollHits === "all" },
+    "reroll_hits_1": { restoreBadge: (mods) => mods.rerollHits === "ones" },
+    "reroll_wounds_all": { restoreBadge: (mods) => mods.rerollWounds === "all" },
+    "reroll_wounds_1": { restoreBadge: (mods) => mods.rerollWounds === "ones" },
+    "reroll_one_hit": { restoreBadge: (mods) => mods.rerollOneHit },
+    "reroll_one_wound": { restoreBadge: (mods) => mods.rerollOneWound },
+    "fish_crits": { restoreBadge: (mods) => mods.fishForCrits },
+    "reroll_damage": { restoreBadge: (mods) => mods.rerollDamage },
+    "reroll_one_damage": { restoreBadge: (mods) => mods.rerollOneDamage },
+    "damage_plus_1": { restoreBadge: (mods) => mods.damageMod > 0 },
+
+    // value badges
+    "sustained": { restoreBadge: (mods) => mods.sustained > 0 ? mods.sustained : false },
+    "melta": { restoreBadge: (mods) => mods.melta > 0 ? mods.melta : false },
+    "anti": { restoreBadge: (mods) => mods.anti > 0 ? mods.anti : false },
+    "rapidfire": { restoreBadge: (mods) => mods.rapidFire > 0 ? mods.rapidFire : false }
+};
+
+for (const key in RESTORE_MAPPINGS) {
+    if (ModifierRegistry[key]) {
+        Object.assign(ModifierRegistry[key], RESTORE_MAPPINGS[key]);
+    }
+}
+
 // ui labels for combi categories
 export const CombiCategoryTitles = {
     "weapon_rules": "Weapon Rules",

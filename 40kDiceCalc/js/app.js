@@ -95,6 +95,15 @@ initializeTelemetry();
 
 //#region core data builders >>>>>>>>>>>>>>>>>>>>>>>
 
+// link target UI checkboxes to their state keys
+const TARGET_CHECKBOXES = {
+    "def-minus-hit": "minusOneHit",
+    "def-minus-wound": "minusOneWound",
+    "def-minus-wound-str": "minusOneWoundHighStr",
+    "def-cover": "cover",
+    "def-plus-one-save": "plusOneSave"
+};
+
 // parse ui modules into weapon data
 function createWeaponsArray(stripBadges = false) {
     const modules = document.querySelectorAll('.attacker-module');
@@ -221,17 +230,19 @@ function createUnit() {
     const inVul = parseInt(document.getElementById("inVul").value, 10) || null;
     const fnp = parseInt(document.getElementById("def-fnp").value, 10) || null;
     const modelCount = parseInt(document.getElementById("target-models").value, 10);
+
     const reductionDrop = document.getElementById("def-reduce-dam") ? document.getElementById("def-reduce-dam").value : "none";
 
     const modifiers = {
-        minusOneHit: document.getElementById("def-minus-hit") ? document.getElementById("def-minus-hit").checked : false,
-        minusOneWound: document.getElementById("def-minus-wound") ? document.getElementById("def-minus-wound").checked : false,
-        minusOneWoundHighStr: document.getElementById("def-minus-wound-str") ? document.getElementById("def-minus-wound-str").checked : false,
-        cover: document.getElementById("def-cover") ? document.getElementById("def-cover").checked : false,
         halfDamage: reductionDrop === "half",
-        minusOneDamage: reductionDrop === "minus1",
-        plusOneSave: document.getElementById("def-plus-one-save") ? document.getElementById("def-plus-one-save").checked : false
+        minusOneDamage: reductionDrop === "minus1"
     };
+
+    // scrape all target checkboxes
+    for (const [id, stateKey] of Object.entries(TARGET_CHECKBOXES)) {
+        const el = document.getElementById(id);
+        modifiers[stateKey] = el ? el.checked : false;
+    }
 
     // Unit from Unit.js
     const unit = new Unit(toughness, wounds, save, inVul, fnp, modelCount, modifiers);
@@ -258,20 +269,11 @@ function loadTargetProfile(targetData) {
     document.getElementById("def-fnp").value = targetData.fnp || "0";
 
     if (targetData.modifiers) {
-        const hitMinus = document.getElementById("def-minus-hit");
-        if (hitMinus) hitMinus.checked = targetData.modifiers.minusOneHit || false;
-
-        const woundMinus = document.getElementById("def-minus-wound");
-        if (woundMinus) woundMinus.checked = targetData.modifiers.minusOneWound || false;
-
-        const woundMinusStr = document.getElementById("def-minus-wound-str");
-        if (woundMinusStr) woundMinusStr.checked = targetData.modifiers.minusOneWoundHighStr || false;
-
-        const cover = document.getElementById("def-cover");
-        if (cover) cover.checked = targetData.modifiers.cover || false;
-
-        const plusSave = document.getElementById("def-plus-one-save");
-        if (plusSave) plusSave.checked = targetData.modifiers.plusOneSave || false;
+        // restore target checkboxes
+        for (const [id, stateKey] of Object.entries(TARGET_CHECKBOXES)) {
+            const el = document.getElementById(id);
+            if (el) el.checked = targetData.modifiers[stateKey] || false;
+        }
 
         const reduceDam = document.getElementById("def-reduce-dam");
         if (reduceDam) {
@@ -1044,10 +1046,11 @@ function clearDashboard() {
     document.getElementById("target-models").value = 5;
     document.getElementById("def-fnp").value = "0";
 
-    ["def-minus-hit", "def-minus-wound", "def-minus-wound-str", "def-cover"].forEach(id => {
+    // clear all target checkboxes
+    for (const id of Object.keys(TARGET_CHECKBOXES)) {
         const el = document.getElementById(id);
         if (el) el.checked = false;
-    });
+    }
 
     const reduceDam = document.getElementById("def-reduce-dam");
     if (reduceDam) reduceDam.value = "none";

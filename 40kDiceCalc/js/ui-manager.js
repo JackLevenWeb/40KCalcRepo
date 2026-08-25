@@ -391,47 +391,23 @@ export function buildRosterFromJSON(containerElement, jsonData, clearRoster = tr
                 newModule.querySelector('.grant-keyword').value = unitData.grantedKeyword;
             }
         }
-
         const mods = unitData.modifiers;
 
         if (mods) {
-            if (mods.lethal) addBadgeToModule(newModule, "lethal", false);
-            if (mods.devastating) addBadgeToModule(newModule, "devastating", false);
-            if (mods.lance) addBadgeToModule(newModule, "lance", false);
-            if (mods.torrent) addBadgeToModule(newModule, "torrent", false);
-            if (mods.twinLinked) addBadgeToModule(newModule, "twinlinked", false);
-            if (mods.blast) addBadgeToModule(newModule, "blast", false);
-            if (mods.cleave) addBadgeToModule(newModule, "cleave", false);
-            if (mods.hitMod > 0) addBadgeToModule(newModule, "hit_plus_1", false);
-            if (mods.hitMod < 0) addBadgeToModule(newModule, "hit_minus_1", false);
-            if (mods.woundMod > 0) addBadgeToModule(newModule, "wound_plus_1", false);
-            if (mods.woundMod < 0) addBadgeToModule(newModule, "wound_minus_1", false);
-            if (mods.rerollHits === "all") addBadgeToModule(newModule, "reroll_hits_all", false);
-            if (mods.rerollHits === "ones") addBadgeToModule(newModule, "reroll_hits_1", false);
-            if (mods.rerollWounds === "all") addBadgeToModule(newModule, "reroll_wounds_all", false);
-            if (mods.rerollWounds === "ones") addBadgeToModule(newModule, "reroll_wounds_1", false);
-            if (mods.rerollOneHit) addBadgeToModule(newModule, "reroll_one_hit", false);
-            if (mods.rerollOneWound) addBadgeToModule(newModule, "reroll_one_wound", false);
-            if (mods.fishForCrits) addBadgeToModule(newModule, "fish_crits", false);
-            if (mods.rerollDamage) addBadgeToModule(newModule, "reroll_damage", false);
-            if (mods.rerollOneDamage) addBadgeToModule(newModule, "reroll_one_damage", false);
-            if (mods.damageMod > 0) addBadgeToModule(newModule, "damage_plus_1", false);
+            // restore active badges with registry
+            for (const key in ModifierRegistry) {
+                if (ModifierRegistry[key].restoreBadge) {
+                    const badgeVal = ModifierRegistry[key].restoreBadge(mods);
 
-            if (mods.sustained > 0) {
-                addBadgeToModule(newModule, "sustained", false);
-                newModule.querySelector('.mod-badge[data-key="sustained"] .badge-val').value = mods.sustained;
-            }
-            if (mods.melta > 0) {
-                addBadgeToModule(newModule, "melta", false);
-                newModule.querySelector('.mod-badge[data-key="melta"] .badge-val').value = mods.melta;
-            }
-            if (mods.anti > 0) {
-                addBadgeToModule(newModule, "anti", false);
-                newModule.querySelector('.mod-badge[data-key="anti"] .badge-val').value = mods.anti;
-            }
-            if (mods.rapidFire > 0) {
-                addBadgeToModule(newModule, "rapidfire", false);
-                newModule.querySelector('.mod-badge[data-key="rapidfire"] .badge-val').value = mods.rapidFire;
+                    if (badgeVal) {
+                        addBadgeToModule(newModule, key, false);
+
+
+                        if (typeof badgeVal === 'number' && ModifierRegistry[key].hasInput) {
+                            newModule.querySelector(`.mod-badge[data-key="${key}"] .badge-val`).value = badgeVal;
+                        }
+                    }
+                }
             }
         }
     });
