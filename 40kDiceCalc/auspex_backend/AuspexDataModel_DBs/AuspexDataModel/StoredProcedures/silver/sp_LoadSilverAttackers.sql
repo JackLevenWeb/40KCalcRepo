@@ -114,6 +114,7 @@ FROM
     reroll_wounds varchar(20) '$.reroll_wounds',
     fish_for_crits bit '$.fish_for_crits'
   ) AS Mods
+  INNER JOIN [dbo].[silver_simulations] s ON s.runid = SessionData.run_id
   LEFT JOIN [dbo].[silver_attackers] existing_a ON existing_a.runid = SessionData.run_id
   AND existing_a.unit_id = Attacker.unit_id
 WHERE
