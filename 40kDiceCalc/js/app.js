@@ -50,6 +50,21 @@ document.addEventListener("App:ThemeChanged", () => {
     }
 });
 
+document.addEventListener("App:DuplicateModule", (e) => {
+    const targetId = e.detail.unitId;
+    const allWeapons = createWeaponsArray();
+    const weaponToClone = allWeapons.find(w => w.unitId === targetId);
+
+    if (weaponToClone) {
+        const clone = JSON.parse(JSON.stringify(weaponToClone));
+        clone.unitName = clone.unitName + " (Copy)";
+        clone.unitId = crypto.randomUUID();
+
+        buildRosterFromJSON(RosterContainer, [clone], false);
+        document.dispatchEvent(new CustomEvent("App:AutoSave"));
+    }
+});
+
 const CalcBtn = document.getElementById("calculate-btn");
 const RosterContainer = document.getElementById("attacker-roster");
 const RosterNameInput = document.getElementById("roster-name");
@@ -227,6 +242,8 @@ function loadTargetProfile(targetData) {
 
     const nameInput = document.getElementById("target-name");
     if (nameInput && targetData.name) nameInput.value = targetData.name;
+    const factionDrop = document.getElementById("target-faction");
+    if (factionDrop && targetData.faction) factionDrop.value = targetData.faction;
 
     document.getElementById("toughness").value = targetData.toughness || 4;
     document.getElementById("wounds").value = targetData.wounds || 2;
@@ -263,6 +280,26 @@ function loadTargetProfile(targetData) {
 //#endregion
 
 //#region simulation worker and scenarios >>>>>>>>>>>>>>>>>>>>>>>
+
+
+// toggles all sim buttons to prevent overlapping worker threads
+function setSimulationButtonsState(isDisabled) {
+    const calcBtn = document.getElementById("calculate-btn");
+    const advBtn = document.getElementById("advanced-analytics-btn");
+    const combiBtn = document.getElementById("run-combinatorial-btn");
+
+    const tabStandard = document.getElementById("tab-standard");
+    const tabCombi = document.getElementById("tab-combinatorial");
+    const tabDataLoom = document.getElementById("tab-dataloom");
+
+    if (calcBtn) calcBtn.disabled = isDisabled;
+    if (advBtn) advBtn.disabled = isDisabled;
+    if (combiBtn) combiBtn.disabled = isDisabled;
+
+    if (tabStandard) tabStandard.disabled = isDisabled;
+    if (tabCombi) tabCombi.disabled = isDisabled;
+    if (tabDataLoom) tabDataLoom.disabled = isDisabled;
+}
 
 // execute simulation in background thread
 function runWorkerSimulation(iterations, weaponsArray, targetUnit) {
@@ -424,7 +461,8 @@ if (CalcBtn) {
     CalcBtn.addEventListener("click", () => {
         document.dispatchEvent(new CustomEvent("App:AutoSave"));
         CalcBtn.textContent = "Rolling dice...";
-        CalcBtn.disabled = true;
+        // disable all buttons when simulation starts
+        setSimulationButtonsState(true);
 
         const attackerWeapons = createWeaponsArray();
         const targetUnit = createUnit();
@@ -434,7 +472,7 @@ if (CalcBtn) {
         worker.addEventListener('error', (error) => {
             console.error("PIPELINE CRASH:", error.message);
             CalcBtn.textContent = "Pipeline Error (Check Console)";
-            CalcBtn.disabled = false;
+            setSimulationButtonsState(false);
             worker.terminate();
         });
 
@@ -469,7 +507,7 @@ if (CalcBtn) {
 
             // getCurrentTheme from theme-manager.js
             CalcBtn.textContent = getCurrentTheme().btnStandardText;
-            CalcBtn.disabled = false;
+            setSimulationButtonsState(false);
 
             const batchId = generateId();
 
@@ -492,7 +530,7 @@ if (advAnalyticsBtn) {
         document.dispatchEvent(new CustomEvent("App:AutoSave"));
 
         advAnalyticsBtn.textContent = "Running Pipeline...";
-        advAnalyticsBtn.disabled = true;
+        setSimulationButtonsState(true);
 
         // start timer
         const startTime = startTelemetryTimer();
@@ -693,7 +731,7 @@ if (advAnalyticsBtn) {
         }
 
         advAnalyticsBtn.textContent = getCurrentTheme().btnAdvancedText;
-        advAnalyticsBtn.disabled = false;
+        setSimulationButtonsState(false);
     });
 }
 
@@ -1177,7 +1215,7 @@ if (combiButton) {
 
         document.dispatchEvent(new CustomEvent("App:AutoSave"));
 
-        combiButton.disabled = true;
+        setSimulationButtonsState(true);
         combiButton.textContent = "CALCULATING PERMUTATIONS...";
 
         if (simCounterDisplay) simCounterDisplay.textContent = "0";
@@ -1319,8 +1357,8 @@ if (combiButton) {
             console.error("Combinatorial Engine Failed:", error);
             alert("An error occurred during permutations. Check your console for details.");
         } finally {
-            combiButton.disabled = false;
             combiButton.textContent = "RUN PERMUTATIONS";
+            setSimulationButtonsState(false);
         }
     });
 }

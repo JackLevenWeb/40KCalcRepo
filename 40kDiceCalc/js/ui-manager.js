@@ -89,10 +89,12 @@ export function addAttackerModule(containerElement) {
                             <option value="Genestealer Cults">Genestealer Cults</option>
                         </optgroup>
                    </select>
-
                    <div class="attached-leaders-display" style="color: var(--theme-text-light); font-size: 0.85rem; font-weight: bold; margin-top: 5px;"></div>
                 </div>
-                <button class="remove-btn" style="background: var(--theme-text-light); color: var(--bg-color); border: none; border-radius: 4px; padding: 5px 10px; font-weight: bold;">X</button>
+               <div style="display: flex; gap: 8px;">
+                    <button class="duplicate-btn" title="duplicate unit" style="display: flex; justify-content: center; align-items: center; line-height: 1; background: var(--theme-mid); color: #fff; border: none; border-radius: 4px; padding: 8px 5px 5px 5px; font-size: 1rem; cursor: pointer;">&#x29C9;</button>
+                    <button class="remove-btn" title="remove unit" style="background: var(--theme-text-light); color: var(--bg-color); border: none; border-radius: 4px; padding: 5px 10px; font-weight: bold; cursor: pointer;">X</button>
+                </div>
             </div>
 
             <div style="margin-bottom: 15px;">
@@ -350,6 +352,7 @@ export function buildRosterFromJSON(containerElement, jsonData, clearRoster = tr
         newModule.querySelector(".in-dam").value = unitData.damage || "1";
         newModule.querySelector(".in-models").value = unitData.modelCount || 5;
         newModule.querySelector(".in-units").value = unitData.unitCount || 1;
+        if (unitData.faction) newModule.querySelector(".in-faction").value = unitData.faction;
 
         // restore combi roster toggle state
         if (unitData.includeInCombi) {

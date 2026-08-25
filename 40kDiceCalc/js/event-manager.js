@@ -14,6 +14,7 @@ import { applyTheme } from './theme-manager.js';
 export function initializeWatchers() {
     const RosterContainer = document.getElementById("attacker-roster");
     const GlobalModBtn = document.getElementById("add-global-mod-btn");
+    const RemoveGlobalModBtn = document.getElementById("remove-global-mod-btn");
     const GlobalModSelect = document.getElementById("global-mod-dropdown");
     const AddAttackerBtn = document.getElementById("add-attacker-btn");
     const ExportBtn = document.getElementById("export-roster-btn");
@@ -254,11 +255,19 @@ export function initializeWatchers() {
     });
 
     RosterContainer.addEventListener("click", (e) => {
+        if (e.target.classList.contains("duplicate-btn")) {
+            const module = e.target.closest(".attacker-module");
+            if (module) {
+                const unitId = module.getAttribute("data-unit-id");
+                document.dispatchEvent(new CustomEvent("App:DuplicateModule", { detail: { unitId: unitId } }));
+            }
+        }
+
         if (e.target.classList.contains("add-mod-btn") ||
             e.target.classList.contains("remove-mod-btn") ||
             e.target.classList.contains("remove-btn")) {
 
-            // added 50ms delay to ensure dom is fully updated before saving
+            // add delay
             setTimeout(() => {
                 triggerSave();
             }, 50);
@@ -288,6 +297,30 @@ export function initializeWatchers() {
 
             allModules.forEach(module => {
                 addBadgeToModule(module, modKey, false);
+            });
+
+            GlobalModSelect.value = "none";
+            syncAppUI();
+            triggerSave();
+        });
+    }
+
+    // event-manager.js
+
+    if (RemoveGlobalModBtn) {
+        RemoveGlobalModBtn.addEventListener("click", () => {
+            const modKey = GlobalModSelect.value;
+            if (modKey === "none") return;
+
+            const allModules = document.querySelectorAll('.attacker-module');
+
+            allModules.forEach(module => {
+                const badge = module.querySelector(`.mod-badge[data-key="${modKey}"]`);
+
+                // removes the badge if it exists on the unit
+                if (badge && badge.dataset.granted !== "true") {
+                    badge.remove();
+                }
             });
 
             GlobalModSelect.value = "none";

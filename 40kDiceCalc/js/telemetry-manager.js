@@ -133,6 +133,7 @@ async function buildAndSendPayLoad(data) {
 
     // execute transmission 
     try {
+        return; //temp disable server sending
         const response = await fetch(azureEndpoint, {
             method: "POST",
             headers: {
