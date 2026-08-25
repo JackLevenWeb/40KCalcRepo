@@ -126,7 +126,7 @@ function createWeaponsArray(stripBadges = false) {
             "lethal", "devastating", "sustained", "hit_plus_1", "hit_minus_1", "wound_plus_1", "wound_minus_1",
             "reroll_hits_1", "reroll_hits_all", "reroll_wounds_1", "reroll_wounds_all",
             "fish_crits", "reroll_damage", "reroll_one_hit", "reroll_one_wound", "reroll_one_damage",
-            "lance", "twinlinked"
+            "lance", "twinlinked", "damage_plus_1"
         ];
 
         const hasMod = (key) => {
@@ -151,6 +151,9 @@ function createWeaponsArray(stripBadges = false) {
         if (hasMod("wound_plus_1")) woundModTotal += 1;
         if (hasMod("wound_minus_1")) woundModTotal -= 1;
 
+        let damageModTotal = 0;
+        if (hasMod("damage_plus_1")) damageModTotal += 1;
+
         let finalRerollHits = "none";
         if (hasMod("reroll_hits_all")) finalRerollHits = "all";
         else if (hasMod("reroll_hits_1")) finalRerollHits = "ones";
@@ -164,6 +167,7 @@ function createWeaponsArray(stripBadges = false) {
             critWoundThreshold: module.querySelector(".in-crit-wound") ? parseInt(module.querySelector(".in-crit-wound").value, 10) : 6,
             hitMod: hitModTotal,
             woundMod: woundModTotal,
+            damageMod: damageModTotal,
             rerollHits: finalRerollHits,
             rerollWounds: finalRerollWounds,
             lethal: hasMod("lethal"),
@@ -325,7 +329,7 @@ const SIMULATION_SCENARIOS = {
     "Hit Mods": ["hit_plus_1", "reroll_hits_1", "reroll_hits_all", "sustained_hits", "fish_crits"],
     "Wound Mods": ["wound_plus_1", "reroll_wounds_1", "reroll_wounds_all", "lethal"],
     "Save/Ap": ["extra_ap_1"],
-    "Damage Mods": ["devastating", "melta_range", "reroll_damage"]
+    "Damage Mods": ["damage_plus_1", "devastating", "melta_range", "reroll_damage"]
 };
 
 const target_SIMULATION_SCENARIOS = {
@@ -355,6 +359,7 @@ function applyModifierToWeapon(weapon, modKey) {
     if (modKey === "devastating") weapon.modifiers.devastating = true;
     if (modKey === "fish_crits") weapon.modifiers.fishForCrits = true;
     if (modKey === "reroll_damage") weapon.modifiers.rerollDamage = true;
+    if (modKey === "damage_plus_1") weapon.modifiers.damageMod += 1;
 
     if (modKey === "reroll_one_hit") weapon.modifiers.rerollOneHit = true;
     if (modKey === "reroll_one_wound") weapon.modifiers.rerollOneWound = true;
@@ -375,6 +380,7 @@ function checkSkipReason(weaponsArray, targetUnit, modKey) {
         if (modKey === "devastating" && w.modifiers.devastating === true) return "applied";
         if (modKey === "fish_crits" && w.modifiers.fishForCrits === true) return "applied";
         if (modKey === "reroll_damage" && w.modifiers.rerollDamage === true) return "applied";
+        if (modKey === "damage_plus_1" && w.modifiers.damageMod > 0) return "applied";
 
         if (modKey === "melta_range" && w.modifiers.melta === 0) return "not_applicable";
 
@@ -887,6 +893,7 @@ function buildBaseStatsHTML(weaponsArray, targetUnit) {
         if (w.modifiers.woundMod > 0) activeMods.push(`+${w.modifiers.woundMod} Wound`);
         if (w.modifiers.woundMod < 0) activeMods.push(`${w.modifiers.woundMod} Wound`);
         if (w.modifiers.rerollDamage) activeMods.push(`RR Damage`);
+        if (w.modifiers.damageMod > 0) activeMods.push(`+${w.modifiers.damageMod} Dmg`);
 
         let modsStr = activeMods.length > 0 ? `[${activeMods.join(', ')}]` : `[No Mods]`;
 

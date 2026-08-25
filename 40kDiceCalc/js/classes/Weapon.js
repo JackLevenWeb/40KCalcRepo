@@ -37,7 +37,8 @@ export class Weapon {
             rerollDamage: modifiers.rerollDamage || false,
             rerollOneHit: modifiers.rerollOneHit || false,
             rerollOneWound: modifiers.rerollOneWound || false,
-            rerollOneDamage: modifiers.rerollOneDamage || false
+            rerollOneDamage: modifiers.rerollOneDamage || false,
+            damageMod: modifiers.damageMod || 0
         };
     }
 }

@@ -150,7 +150,8 @@ export const ModLabels = {
     "damage_minus_1": "Target: -1 Damage",
     "damage_half": "Target: Half Damage",
     "FNP": "Target: Feel No Pain 5+",
-    "plus_1_save": "Target: +1 to Save"
+    "plus_1_save": "Target: +1 to Save",
+    "damage_plus_1": "+1 to Damage"
 };
 
 // truncates tables for new simulation runs

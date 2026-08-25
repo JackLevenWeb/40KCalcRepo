@@ -358,7 +358,7 @@ function modelsKill(damageEvents, weapon, unit, startingHealth) {
 
     for (let i = 0; i < damageEvents; i++) {
         let baseDmg = resolveDamage(weapon.damage, weapon.modifiers.rerollDamage, singleDamageRerollState);
-        let dmgInstance = baseDmg + (weapon.modifiers.melta || 0);
+        let dmgInstance = baseDmg + (weapon.modifiers.melta || 0) + (weapon.modifiers.damageMod || 0);
 
         if (unit.modifiers.halfDamage) dmgInstance = Math.ceil(dmgInstance / 2);
         if (unit.modifiers.minusOneDamage) dmgInstance -= 1;

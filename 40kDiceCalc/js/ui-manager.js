@@ -178,6 +178,7 @@ export function addAttackerModule(containerElement) {
                         <option value="hit_minus_1">-1 to Hit</option>
                         <option value="wound_plus_1">+1 to Wound</option>
                         <option value="wound_minus_1">-1 to Wound</option>
+                        <option value="damage_plus_1">+1 to Damage</option>
                     </optgroup>
                   <optgroup label="Rerolls">
                         <option value="reroll_hits_1">Reroll 1s to Hit</option>
@@ -414,6 +415,7 @@ export function buildRosterFromJSON(containerElement, jsonData, clearRoster = tr
             if (mods.fishForCrits) addBadgeToModule(newModule, "fish_crits", false);
             if (mods.rerollDamage) addBadgeToModule(newModule, "reroll_damage", false);
             if (mods.rerollOneDamage) addBadgeToModule(newModule, "reroll_one_damage", false);
+            if (mods.damageMod > 0) addBadgeToModule(newModule, "damage_plus_1", false);
 
             if (mods.sustained > 0) {
                 addBadgeToModule(newModule, "sustained", false);
@@ -660,6 +662,7 @@ export function renderCombiMirror(weaponsArray, targetUnit) {
         if (w.modifiers.rerollOneHit) activeMods.push("RR 1 Hit");
         if (w.modifiers.rerollOneWound) activeMods.push("RR 1 Wound");
         if (w.modifiers.rerollOneDamage) activeMods.push("RR 1 Dmg");
+        if (w.modifiers.damageMod > 0) activeMods.push(`+${w.modifiers.damageMod} Dmg`);
 
         return activeMods.length > 0 ? `[${activeMods.join(', ')}]` : "";
     };

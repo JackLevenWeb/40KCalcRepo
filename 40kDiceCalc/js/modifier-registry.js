@@ -19,6 +19,7 @@ export const ModifierRegistry = {
     "wound_plus_1": { name: "+1 to Wound", hasInput: false, combiCategory: "flat_mods" },
     "wound_minus_1": { name: "-1 to Wound", hasInput: false, combiCategory: null },
     "extra_ap_1": { name: "AP +1", hasInput: false, combiCategory: "flat_mods" },
+    "damage_plus_1": { name: "+1 Damage", hasInput: false, combiCategory: "flat_mods" },
 
     "reroll_hits_1": { name: "Reroll 1s (Hit)", hasInput: false, combiCategory: "rerolls" },
     "reroll_hits_all": { name: "Reroll All (Hit)", hasInput: false, combiCategory: "rerolls" },
