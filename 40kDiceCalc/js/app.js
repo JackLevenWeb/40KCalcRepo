@@ -703,8 +703,9 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
         return { ...dataRow, modifier_name: modName, skipReason: skipReason };
     }).filter(r => r.unit_name);
 
-    const th = `padding: 8px 10px; color: var(--theme-text-muted); font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid var(--border-color);`;
-    const td = `padding: 10px; background: rgba(255,255,255,0.03); color: #fff; font-weight: bold; margin-bottom: 5px;`;
+
+    const th = `padding: 8px 4px 8px 6px; color: var(--theme-text-muted); font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid var(--border-color);`;
+    const td = `padding: 10px 4px 10px 6px; background: rgba(255,255,255,0.03); color: #fff; font-weight: bold; margin-bottom: 5px;`;
     const tdFirst = td + `border-left: 3px solid var(--theme-text-light); border-radius: 4px 0 0 4px;`;
     const tdLast = td + `border-radius: 0 4px 4px 0;`;
 
