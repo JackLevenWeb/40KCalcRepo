@@ -423,14 +423,19 @@ export function buildRosterFromJSON(containerElement, jsonData, clearRoster = tr
 export function spawnReportCard(title, container, statsHTML, avgStatsHTML) {
     const cardHTML = `
         <div class="report-card" style="margin-bottom: 20px; background: rgba(15, 17, 21, 0.4); border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden;">
-            <div style="display: grid; grid-template-columns: 375px 1fr; gap: 0; align-items: stretch;">
-                <div class="avg-stats-sidebar" style="background: rgba(0,0,0,0.25); padding: 15px; border-right: 1px solid var(--border-color);">
+            <div style="display: grid; grid-template-columns: 450px 1fr; gap: 0; align-items: stretch;">
+                
+              
+                <div class="avg-stats-sidebar" style="background: rgba(0,0,0,0.25); padding: 15px 15px 15px 15px; border-right: 1px solid var(--border-color); overflow-x: auto;">
                     <h4 style="color: var(--theme-text-light); margin-top: 0; margin-bottom: 10px; font-size: 1rem;">${title}</h4>
                     ${avgStatsHTML}
                 </div>
-                <div style="padding: 15px; min-height: 250px; position: relative;">
+                
+                <!-- Added min-width: 0; to stop the canvas from infinitely expanding the CSS grid -->
+                <div style="padding: 15px; min-height: 250px; position: relative; min-width: 0;">
                     <canvas class="adv-chart"></canvas>
                 </div>
+
             </div>
             <div class="core-stats-header" style="padding: 10px 15px; background: rgba(255,255,255,0.02); border-top: 1px solid var(--border-color);">
                 ${statsHTML}

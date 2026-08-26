@@ -57,7 +57,7 @@ document.addEventListener("App:DuplicateModule", (e) => {
     const weaponToClone = allWeapons.find(w => w.unitId === targetId);
 
     if (weaponToClone) {
-        const clone = JSON.parse(JSON.stringify(weaponToClone));
+        const clone = structuredClone(weaponToClone);
         clone.unitName = clone.unitName + " (Copy)";
         clone.unitId = crypto.randomUUID();
 
@@ -578,6 +578,7 @@ if (advAnalyticsBtn) {
                 baseWeapon.modifiers.melta = originalMelta;
 
                 //attacker mods
+                // iterate through every available mod to simulate and measure its isolated impact on the base profile
                 for (const [category, mods] of Object.entries(SIMULATION_SCENARIOS)) {
                     for (const modKey of mods) {
                         const skipReason = checkSkipReason([baseWeapon], targetUnit, modKey);
@@ -596,7 +597,7 @@ if (advAnalyticsBtn) {
                             continue;
                         }
 
-                        let moddedWeapon = JSON.parse(JSON.stringify(baseWeapon));
+                        let moddedWeapon = structuredClone(baseWeapon);
                         applyModifierToWeapon(moddedWeapon, modKey, targetUnit);
 
                         let results = await runWorkerSimulation(SIMULATION_ITERATIONS, [moddedWeapon], targetUnit);
@@ -614,6 +615,7 @@ if (advAnalyticsBtn) {
                 }
 
                 //target mods
+                //iterate through every available mod to simulate and check how effectively it reduces the base profile's damage/models killed
                 for (const [category, mods] of Object.entries(target_SIMULATION_SCENARIOS)) {
                     for (const modKey of mods) {
                         const skipReason = checkSkipReasonTarget(targetUnit, [baseWeapon], modKey);
@@ -630,7 +632,7 @@ if (advAnalyticsBtn) {
                             continue;
                         }
 
-                        let moddedTarget = JSON.parse(JSON.stringify(targetUnit));
+                        let moddedTarget = structuredClone(targetUnit);
                         applyModifiersToTarget(moddedTarget, modKey);
 
                         let results = await runWorkerSimulation(SIMULATION_ITERATIONS, [baseWeapon], moddedTarget);
@@ -703,8 +705,9 @@ function generateAdvancedReport(title, category, sqlData, sqlAvgData, totalRuns,
         return { ...dataRow, modifier_name: modName, skipReason: skipReason };
     }).filter(r => r.unit_name);
 
-    const th = `padding: 8px 10px; color: var(--theme-text-muted); font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid var(--border-color);`;
-    const td = `padding: 10px; background: rgba(255,255,255,0.03); color: #fff; font-weight: bold; margin-bottom: 5px;`;
+
+    const th = `padding: 8px 4px 8px 6px; color: var(--theme-text-muted); font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid var(--border-color);`;
+    const td = `padding: 10px 4px 10px 6px; background: rgba(255,255,255,0.03); color: #fff; font-weight: bold; margin-bottom: 5px;`;
     const tdFirst = td + `border-left: 3px solid var(--theme-text-light); border-radius: 4px 0 0 4px;`;
     const tdLast = td + `border-radius: 0 4px 4px 0;`;
 
@@ -1223,7 +1226,7 @@ if (combiButton) {
                 const worker = new Worker(new URL('./webWorker.js', import.meta.url), { type: 'module' });
 
                 for (const mod of comboYield) {
-                    let moddedWeapons = JSON.parse(JSON.stringify(attackGroup.weapons));
+                    let moddedWeapons = structuredClone(attackGroup.weapons);
                     let isInvalidCombo = false;
 
                     for (const modKey of mod) {
