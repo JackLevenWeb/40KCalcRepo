@@ -98,116 +98,152 @@ if (importTargetBtn) importTargetBtn.addEventListener('click', () => handleImpor
 
 //#region api fetching >>>>>>>>>>>>>>>>>>>>>>>
 
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 // fetches unit names and ids
 async function fetchUnitName() {
-    try {
-        let offSet = 0;
-        let fetching = true;
+    const maxRetries = 3;
+    const retryDelayMs = 1500;
 
-        while (fetching) {
-            const response = await fetch(`${BASE}/v1/${edition}/units?limit=500&offset=${offSet}`);
+    let offSet = 0;
+    let fetching = true;
+
+    while (fetching) {
+        let attempt = 1;
+        let success = false;
+
+        // retry loop
+        while (attempt <= maxRetries && !success) {
+            try {
+                const response = await fetch(`${BASE}/v1/${edition}/units?limit=500&offset=${offSet}`);
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${text}`);
+                }
+
+                const units = await response.json();
+
+                if (units.length === 0) {
+                    fetching = false;
+                } else {
+                    for (const unit of units) {
+                        globalUnitIndex.set(unit.name, unit.id);
+                        unitNames.push(unit.name);
+                    }
+                    offSet += 500; // api limited to 500 per call
+                }
+
+                success = true;
+            } catch (err) {
+                console.warn(`[API] fetchUnitName chunk failed (Attempt ${attempt}):`, err.message);
+
+                if (attempt < maxRetries) {
+                    await sleep(retryDelayMs);
+                } else {
+                    console.error("[API] Failed to fetch unit names after maximum retries.");
+                    fetching = false; // Stop the pagination if the API is completely down
+                }
+                attempt++;
+            }
+        }
+    }
+
+    console.log(`Successfully loaded ${unitNames.length} units into the search index.`);
+}
+
+fetchUnitName();
+
+// fetche specific unit
+async function fetchUnitDetails(unitName, importType) {
+    const id = globalUnitIndex.get(unitName);
+
+    if (!id) {
+        alert(`Could not find the ID for ${unitName}. Please select it from the dropdown list.`);
+        return;
+    }
+
+    const activeBtn = importType === 'attacker' ? importAttackerBtn : importTargetBtn;
+    activeBtn.textContent = "Importing...";
+    activeBtn.disabled = true;
+
+    const maxRetries = 3;
+    const retryDelayMs = 1500;
+
+    // retry loop
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            const response = await fetch(`${BASE}/v1/${edition}/units/${id}`);
 
             if (!response.ok) {
                 const text = await response.text();
                 throw new Error(`HTTP ${response.status}: ${text}`);
             }
 
-            const units = await response.json();
+            const apiUnit = await response.json();
+            console.log("Unit Data Imported:", apiUnit);
 
-            if (units.length === 0) {
-                fetching = false;
-            } else {
-                for (const unit of units) {
-                    globalUnitIndex.set(unit.name, unit.id);
-                    unitNames.push(unit.name);
+            if (importType === 'attacker') {
+                const weaponTypeToggle = document.getElementById('weapon-type-toggle');
+                const weaponMode = weaponTypeToggle.value;
+                const isRanged = weaponMode === 'ranged';
+
+                const apiWeaponsArray = apiUnit.weapons ? apiUnit.weapons[weaponMode] : [];
+
+                if (!apiWeaponsArray || apiWeaponsArray.length === 0) {
+                    alert(`The ${apiUnit.name} does not have any ${weaponMode} weapons equipped.`);
+                    activeBtn.textContent = "Import Attacker";
+                    activeBtn.disabled = false;
+                    return;
                 }
 
-                // api limited to 500 per call
-                offSet += 500;
-            }
-        }
+                const formattedRoster = apiWeaponsArray.map(apiWeapon => formatWeaponData(apiWeapon, apiUnit, isRanged));
+                const rosterContainer = document.getElementById('attacker-roster');
 
-        console.log(`Successfully loaded ${unitNames.length} units.`);
-    } catch (err) {
-        console.error("Failed to fetch unit names", err);
-    }
-}
+                buildRosterFromJSON(rosterContainer, formattedRoster, false);
 
-fetchUnitName();
+                // sets the faction dropdown for imported attacker modules
+                if (apiUnit.faction) {
+                    const factionDrops = rosterContainer.querySelectorAll(".in-faction");
+                    factionDrops.forEach(drop => {
+                        drop.value = apiUnit.faction;
+                    });
+                }
 
-async function fetchUnitDetails(unitName, importType) {
-    try {
-        const id = globalUnitIndex.get(unitName);
-
-        if (!id) {
-            alert(`Could not find the ID for ${unitName}. Please select it from the dropdown list.`);
-            return;
-        }
-
-        const activeBtn = importType === 'attacker' ? importAttackerBtn : importTargetBtn;
-
-        activeBtn.textContent = "Importing...";
-        activeBtn.disabled = true;
-
-        const response = await fetch(`${BASE}/v1/${edition}/units/${id}`);
-
-        if (!response.ok) {
-            const text = await response.text();
-            throw new Error(`HTTP ${response.status}: ${text}`);
-        }
-
-        const apiUnit = await response.json();
-
-        console.log(apiUnit);
-
-        if (importType === 'attacker') {
-            const weaponTypeToggle = document.getElementById('weapon-type-toggle');
-            const weaponMode = weaponTypeToggle.value;
-            const isRanged = weaponMode === 'ranged';
-
-            const apiWeaponsArray = apiUnit.weapons ? apiUnit.weapons[weaponMode] : [];
-
-            if (!apiWeaponsArray || apiWeaponsArray.length === 0) {
-                alert(`The ${apiUnit.name} does not have any ${weaponMode} weapons equipped.`);
                 activeBtn.textContent = "Import Attacker";
-                activeBtn.disabled = false;
-                return;
+            } else if (importType === 'target') {
+                populateTargetProfile(apiUnit);
+                activeBtn.textContent = "Import Target";
             }
 
-            const formattedRoster = apiWeaponsArray.map(apiWeapon => formatWeaponData(apiWeapon, apiUnit, isRanged));
-            const rosterContainer = document.getElementById('attacker-roster');
+            document.dispatchEvent(new CustomEvent("App:AutoSave"));
+            activeBtn.disabled = false;
+            searchInput.value = "";
 
-            buildRosterFromJSON(rosterContainer, formattedRoster, false);
+            break;
 
-            // sets the faction dropdown for imported attacker modules
-            if (apiUnit.faction) {
-                const factionDrops = rosterContainer.querySelectorAll(".in-faction");
-                factionDrops.forEach(drop => {
-                    drop.value = apiUnit.faction;
-                });
+        } catch (err) {
+            console.warn(`[API] fetchUnitDetails failed (Attempt ${attempt}):`, err.message);
+
+            if (attempt < maxRetries) {
+                // update the UI with retry info
+                activeBtn.textContent = `Retrying (${attempt}/${maxRetries})...`;
+                await sleep(retryDelayMs);
+            } else {
+                console.error("[API] Failed to fetch unit details after maximum retries.", err);
+
+                // reset buttons on failure
+                if (importAttackerBtn) {
+                    importAttackerBtn.textContent = "Import Attacker";
+                    importAttackerBtn.disabled = false;
+                }
+                if (importTargetBtn) {
+                    importTargetBtn.textContent = "Import Target";
+                    importTargetBtn.disabled = false;
+                }
+
+                alert("Network error: Failed to connect to the OpenHammer database. Please try again.");
             }
-
-            activeBtn.textContent = "Import Attacker";
-        } else if (importType === 'target') {
-            populateTargetProfile(apiUnit);
-            activeBtn.textContent = "Import Target";
-        }
-
-        document.dispatchEvent(new CustomEvent("App:AutoSave"));
-        activeBtn.disabled = false;
-        searchInput.value = "";
-
-    } catch (err) {
-        console.error("Failed to fetch unit details", err);
-
-        if (importAttackerBtn) {
-            importAttackerBtn.textContent = "Import Attacker";
-            importAttackerBtn.disabled = false;
-        }
-
-        if (importTargetBtn) {
-            importTargetBtn.textContent = "Import Target";
-            importTargetBtn.disabled = false;
         }
     }
 }
