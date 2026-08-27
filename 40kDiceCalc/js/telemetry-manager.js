@@ -33,7 +33,7 @@ export function dispatchTelemetryEvent(startTime, results, attackers, target, au
 export function initializeTelemetry() {
     document.addEventListener("App:ExportTelemetry", (event) => {
         const simulationData = event.detail;
-        buildAndSendPayLoad(simulationData);
+        // buildAndSendPayLoad(simulationData);
     });
 }
 
