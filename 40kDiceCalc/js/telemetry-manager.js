@@ -1,4 +1,6 @@
-// placeholder for azure function endpoint
+// telemetry-manager.js
+
+// placeholder for local FastAPI / backend endpoint
 const azureEndpoint = "http://localhost:8080/api/telemetry";
 
 // unique string for database tracking
@@ -35,13 +37,11 @@ export function initializeTelemetry() {
     });
 }
 
-// map and package raw data
+// map and package raw data with retry transmission
 async function buildAndSendPayLoad(data) {
     const runId = generateId();
     const timeStamp = new Date().toISOString();
     const concurrency = navigator.hardwareConcurrency || 1;
-
-
 
     // build payload 
     const finalPayload = {
@@ -71,7 +71,6 @@ async function buildAndSendPayLoad(data) {
                 def_cover: data.target.modifiers?.cover || false,
                 def_plus_one_save: data.target.modifiers?.plusOneSave || false
             },
-            // map attacker units for payload
             attacker_units: data.attackers.map(attacker => ({
                 unit_id: attacker.unitId,
                 name: attacker.unitName,
@@ -131,21 +130,40 @@ async function buildAndSendPayLoad(data) {
         }
     };
 
-    // execute transmission 
-    try {
-        return; //temp disable server sending
-        const response = await fetch(azureEndpoint, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(finalPayload)
-        });
+    // helper to pause execution asynchronously
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-        if (!response.ok) {
-            console.error("telemetry export failed with status", response.status);
+    const maxRetries = 3;
+    const retryDelayMs = 2000;
+
+    // Execute transmission with retry loop
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            console.log(`[Telemetry] Attempt ${attempt} of ${maxRetries} sending to ${azureEndpoint}...`);
+
+            const response = await fetch(azureEndpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(finalPayload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server responded with HTTP status ${response.status}`);
+            }
+
+            console.log("[Telemetry] Payload delivered successfully!");
+            break; // exit loop on success
+        } catch (error) {
+            console.warn(`[Telemetry] Attempt ${attempt} failed: ${error.message}`);
+
+            if (attempt < maxRetries) {
+                console.log(`[Telemetry] Retrying in ${retryDelayMs / 1000} seconds...`);
+                await sleep(retryDelayMs);
+            } else {
+                console.error("[Telemetry] Maximum retries reached. Transmission aborted.");
+            }
         }
-    } catch (error) {
-        console.error("network error during telemetry export", error);
     }
 }
